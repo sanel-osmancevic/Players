@@ -78,7 +78,7 @@ body{padding:16px;max-width:1100px;margin:0 auto}button,select{font:inherit;colo
 .el-seg{display:inline-flex;border:1px solid var(--color-border-line);border-radius:999px;padding:2px;margin:0 0 var(--cds-gap-md);gap:2px}
 .el-seg button{font:inherit;font-size:var(--cds-font-size-caption);font-weight:var(--cds-font-weight-medium);border:0;border-radius:999px;padding:var(--cds-pad-xs) var(--cds-pad-md);min-height:36px;background:none;color:var(--color-fg-muted);cursor:pointer}
 .el-seg button[aria-pressed=true]{background:var(--color-fg);color:var(--color-bg)}
-#pane-sig[hidden],#pane-gl[hidden],#pane-2[hidden],#pane-3[hidden],#tab-uc-2[hidden],#tab-uc-3[hidden],#naslov-uc-2[hidden],#naslov-uc-3[hidden]{display:none}
+.el-bezrez .el-rezk{display:none}
 .el-seg+.el-seg{margin-left:var(--cds-gap-sm)}
 .el-table td.el-dan{padding-left:var(--cds-pad-lg);color:var(--color-fg-muted)}
 .el-table tr.el-kolo td{font-weight:600;border-bottom:2px solid var(--color-border-line)}
@@ -97,16 +97,15 @@ body{padding:16px;max-width:1100px;margin:0 auto}button,select{font:inherit;colo
 <div class="el-wrap">
   <header class="el-head">
     <h1>EuroLeague – Maxbet preporuke</h1>
-    <p>Aktuelno kolo: <b data-draw="kolonow" data-source="utakmice">—</b>. Preporuke za poene, skokove i asistencije igrača iz Maxbet ponude, na osnovu modela (minuti i rotacija, protivnik po poziciji i zonama šuta, tempo, povrede) i učinka ove sezone. Posle kola upisuju se stvarni rezultati.</p>
+    <p>Aktuelno kolo: <b data-draw="kolonow" data-source="utakmice">—</b> Preporuke za poene, skokove i asistencije igrača iz Maxbet ponude, na osnovu modela (minuti i rotacija, protivnik po poziciji i zonama šuta, tempo, povrede) i učinka ove sezone. Posle kola upisuju se stvarni rezultati.</p>
   </header>
 
   <div class="el-filters">
   <div class="el-tabs" role="tablist">
     <button role="tab" id="tab-preporuke" aria-controls="preporuke" aria-selected="true">Preporuke</button>
-    <button role="tab" id="tab-rezultati" aria-controls="rezultati" aria-selected="false">Rezultati</button>
     <button role="tab" id="tab-tiketi" aria-controls="tiketi" aria-selected="false">Tiketi</button>
   </div>
-  <div class="el-bar" id="el-filterbar" style="padding-top:var(--cds-pad-sm)" hidden>
+  <div class="el-bar" id="el-filterbar" style="padding-top:var(--cds-pad-sm)">
     <label for="el-kolo">Kolo</label>
     <select id="el-kolo" data-draw="kolosel" data-source="utakmice zapamceno" aria-label="Kolo"></select>
     <label for="el-day">Dan</label>
@@ -120,10 +119,11 @@ body{padding:16px;max-width:1100px;margin:0 auto}button,select{font:inherit;colo
       <button type="button" id="mod-sig" aria-pressed="true">Sigurnije</button>
       <button type="button" id="mod-gl" aria-pressed="false">Glavne linije</button>
     </div>
-    <div id="pane-sig">
-    <p class="el-note el-warn" id="el-nopicks" hidden>Trenutno nema opklada koje čekaju: ili su sve završene (vidi Rezultate), ili Maxbet još nema linije za igrače.</p>
+    <p class="el-ucinak" id="el-ucred">Izabrano kolo (ili dan): završeno <b data-draw="uc" data-source="ucinak" data-field="zavrseno">—</b> od <b data-draw="uc" data-source="ucinak" data-field="ukupno">—</b> · prošlo <b data-draw="uc" data-source="ucinak" data-field="proslo">—</b> · palo <b data-draw="uc" data-source="ucinak" data-field="palo">—</b> · profit uz ulog 1 po opkladi: <b data-draw="uc" data-source="ucinak" data-field="profit">—</b></p>
+    <p class="el-note" id="el-glnote" hidden>Osnovne Maxbet granice (kvote oko 1.90, kladionica ih vidi kao 50:50). Za svakog igrača prikazana je strana sa većom šansom; prikazano je 10 sa najvećom šansom (samo 55% ili više).</p>
+    <p class="el-note el-warn" id="el-nopicks" hidden></p>
     <div class="el-scroll">
-      <table class="el-table" data-source="prikaz" data-row-key="kljuc">
+      <table class="el-table" id="el-tabpick" data-source="prikaz" data-row-key="kljuc">
         <thead><tr>
           <th data-field="igrac">Igrač</th>
           <th data-field="utakmica" class="el-hide">Utakmica</th>
@@ -132,53 +132,16 @@ body{padding:16px;max-width:1100px;margin:0 auto}button,select{font:inherit;colo
           <th data-field="sansa" class="num">Šansa</th>
           <th data-field="ulog" class="num">Ulog</th>
           <th data-field="istorija" class="num el-hide">Sezona · posl. 5</th>
+          <th data-field="rezultat" class="num el-rezk">Rezultat</th>
+          <th data-field="profit" class="num el-hide el-rezk">Profit</th>
         </tr></thead>
         <tbody data-draw="picks"></tbody>
       </table>
     </div>
-    </div>
-    <div id="pane-gl" hidden>
-    <p class="el-note">Osnovne Maxbet granice (kvote oko 1.90, kladionica ih vidi kao 50:50). Za svakog igrača prikazana je strana sa većom šansom; prikazano je 10 sa najvećom šansom (samo 55% ili više).</p>
-    <p class="el-note el-warn" id="el-nogl" hidden>Nema glavnih linija sa šansom 55% ili više za utakmice koje nisu počele.</p>
-    <div class="el-scroll">
-      <table class="el-table" data-source="glavne" data-row-key="kljuc">
-        <thead><tr>
-          <th data-field="igrac">Igrač</th>
-          <th data-field="utakmica" class="el-hide">Utakmica</th>
-          <th data-field="opklada">Opklada</th>
-          <th data-field="kvota" class="num">Kvota</th>
-          <th data-field="sansa" class="num">Šansa</th>
-          <th data-field="ulog" class="num">Ulog</th>
-          <th data-field="istorija" class="num el-hide">Sezona · posl. 5</th>
-        </tr></thead>
-        <tbody data-draw="glavne"></tbody>
-      </table>
-    </div>
-    </div>
-  </section>
-
-  <section class="el-card el-panel" id="rezultati" role="tabpanel" aria-labelledby="tab-rezultati" hidden>
-    <div class="el-seg" role="group" aria-label="Vrsta linija u rezultatima">
-      <button type="button" id="res-sig" aria-pressed="true">Sigurnije</button>
-      <button type="button" id="res-gl" aria-pressed="false">Glavne linije</button>
-    </div>
-    <p class="el-ucinak">Izabrano kolo (ili dan): završeno <b data-draw="uc" data-source="ucinak" data-field="zavrseno">—</b> od <b data-draw="uc" data-source="ucinak" data-field="ukupno">—</b> · prošlo <b data-draw="uc" data-source="ucinak" data-field="proslo">—</b> · palo <b data-draw="uc" data-source="ucinak" data-field="palo">—</b> · profit uz ulog 1 po opkladi: <b data-draw="uc" data-source="ucinak" data-field="profit">—</b></p>
-    <p class="el-note el-warn" id="el-noresults" hidden>Za izabrane utakmice još nema završenih opklada.</p>
-    <div class="el-scroll">
-      <table class="el-table" data-source="prikaz" data-row-key="kljuc">
-        <thead><tr>
-          <th data-field="igrac">Igrač</th>
-          <th data-field="utakmica" class="el-hide">Utakmica</th>
-          <th data-field="opklada">Opklada</th>
-          <th data-field="kvota" class="num">Kvota</th>
-          <th data-field="rezultat" class="num">Rezultat</th>
-          <th data-field="profit" class="num">Profit</th>
-        </tr></thead>
-        <tbody data-draw="results"></tbody>
-      </table>
-    </div>
+    <div id="el-uckola" hidden>
     <h3 class="el-sub">Učinak po kolima</h3>
     <p class="el-note">Profit: prošla opklada donosi kvotu − 1, pala −1, uz ulog 1 po opkladi; „nije igrao“ se ne računa. Profit (ulozi): sa predloženim ulogom za svaku opkladu (1 j. = 1% kase). Vrednost vs tržište: koliko je naša Maxbet kvota vredela prema završnoj ceni pet kladionica bez marže; plus znači da smo dobili bolju cenu od tržišta, što je najpouzdaniji znak da sistem ima prednost, i pre rezultata. Pad kvote: koliko je Maxbet kvota pala od prve preporuke do početka.</p>
+    <div class="el-scroll">
     <table class="el-table" data-source="ucinak" data-row-key="kljuc">
       <thead><tr>
         <th data-field="kolo">Kolo</th>
@@ -194,6 +157,8 @@ body{padding:16px;max-width:1100px;margin:0 auto}button,select{font:inherit;colo
       </tr></thead>
       <tbody data-draw="hist"></tbody>
     </table>
+    </div>
+    </div>
   </section>
 
   <section class="el-card el-panel" id="tiketi" role="tabpanel" aria-labelledby="tab-tiketi" hidden>
@@ -201,12 +166,9 @@ body{padding:16px;max-width:1100px;margin:0 auto}button,select{font:inherit;colo
       <button type="button" id="tik-sig" aria-pressed="true">Sigurnije</button>
       <button type="button" id="tik-gl" aria-pressed="false">Glavne linije</button>
     </div>
-    <div class="el-seg" role="group" aria-label="Vrsta tiketa">
-      <button type="button" id="vel-2" aria-pressed="true">Dublovi</button>
-      <button type="button" id="vel-3" aria-pressed="false">Triplovi</button>
-    </div>
     <p class="el-note">Klikni na dan u učinku ispod da otvoriš tikete tog dana. Tiketi od zaključanih opklada za svaki dan: najjača opklada ide sa sledećom najjačom (za triplove sa sledeće dve) iz drugih utakmica. Kvota = proizvod kvota, šansa = proizvod šansi. Igrač koji ne igra računa se kvotom 1. U tikete ulaze samo opklade sa predloženim ulogom većim od 0 (one koje posle usklađivanja šanse imaju prednost); dve opklade iz iste utakmice nikad nisu na istom tiketu.</p>
-    <div id="pane-2">
+    <p class="el-note">Ulog 1 po tiketu: prošao tiket donosi kvotu − 1, pao −1.</p>
+    <h3 class="el-sub">Dublovi</h3>
     <p class="el-note el-warn" id="el-nodubl" hidden>Za aktuelno kolo još nema zaključanih opklada za dublove.</p>
     <div class="el-scroll" hidden>
       <table class="el-table" data-source="dublovi" data-row-key="kljuc">
@@ -219,8 +181,18 @@ body{padding:16px;max-width:1100px;margin:0 auto}button,select{font:inherit;colo
         <tbody data-draw="dubl"></tbody>
       </table>
     </div>
-    </div>
-    <div id="pane-3" hidden>
+    <table class="el-table" data-source="ucinak_dublova" data-row-key="kljuc">
+      <thead><tr>
+        <th data-field="kolo">Kolo</th>
+        <th data-field="ukupno" class="num">Dublova</th>
+        <th data-field="zavrseno" class="num el-hide">Završeno</th>
+        <th data-field="proslo" class="num">Prošlo</th>
+        <th data-field="palo" class="num">Palo</th>
+        <th data-field="profit" class="num">Profit (ulog 1)</th>
+      </tr></thead>
+      <tbody data-draw="dhist"></tbody>
+    </table>
+    <h3 class="el-sub">Triplovi</h3>
     <p class="el-note el-warn" id="el-notripl" hidden>Za aktuelno kolo još nema zaključanih opklada za triplove.</p>
     <div class="el-scroll" hidden>
       <table class="el-table" data-source="triplovi" data-row-key="kljuc">
@@ -233,22 +205,7 @@ body{padding:16px;max-width:1100px;margin:0 auto}button,select{font:inherit;colo
         <tbody data-draw="tripl"></tbody>
       </table>
     </div>
-    </div>
-    <h3 class="el-sub" id="naslov-uc-2">Učinak dublova</h3>
-    <h3 class="el-sub" id="naslov-uc-3" hidden>Učinak triplova</h3>
-    <p class="el-note">Ulog 1 po tiketu: prošao tiket donosi kvotu − 1, pao −1. Klikni na dan da vidiš tikete.</p>
-    <table class="el-table" data-source="ucinak_dublova" data-row-key="kljuc" id="tab-uc-2">
-      <thead><tr>
-        <th data-field="kolo">Kolo</th>
-        <th data-field="ukupno" class="num">Dublova</th>
-        <th data-field="zavrseno" class="num el-hide">Završeno</th>
-        <th data-field="proslo" class="num">Prošlo</th>
-        <th data-field="palo" class="num">Palo</th>
-        <th data-field="profit" class="num">Profit (ulog 1)</th>
-      </tr></thead>
-      <tbody data-draw="dhist"></tbody>
-    </table>
-    <table class="el-table" data-source="ucinak_triplova" data-row-key="kljuc" id="tab-uc-3" hidden>
+    <table class="el-table" data-source="ucinak_triplova" data-row-key="kljuc">
       <thead><tr>
         <th data-field="kolo">Kolo</th>
         <th data-field="ukupno" class="num">Triplova</th>
@@ -287,7 +244,7 @@ window.d3={format:f=>{const m=/^(\+)?\.(\d+)([f%])$/.exec(f);const plus=!!m[1],n
 })();
 </script>
 <script>
-window.elState={kolo:'',game:'',day:'',q:'',rmod:'sig',tmod:'sig',vel:'2'};
+window.elState={kolo:'',game:'',day:'',q:'',rmod:'sig',tmod:'sig'};
 const vrstaOf=x=>x.vrsta==='glavne'?'gl':'sig';
 const fmt1=d3.format('.1f'), pct=d3.format('.0%'), sgn=d3.format('+.1f');
 const statName={pts:'poena',reb:'skokova',ast:'asistencija'};
@@ -296,21 +253,23 @@ const rowsOf=id=>{const d=dash.data(id);return d.status==='ok'?d.data:null;};
 const dayOf=termin=>String(termin).split(' ').slice(0,2).join(' ');
 const dayKey=d=>{const m=String(d).match(/(\d+)\.(\d+)\./);return m?(+m[2])*100+(+m[1]):0;};
 const latestKolo=()=>{const r=rowsOf('utakmice')||[];const z=(rowsOf('zapamceno')||[]).filter(x=>x.igrac);return Math.max(0,...r.map(x=>+x.kolo),...(r.length?[]:z.map(x=>+x.kolo)));};
-const curKolo=()=>window.elState.kolo?+window.elState.kolo:latestKolo();
+const terminMs=t=>{const m=String(t).match(/(\d+)\.(\d+)\.\s+(\d+):(\d+)/);if(!m)return null;const n=new Date(),d=new Date(n.getFullYear(),+m[2]-1,+m[1],+m[3],+m[4]);if(d-n>180*864e5)d.setFullYear(d.getFullYear()-1);return +d;};
+const trenutnoKolo=()=>{const k=latestKolo();if(!k)return k;const t=gamesOf(k).map(g=>terminMs(g.t));return t.length&&t.every(x=>x!==null&&x+3*36e5<Date.now())?k+1:k;};   // 3 h: utakmica se završila
+const curKolo=()=>window.elState.kolo?+window.elState.kolo:trenutnoKolo();
 const gamesOf=k=>{const m=new Map();for(const g of [...(rowsOf('utakmice')||[]),...((rowsOf('zapamceno')||[]).filter(x=>x.igrac))]) if(+g.kolo===k&&!m.has(g.utakmica)) m.set(g.utakmica,{g:g.utakmica,t:g.termin,d:dayOf(g.termin),o:+g.red});return [...m.values()].sort((a,b)=>dayKey(a.d)-dayKey(b.d)||a.o-b.o);};
 const dayMap=()=>new Map(gamesOf(curKolo()).map(g=>[g.g,g.d]));
 const inSel=x=>+x.kolo===curKolo()&&(!window.elState.game||x.utakmica===window.elState.game)&&(!window.elState.day||dayMap().get(x.utakmica)===window.elState.day);
 const td=(tr,v,c)=>{const e=document.createElement('td');e.textContent=v;if(c)e.className=c;tr.appendChild(e);};
-const applyKolo=()=>{const old=curKolo()!==latestKolo();document.querySelectorAll('#el-oldkolo').forEach(e=>e.hidden=!old||e.dataset.tab!=='1');};
-const redrawAll=()=>{applyKolo();if(window.elMsgs)window.elMsgs();['daysel','uc','picks','glavne','results','hist','dubl','dhist','tripl','thist'].forEach(n=>dash.draw(n));};
+const applyKolo=()=>{const old=curKolo()!==trenutnoKolo();document.querySelectorAll('#el-oldkolo').forEach(e=>e.hidden=!old||e.dataset.tab!=='1');};
+const redrawAll=()=>{applyKolo();if(window.elMsgs)window.elMsgs();['daysel','uc','picks','hist','dubl','dhist','tripl','thist'].forEach(n=>dash.draw(n));};
 const dayLabel={'čet':'Četvrtak','pet':'Petak','sub':'Subota','ned':'Nedelja','pon':'Ponedeljak','uto':'Utorak','sre':'Sreda'};
 
 dash.onData(applyKolo);
 
-dash.draw('kolonow',el=>{const k=latestKolo();el.textContent=k?k+'.':'—';});
+dash.draw('kolonow',el=>{const k=trenutnoKolo();el.textContent=k?k+'.':'—';});
 
 dash.draw('kolosel',sel=>{
-  const ks=[...new Set([...(rowsOf('utakmice')||[]),...((rowsOf('zapamceno')||[]).filter(x=>x.igrac))].map(x=>+x.kolo))].filter(Boolean).sort((a,b)=>b-a);
+  const ks=[...new Set([...[...(rowsOf('utakmice')||[]),...((rowsOf('zapamceno')||[]).filter(x=>x.igrac))].map(x=>+x.kolo),trenutnoKolo()])].filter(Boolean).sort((a,b)=>b-a);
   sel.replaceChildren(...ks.map(k=>new Option(k+'. kolo',String(k))));
   sel.value=String(curKolo());
   sel.onchange=()=>{window.elState.kolo=sel.value;window.elState.day='';window.elState.game='';redrawAll();};
@@ -615,70 +574,54 @@ const kartica=(tb,tr,x,n)=>{
   for(const [a,b] of L){const d=document.createElement('div'); const s=document.createElement('span'); s.className='sub'; s.textContent=a+': '; d.appendChild(s); d.appendChild(document.createTextNode(b)); box.appendChild(d);}
   c.appendChild(box); row.appendChild(c); tb.appendChild(row);
 };
+// Jedna lista po kolu: opklade koje čekaju su gore, a kad se upiše rezultat prelaze među završene
+const redovi=()=>{
+  const p=dash.data('prikaz'); if(p.status!=='ok')return [];
+  const m=window.elState.rmod, r=p.data.filter(x=>inSel(x)&&vrstaOf(x)===m);
+  if(m==='gl'&&curKolo()===latestKolo()&&!p.data.some(x=>vrstaOf(x)==='gl'&&+x.kolo===latestKolo()&&!done(x))){   // nema zapamćenih: sveže linije za nepočete utakmice
+    const g=dash.data('glavne'), pocelo=new Set(p.data.filter(x=>x.ishod).map(x=>x.kolo+'|'+x.utakmica));
+    if(g.status==='ok')r.push(...g.data.filter(x=>+x.kolo===latestKolo()&&!pocelo.has(x.kolo+'|'+x.utakmica)).slice(0,10).filter(inSel));
+  }
+  const ord={'Najsigurnije':0,'Takođe verujem':1,'Sigurnije':2,'Vrednost':3};   // poslednje dve su grupe iz starijih kola
+  const po=m==='gl'?(a,b)=>b.sansa-a.sansa:(a,b)=>(ord[a.grupa]??2)-(ord[b.grupa]??2)||(+a.rang||0)-(+b.rang||0);
+  return [...r.filter(x=>!done(x)).sort(po),...r.filter(done).sort(po)];
+};
 dash.draw('picks',tb=>{
   tb.replaceChildren();
-  const d=dash.data('prikaz'); const r=d.status==='ok'?d.data.filter(x=>+x.kolo===latestKolo()&&!done(x)&&vrstaOf(x)==='sig'):[];
-  const ord={'Najsigurnije':0,'Takođe verujem':1};
-  r.sort((a,b)=>(ord[a.grupa]??2)-(ord[b.grupa]??2)||(+a.rang||0)-(+b.rang||0));
-  let last=null,ng=0;
+  const m=window.elState.rmod;
+  const r=redovi(), ranije=curKolo()!==trenutnoKolo(), imaRez=ranije||r.some(done);   // trenutno kolo: rezultati tek kad ih ima, učinak samo za ranija kola
+  document.getElementById('el-tabpick').classList.toggle('el-bezrez',!imaRez); document.getElementById('el-tabpick').parentElement.hidden=!r.length;
+  document.getElementById('el-ucred').hidden=!imaRez; document.getElementById('el-uckola').hidden=!ranije;
+  let last=null,ng=0,zav=false;
   r.forEach(x=>{
+    if(done(x)&&!zav){zav=true;last=null;ng=0;const g=document.createElement('tr');g.className='el-daysep';g.dataset.key='zavrseno';const c=document.createElement('td');c.colSpan=9;c.textContent='Završeno';g.appendChild(c);tb.appendChild(g);}
     const tr=document.createElement('tr');tr.dataset.key=x.kljuc;
-    if(x.grupa!==last){if(ng++)tr.className='el-split';last=x.grupa;}
-    td(tr,x.igrac,x.grupa==='Najsigurnije'?'el-good':'');tdGame(tr,x);tdOp(tr,x);
+    if(m==='sig'&&x.grupa!==last){if(ng++)tr.className='el-split';last=x.grupa;}
+    td(tr,x.igrac,(m==='sig'?x.grupa==='Najsigurnije':x.sansa>=0.65)?'el-good':'');tdGame(tr,x);tdOp(tr,x);
     td(tr,d3.format('.2f')(x.kvota),'num');td(tr,pct(x.sansa),'num');tdUlog(tr,x);td(tr,x.istorija+(x.forma5?' · '+x.forma5:''),'num el-hide');
+    if(done(x)){
+      const has=x.rezultat!==null&&x.rezultat!==undefined&&x.rezultat!=='';
+      const c=document.createElement('td');c.className='num el-rezk';const b=document.createElement('span');
+      b.className='el-res '+(x.ishod==='prošlo'?'ok':x.ishod==='palo'?'no':'dnp');
+      b.textContent=has?String(x.rezultat):'—';
+      b.title=x.ishod==='prošlo'?'Prošlo':x.ishod==='palo'?'Palo':'Nije igrao';
+      c.appendChild(b);tr.appendChild(c);
+      const u=Number(x.ulog)>0?Number(x.ulog):1, p=x.ishod==='prošlo'?(Number(x.kvota)-1)*u:x.ishod==='palo'?-u:null;
+      td(tr,p===null?'—':d3.format('+.2f')(p),p===null?'num el-hide el-rezk sub':p>=0?'num el-hide el-rezk el-good':'num el-hide el-rezk el-bad');
+    }else{td(tr,'—','num el-rezk sub');td(tr,'—','num el-hide el-rezk sub');}
     tb.appendChild(tr); kartica(tb,tr,x,'picks');
   });
 });
 
-dash.draw('results',tb=>{
-  tb.replaceChildren();
-  const d=dash.data('prikaz'); const r=d.status==='ok'?d.data.filter(x=>inSel(x)&&done(x)&&vrstaOf(x)===window.elState.rmod):[];
-  r.forEach(x=>{
-    const tr=document.createElement('tr');tr.dataset.key=x.kljuc;
-    td(tr,x.igrac);tdGame(tr,x);td(tr,x.opklada);
-    td(tr,d3.format('.2f')(x.kvota),'num');
-    const has=x.rezultat!==null&&x.rezultat!==undefined&&x.rezultat!=='';
-    const c=document.createElement('td');c.className='num';const b=document.createElement('span');
-    b.className='el-res '+(x.ishod==='prošlo'?'ok':x.ishod==='palo'?'no':'dnp');
-    b.textContent=has?String(x.rezultat):'—';
-    b.title=x.ishod==='prošlo'?'Prošlo':x.ishod==='palo'?'Palo':'Nije igrao';
-    c.appendChild(b);tr.appendChild(c);
-    const u=Number(x.ulog)>0?Number(x.ulog):1, p=x.ishod==='prošlo'?(Number(x.kvota)-1)*u:x.ishod==='palo'?-u:null;
-    td(tr,p===null?'—':d3.format('+.2f')(p),p===null?'num sub':p>=0?'num el-good':'num el-bad');
-    tb.appendChild(tr);
-  });
-});
-
 (()=>{const tabs=[...document.querySelectorAll('.el-tabs button')];
- const show=id=>{tabs.forEach(b=>{const on=b.getAttribute('aria-controls')===id;b.setAttribute('aria-selected',on);document.getElementById(b.getAttribute('aria-controls')).hidden=!on;});const rez=id==='rezultati';document.getElementById('el-filterbar').hidden=!rez;document.querySelectorAll('#el-oldkolo').forEach(e=>{e.dataset.tab=rez?'1':'';if(!rez)e.hidden=true;});try{localStorage.setItem('el-tab',id);}catch(e){}};
+ const show=id=>{tabs.forEach(b=>{const on=b.getAttribute('aria-controls')===id;b.setAttribute('aria-selected',on);document.getElementById(b.getAttribute('aria-controls')).hidden=!on;});const rez=id==='preporuke';document.getElementById('el-filterbar').hidden=!rez;document.querySelectorAll('#el-oldkolo').forEach(e=>{e.dataset.tab=rez?'1':'';if(!rez)e.hidden=true;});try{localStorage.setItem('el-tab',id);}catch(e){}};
  tabs.forEach(b=>b.addEventListener('click',()=>show(b.getAttribute('aria-controls'))));
- let t=null;try{t=localStorage.getItem('el-tab');}catch(e){} if(t==='rezultati'||t==='tiketi')show(t);})();
-dash.draw('glavne',tb=>{
-  tb.replaceChildren();
-  const d=dash.data('glavne'), z=dash.data('zapamceno');
-  const zap=z.status==='ok'?z.data.filter(x=>x.igrac):[];
-  const pocelo=new Set(zap.filter(x=>x.ishod).map(x=>x.kolo+'|'+x.utakmica));
-  const sacuvane=zap.filter(x=>x.vrsta==='glavne'&&+x.kolo===latestKolo()&&!x.ishod);
-  const r=sacuvane.length?sacuvane.sort((a,b)=>b.sansa-a.sansa):(d.status==='ok'?d.data.filter(x=>+x.kolo===latestKolo()&&!pocelo.has(x.kolo+'|'+x.utakmica)).slice(0,10):[]);
-  r.forEach(x=>{
-    const tr=document.createElement('tr');tr.dataset.key=x.kljuc;
-    td(tr,x.igrac,x.sansa>=0.65?'el-good':'');tdGame(tr,x);tdOp(tr,x);
-    td(tr,d3.format('.2f')(x.kvota),'num');td(tr,pct(x.sansa),'num');tdUlog(tr,x);td(tr,x.istorija+(x.forma5?' · '+x.forma5:''),'num el-hide');
-    tb.appendChild(tr); kartica(tb,tr,x,'glavne');
-  });
-});
-
+ let t=null;try{t=localStorage.getItem('el-tab');}catch(e){} show(t==='tiketi'?'tiketi':'preporuke');})();
 (()=>{const bs=document.getElementById('mod-sig'), bg=document.getElementById('mod-gl');
  if(!bs||!bg)return;
- const set=m=>{bs.setAttribute('aria-pressed',m==='sig');bg.setAttribute('aria-pressed',m==='gl');
-   document.getElementById('pane-sig').hidden=m!=='sig';document.getElementById('pane-gl').hidden=m!=='gl';
-   try{localStorage.setItem('el-mod',m);}catch(e){} if(m==='gl')dash.draw('glavne');};
- bs.addEventListener('click',()=>set('sig'));bg.addEventListener('click',()=>set('gl'));
- let m=null;try{m=localStorage.getItem('el-mod');}catch(e){} if(m==='gl')set('gl');})();
-(()=>{const bs=document.getElementById('res-sig'), bg=document.getElementById('res-gl');
- if(!bs||!bg)return;
  const set=m=>{window.elState.rmod=m;bs.setAttribute('aria-pressed',m==='sig');bg.setAttribute('aria-pressed',m==='gl');
-   try{localStorage.setItem('el-rmod',m);}catch(e){} ['uc','results','hist'].forEach(n=>dash.draw(n));if(window.elMsgs)window.elMsgs();};
+   document.getElementById('el-glnote').hidden=m!=='gl';
+   try{localStorage.setItem('el-rmod',m);}catch(e){} ['uc','picks','hist'].forEach(n=>dash.draw(n));if(window.elMsgs)window.elMsgs();};
  bs.addEventListener('click',()=>set('sig'));bg.addEventListener('click',()=>set('gl'));
  let m=null;try{m=localStorage.getItem('el-rmod');}catch(e){} if(m==='gl')set('gl');})();
 dash.draw('dubl',tb=>{
@@ -780,25 +723,12 @@ dash.draw('thist',tb=>{
     if(x.nivo==='dan') tikDan(tb,x,'triplovi',t=>t.noge,'3');
   }
 });
-(()=>{const b2=document.getElementById('vel-2'), b3=document.getElementById('vel-3');
- if(!b2||!b3)return;
- const set=m=>{window.elState.vel=m;b2.setAttribute('aria-pressed',m==='2');b3.setAttribute('aria-pressed',m==='3');
-   document.getElementById('pane-2').hidden=m!=='2';document.getElementById('pane-3').hidden=m!=='3';
-   document.getElementById('tab-uc-2').hidden=m!=='2';document.getElementById('tab-uc-3').hidden=m!=='3';
-   document.querySelectorAll('#naslov-uc-2').forEach(e=>e.hidden=m!=='2');document.querySelectorAll('#naslov-uc-3').forEach(e=>e.hidden=m!=='3');
-   try{localStorage.setItem('el-vel',m);}catch(e){} ['dubl','tripl','dhist','thist'].forEach(n=>dash.draw(n));if(window.elMsgs)window.elMsgs();};
- b2.addEventListener('click',()=>set('2'));b3.addEventListener('click',()=>set('3'));
- let m=null;try{m=localStorage.getItem('el-vel');}catch(e){} if(m==='3')set('3');})();
 // poruke "nema podataka": prikazuje i sakriva onData (pre crteža), i prekidači posle promene
 const msgSet=(id,show)=>document.querySelectorAll('#'+id).forEach(e=>e.hidden=!show);
 const updateMsgs=()=>{
   const p=dash.data('prikaz');
-  msgSet('el-nopicks',p.status==='ok'&&!p.data.some(x=>+x.kolo===latestKolo()&&!done(x)&&vrstaOf(x)==='sig'));
-  msgSet('el-noresults',p.status==='ok'&&!p.data.some(x=>inSel(x)&&done(x)&&vrstaOf(x)===window.elState.rmod));
-  const g=dash.data('glavne'), z=dash.data('zapamceno'); const zap=z.status==='ok'?z.data.filter(x=>x.igrac):[];
-  const pocelo=new Set(zap.filter(x=>x.ishod).map(x=>x.kolo+'|'+x.utakmica));
-  const imaGl=zap.some(x=>x.vrsta==='glavne'&&+x.kolo===latestKolo()&&!x.ishod)||(g.status==='ok'&&g.data.some(x=>+x.kolo===latestKolo()&&!pocelo.has(x.kolo+'|'+x.utakmica)));
-  msgSet('el-nogl',(g.status==='ok'||z.status==='ok')&&!imaGl);
+  document.querySelectorAll('#el-nopicks').forEach(e=>e.textContent=window.elState.day?'Za izabrani dan nema preporuka.':'Za '+curKolo()+'. kolo '+(curKolo()===trenutnoKolo()?'još ':'')+'nema preporuka.');
+  msgSet('el-nopicks',p.status==='ok'&&!redovi().length);
   const du=dash.data('dublovi'); msgSet('el-nodubl',du.status==='ok'&&!du.data.some(x=>x.vrsta===window.elState.tmod&&x.kolo===latestKolo()));
   const tp=dash.data('triplovi'); msgSet('el-notripl',tp.status==='ok'&&!tp.data.some(x=>x.vrsta===window.elState.tmod&&x.kolo===latestKolo()));
 };
