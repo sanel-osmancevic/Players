@@ -73,7 +73,8 @@ function azuriraj({ zap = path.join(SISTEM, 'zapamceno.json'), web = path.join(S
   if (fs.existsSync(web)) {   // isto što i objavi_web.py, samo za ovaj fajl
     fs.copyFileSync(zap, path.join(web, 'zapamceno.json'));
     const l = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Belgrade', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date(sada)).map(p => [p.type, p.value]));
-    pisi(path.join(web, 'meta.json'), JSON.stringify({ v: Math.floor(sada / 1000), azurirano: `${l.day}.${l.month}.${l.year}. ${l.hour}:${l.minute}` }));
+    const stara = (() => { try { return JSON.parse(fs.readFileSync(path.join(web, 'meta.json'), 'utf8')); } catch { return {}; } })();
+    pisi(path.join(web, 'meta.json'), JSON.stringify({ ...stara, v: Math.floor(sada / 1000), azurirano: `${l.day}.${l.month}.${l.year}. ${l.hour}:${l.minute}` }));
   }
   log(`rezultati: upisano ${n}, još čeka ${redovi.filter(r => r.igrac && !r.ishod).length}`);
   return n;

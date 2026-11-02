@@ -5,6 +5,7 @@ const ROOT = path.resolve(__dirname, '..', '..'), SISTEM = path.join(ROOT, 'sist
 const MIN = 60000, SVEZ_SNIMAK = 15 * MIN, ROK_BRAVE = 25 * MIN;
 const BRAVA = path.join(PRIK, '.osvezi_traje'), DNEVNIK = path.join(PRIK, 'app.log');
 const NAZIV = { mb: 'Maxbet', sb: 'Soccer', mk: 'Merkur', mz: 'Mozzart', md: 'Meridian', sx: 'Stoiximan' };
+const META = path.join(ROOT, 'data', 'meta.json');
 const log = m => { try { fs.mkdirSync(PRIK, { recursive: true }); fs.appendFileSync(DNEVNIK, `${new Date().toISOString()} ${m}\n`); } catch {} };
 const citaj = (f, d) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return d; } };
 
@@ -17,6 +18,11 @@ function pokreni(cmd, args, cwd, rok) {
     p.stdout.on('data', d => izlaz += d); p.stderr.on('data', d => izlaz += d);
     p.on('error', e => { izlaz += String(e.message); kraj(-1); }); p.on('close', kraj);
   });
+}
+// Vreme poslednjeg osvežavanja za aplikaciju; polje v se ne menja, jer ono obnavlja učitavanje podataka
+function upisiOsvezeno() {
+  const p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Belgrade', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date()).map(x => [x.type, x.value]));
+  fs.writeFileSync(META, JSON.stringify({ ...citaj(META, {}), osvezeno: `${p.day}.${p.month}.${p.year}. ${p.hour}:${p.minute}` }));
 }
 const posl = (s, n = 3) => s.trim().split('\n').slice(-n).join(' | ').slice(0, 400);
 
@@ -50,7 +56,7 @@ async function osvezi(posao) {
       const st = citaj(path.join(PRIK, 'stanje.json'), { knjige: {} }).knjige;
       const opis = Object.entries(NAZIV).map(([q, n]) => { const b = st[q] || {};
         return b.pokusano >= start ? `${n}: ${b.greske ? 'nije uspelo' : (b.n || 0) + ' igrača'}` : `${n}: ${(b.greske || 0) >= 3 ? 'preskočeno (blokira)' : 'nedavno osveženo'}`; }).join(', ');
-      if (r.code) zavrsi(k, 'greska', posl(r.izlaz)); else zavrsi(k, 'ok', opis);
+      if (r.code) zavrsi(k, 'greska', posl(r.izlaz)); else zavrsi(k, st.mb?.greske ? 'greska' : 'ok', opis);   // bez Maxbeta nema osvežavanja
     }
     // 2) preračun
     const k2 = korak('Preračun');
@@ -61,6 +67,8 @@ async function osvezi(posao) {
       if (r.code) { zavrsi(k2, 'greska', posl(r.izlaz)); posao.greska = 'Preračun nije uspeo, pa ništa nije poslato na GitHub.'; return; }
       zavrsi(k2, 'ok', r.izlaz.split('\n').find(l => l.startsWith('Zapamćena')) || 'gotovo');
     }
+    // kvote su povučene (preračun je možda preskočen), pa se vreme vidi i na sajtu
+    if (posao.koraci.every(k => k.status !== 'greska')) upisiOsvezeno();
     // 3) GitHub: samo podaci; izmene koda idu posebno, sa svojim opisom
     const k3 = korak('GitHub');
     await pokreni('git', ['add', '-A', '--', 'data', 'sistem', ...['py', 'js', 'html', 'md', 'vbs', 'ps1'].map(e => `:(exclude,glob)**/*.${e}`)], ROOT, 2 * MIN);

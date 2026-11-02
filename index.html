@@ -241,7 +241,7 @@ window.d3={format:f=>{const m=/^(\+)?\.(\d+)([f%])$/.exec(f);const plus=!!m[1],n
     const meta=await fetch('data/meta.json?'+Date.now()).then(r=>r.json()).catch(()=>({}));
     await Promise.all(imena.map(async n=>{ try{ DS[n]=await fetch('data/'+n+'.json?'+(meta.v||Date.now())).then(r=>r.json()); }catch(e){ DS[n]=[]; } }));
     ver++; CB.forEach(cb=>{try{cb();}catch(e){console.error(e);}}); Object.keys(D).forEach(run);
-    const a=document.getElementById('web-azur'); if(a&&meta.azurirano) a.textContent='Ažurirano: '+meta.azurirano;
+    const a=document.getElementById('web-azur'); if(a&&(meta.osvezeno||meta.azurirano)){const os=meta.osvezeno||meta.azurirano;a.textContent='Poslednje osvežavanje: '+os+(meta.azurirano&&meta.azurirano!==os?' · preporuke i rezultati: '+meta.azurirano:'');}
   };
 })();
 </script>
