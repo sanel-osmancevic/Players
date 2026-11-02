@@ -1,4 +1,6 @@
-# Evroliga – analiza igrača za Maxbet
+# Edgeline
+
+Analiza sportskih opklada na igrače. Trenutno pokriva Evroligu i Maxbet.
 
 Sistem koji za svako kolo Evrolige procenjuje poene, skokove i asistencije igrača, poredi ih sa Maxbet granicama
 i kvotama pet drugih kladionica i pravi preporuke, tikete i predloge uloga. Rezultati se prate posle svakog dana,
@@ -52,7 +54,7 @@ na 10 min u poslednjih 90 min pred meč, na 30 min na dan meča, na 2 h do 36 h 
 - Prva postavka: `npm install` u `sistem/servis/`, pa `powershell -ExecutionPolicy Bypass -File instaliraj_zadatak.ps1`.
   Ako `npm install` pukne na `X509_STORE_add_cert`, pokrenuti ga bez promenljive `NODE_USE_SYSTEM_CA`.
 - Ručno: `node kvote_servis.js --odmah`, `--samo=mb,sb`, `--stanje`.
-- Aplikacija: prečica `Evroliga` na desktopu (`napravi_precicu.ps1`) diže `app_server.js` na http://localhost:8765. Dugme **Osveži** povlači kvote, povrede i sudije, pokreće `osvezi.py` i šalje podatke (bez koda) na GitHub; postoji samo lokalno. Dnevnik: `prikupljeno/app.log`.
+- Aplikacija: prečica `Edgeline` na desktopu (`napravi_precicu.ps1`) diže `app_server.js` na http://localhost:8765. Dugme **Osveži** povlači kvote, povrede i sudije, pokreće `osvezi.py` i šalje podatke (bez koda) na GitHub; postoji samo lokalno. Dnevnik: `prikupljeno/app.log`.
 - Povrede (`povrede_servis.js`): zvaničan izveštaj kola, Rotowire lista povreda i sudije iz API-ja idu u `statusi.json` i `sudije_kolo.json`. Prednost: klub potvrdio izveštaj, pa izveštaj bez potvrde, pa Rotowire; ručno upisani statusi ostaju. Startne petorke nemaju izvor pre utakmice, pa se procenjuju iz istorije. Provera bez upisa: `node povrede_servis.js --proba=9`.
 - Automatika (`tik.js`, Windows zadatak na 10 min): danima sa utakmicama, od 8:00 do 1:30 sledećeg jutra, jednom na sat radi ceo tok kao dugme Osveži. Ostalih taktova samo snima kvote i upisuje rezultate. Kad se kolo završi (12 h posle poslednje utakmice), sam pokreće `pripremi_kolo.py` za sledeće. Poslednji ishod: `prikupljeno/auto.json`, dnevnik: `prikupljeno/app.log`.
 - Rezultati: isti zadatak na svakih 10 min pokreće `rezultati_servis.js`. Od 90 min posle početka proverava zvanični API i, kad je utakmica

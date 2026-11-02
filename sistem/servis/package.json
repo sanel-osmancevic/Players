@@ -1,5 +1,5 @@
 {
-  "name": "evroliga-kvote-servis",
+  "name": "edgeline-servis",
   "private": true,
   "description": "Automatsko prikupljanje kvota i upis rezultata",
   "scripts": {
