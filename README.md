@@ -53,6 +53,7 @@ na 10 min u poslednjih 90 min pred meč, na 30 min na dan meča, na 2 h do 36 h 
   Ako `npm install` pukne na `X509_STORE_add_cert`, pokrenuti ga bez promenljive `NODE_USE_SYSTEM_CA`.
 - Ručno: `node kvote_servis.js --odmah`, `--samo=mb,sb`, `--stanje`.
 - Aplikacija: prečica `Evroliga` na desktopu (`napravi_precicu.ps1`) diže `app_server.js` na http://localhost:8765. Dugme **Osveži** povlači kvote, pokreće `osvezi.py` i šalje podatke (bez koda) na GitHub; postoji samo lokalno. Povrede osvežava posebno, po `provera_pred_mec.md`. Dnevnik: `prikupljeno/app.log`.
+- Automatika (`tik.js`, Windows zadatak na 10 min): danima sa utakmicama, od 8:00 do 1:30 sledećeg jutra, jednom na sat radi ceo tok kao dugme Osveži. Ostalih taktova samo snima kvote i upisuje rezultate. Kad se kolo završi (12 h posle poslednje utakmice), sam pokreće `pripremi_kolo.py` za sledeće. Poslednji ishod: `prikupljeno/auto.json`, dnevnik: `prikupljeno/app.log`.
 - Rezultati: isti zadatak na svakih 10 min pokreće `rezultati_servis.js`. Od 90 min posle početka proverava zvanični API i, kad je utakmica
   odigrana, upisuje rezultat i ishod u `zapamceno.json` i `data/` samo za opklade sa te utakmice. Igrač kog nema u zapisniku ostaje neocenjen,
   uz upozorenje u `servis.log`. Provera bez upisa: `node rezultati_servis.js --proba=9`.
