@@ -2,6 +2,7 @@
 // (kvote, povrede, preračun, GitHub); inače samo snima kvote i upisuje rezultate po svom rasporedu. Kad se kolo završi, sam priprema sledeće.
 // SADA zadaje trenutno vreme samo za probe.
 const fs = require('fs'), path = require('path');
+const { spawn } = require('child_process');
 const { osvezi, pokreni } = require('./tok');
 
 const SISTEM = path.resolve(__dirname, '..'), PRIK = path.join(SISTEM, 'prikupljeno'), AUTO = path.join(PRIK, 'auto.json');
@@ -24,6 +25,8 @@ function danUtakmice(games, sada) {
 const kraj = games => Math.max(...games.map(g => Date.parse(g[3])));
 
 async function main() {
+  // aplikacija mora da radi i kad je računar ceo dan bez prečice, da bi bila dostupna sa telefona; ako već radi, novi proces se odmah gasi
+  if (!process.env.EVRO_BEZ_KVOTA) spawn(process.execPath, ['app_server.js'], { cwd: __dirname, detached: true, stdio: 'ignore', windowsHide: true }).unref();
   const sada = process.env.SADA ? Date.parse(process.env.SADA) : Date.now();
   const k = citaj(path.join(SISTEM, 'kolo.json'), { kolo: 0, games: [] }), a = citaj(AUTO, {});
   fs.mkdirSync(PRIK, { recursive: true });

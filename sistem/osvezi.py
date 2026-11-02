@@ -138,13 +138,15 @@ def red(p):
     d['brzo'], d['zaostatak'] = brzo(p)
     return d
 # 1) zadržavamo: utakmice koje su počele, i one koje su već konačno zaključane (60 min pred meč ili ručno)
-zadrzani = [r for r in stari if pocela(r['utakmica']) or r.get('konacno')]
-zakl = {r['utakmica'] for r in zadrzani}
+# Odigrane opklade (dugme Odigrano) ostaju sa svojom granicom i kvotom, a da to ne zaključava ostatak utakmice
+zadrzani = [r for r in stari if pocela(r['utakmica']) or r.get('konacno') or r.get('odigrano')]
+zakl = {r['utakmica'] for r in stari if pocela(r['utakmica']) or r.get('konacno')}
+igrani = {r['kljuc'] for r in zadrzani if r.get('odigrano')}
 # 2) ostatak liste popunjavamo svežim preporukama za utakmice koje još nisu zaključane, do 10 po vrsti
 novi_red = list(zadrzani)
 for vr in ('sigurnije', 'glavne'):
     ima = sum(1 for r in zadrzani if r.get('vrsta') == vr)
-    for p in [p for p in picks if p['vrsta'] == vr and p['utakmica'] not in zakl and not pocela(p['utakmica'])]:
+    for p in [p for p in picks if p['vrsta'] == vr and p['utakmica'] not in zakl and not pocela(p['utakmica']) and p['kljuc'] not in igrani]:
         if ima >= 10: break
         novi_red.append(red(p)); ima += 1
 # 3) konačno zaključavanje: utakmice koje počinju za 60 min ili manje (ili sve, uz --zakljucaj)
@@ -187,7 +189,7 @@ def ulog(d):
     if pr <= 0: return 0.0, round(p, 3), round(pr, 3)
     u = 100 * 0.25 * pr / (kv - 1)
     return min(2.0 if d.get('vrsta') != 'glavne' else 0.5, round(u * 4) / 4 or 0.25), round(p, 3), round(pr, 3)
-otvorene = [d for d in novi_red if not d.get('konacno') and not pocela(d['utakmica'])]
+otvorene = [d for d in novi_red if not d.get('konacno') and not d.get('odigrano') and not pocela(d['utakmica'])]
 for d in otvorene: d['ulog'], d['sansa_kor'], d['prednost'] = ulog(d)
 for d in sorted(otvorene, key=lambda d: -d['ulog']):
     if not d['ulog']: continue

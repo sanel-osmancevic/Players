@@ -63,6 +63,10 @@
 .el-seg button{font:inherit;font-size:var(--cds-font-size-caption);font-weight:var(--cds-font-weight-medium);border:0;border-radius:999px;padding:var(--cds-pad-xs) var(--cds-pad-md);min-height:36px;background:none;color:var(--color-fg-muted);cursor:pointer}
 .el-seg button[aria-pressed=true]{background:var(--color-fg);color:var(--color-bg)}
 .el-bezrez .el-rezk{display:none}
+.el-samolok{display:none}.el-lokalno .el-samolok{display:table-cell}
+.el-table tr.el-odigrano td{background:color-mix(in srgb,var(--color-warn) 13%,transparent)}
+.el-odig{font:inherit;font-size:var(--cds-font-size-caption);font-weight:var(--cds-font-weight-medium);border:1px solid var(--color-border-line);border-radius:999px;padding:2px var(--cds-pad-sm);min-height:32px;background:none;color:inherit;cursor:pointer}
+@media (max-width:640px){.el-odig{min-width:36px;min-height:36px;padding:0}.el-lokalno .el-table td,.el-lokalno .el-table th{padding-left:2px;padding-right:2px}}
 .el-seg+.el-seg{margin-left:var(--cds-gap-sm)}
 .el-table td.el-dan{padding-left:var(--cds-pad-lg);color:var(--color-fg-muted)}
 .el-table tr.el-kolo td{font-weight:600;border-bottom:2px solid var(--color-border-line)}
@@ -113,6 +117,7 @@
           <th data-field="istorija" class="num el-hide">Sezona · posl. 5</th>
           <th data-field="rezultat" class="num el-rezk">Rezultat</th>
           <th data-field="profit" class="num el-hide el-rezk">Profit</th>
+          <th class="num el-samolok"><span class="sr-odig" hidden>Odigrano</span></th>
         </tr></thead>
         <tbody data-draw="picks"></tbody>
       </table>
@@ -547,10 +552,11 @@ dash.draw('picks',tb=>{
   document.getElementById('el-ucred').hidden=!imaRez; document.getElementById('el-uckola').hidden=!ranije;
   let last=null,ng=0,zav=false;
   r.forEach(x=>{
-    if(done(x)&&!zav){zav=true;last=null;ng=0;const g=document.createElement('tr');g.className='el-daysep';g.dataset.key='zavrseno';const c=document.createElement('td');c.colSpan=9;c.textContent='Završeno';g.appendChild(c);tb.appendChild(g);}
+    if(done(x)&&!zav){zav=true;last=null;ng=0;const g=document.createElement('tr');g.className='el-daysep';g.dataset.key='zavrseno';const c=document.createElement('td');c.colSpan=10;c.textContent='Završeno';g.appendChild(c);tb.appendChild(g);}
     const tr=document.createElement('tr');tr.dataset.key=x.kljuc;
     if(m==='sig'&&x.grupa!==last){if(ng++)tr.className='el-split';last=x.grupa;}
     td(tr,x.igrac,(m==='sig'?x.grupa==='Najsigurnije':x.sansa>=0.65)?'el-good':'');tdGame(tr,x);tdOp(tr,x);
+    if(x.odigrano){tr.classList.add('el-odigrano');const k=document.createElement('span');k.textContent=' 🔒';k.title='Odigrano: granica i kvota su zaključane';tr.firstChild.appendChild(k);}
     td(tr,d3.format('.2f')(x.kvota),'num');td(tr,pct(x.sansa),'num');tdUlog(tr,x);td(tr,x.istorija+(x.forma5?' · '+x.forma5:''),'num el-hide');
     if(done(x)){
       const has=x.rezultat!==null&&x.rezultat!==undefined&&x.rezultat!=='';
@@ -562,6 +568,14 @@ dash.draw('picks',tb=>{
       const u=Number(x.ulog)>0?Number(x.ulog):1, p=x.ishod==='prošlo'?(Number(x.kvota)-1)*u:x.ishod==='palo'?-u:null;
       td(tr,p===null?'—':d3.format('+.2f')(p),p===null?'num el-hide el-rezk sub':p>=0?'num el-hide el-rezk el-good':'num el-hide el-rezk el-bad');
     }else{td(tr,'—','num el-rezk sub');td(tr,'—','num el-hide el-rezk sub');}
+    const co=document.createElement('td');co.className='num el-samolok';
+    if(x.zapamceno&&!done(x)){const b=document.createElement('button');b.type='button';b.className='el-odig';const usko=window.matchMedia&&matchMedia('(max-width:640px)').matches, oznaka=x.odigrano?'Poništi':'Odigrano';b.textContent=usko?(x.odigrano?'✕':'✓'):oznaka;b.title=oznaka;b.setAttribute('aria-label',oznaka);
+      b.addEventListener('click',async ev=>{ev.stopPropagation();b.disabled=true;
+        try{const r=await fetch('/api/odigrano',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({kolo:x.kolo,kljuc:x.kljuc,opklada:x.opklada,odigrano:!x.odigrano})});
+          if(!r.ok){const d=await r.json().catch(()=>({}));alert(d.greska||'Nije uspelo.');b.disabled=false;return;}
+          window.__ucitaj();}catch(e){alert('Lokalni server nije dostupan.');b.disabled=false;}});
+      co.appendChild(b);}
+    tr.appendChild(co);
     tb.appendChild(tr); kartica(tb,tr,x,'picks');
   });
 });
