@@ -1,6 +1,6 @@
 // Prikupljanje kvota u pozadini: pokreće snippets/*.js u Chrome-u (poseban profil) i snima u prikupljeno/DATUM/, odakle ih čita market.py.
 // Preračun i preporuke se i dalje pokreću ručno (osvezi.py). Bez prijave na naloge i bez opklada; blokiran sajt se samo beleži i ređe proverava.
-// Upotreba: node kvote_servis.js [--odmah] [--samo=mb,sb] [--stanje]
+// Upotreba: node kvote_servis.js [--odmah] [--klik] [--samo=mb,sb] [--stanje]
 //   bez argumenata: poziva ga Task Scheduler na 10 min, a skripta sama odlučuje da li je vreme za novi snimak
 const fs = require('fs'), path = require('path');
 const { chromium } = require('playwright-core');
@@ -20,6 +20,7 @@ const KNJIGE = [   // Maxbet prvi: on daje raspored utakmica za izbor učestalos
 const MIN = 60000, TAKT = 10;              // Task Scheduler okida na TAKT minuta
 const ROK_SKRIPTE = 3 * MIN, ROK_BRAVE = 25 * MIN;
 const POSLE_GRESAKA = 3, PAUZA_GRESKE = 6 * 60;   // posle 3 uzastopne greške kladionica se proverava na 6 h
+const POSLE_KLIKA = 5;                     // dugme Osveži: kladionica se ponovo pita tek posle ovoliko minuta
 const MIN_UDEO = 0.5;                      // snimak ispod pola prethodnog (bez započete utakmice u međuvremenu) je sumnjiv
 const POZIV_PRAZNO = 6 * 60;               // upozorenje ako kladionica nema igrače manje od 6 h pred meč
 
@@ -58,10 +59,11 @@ async function pokreni(ctx, url, skripta) {
     await page.waitForTimeout(4000);       // sajt postavlja svoje kolačiće
     const cdp = await ctx.newCDPSession(page);
     // replMode dozvoljava await na vrhu i vraća poslednji izraz, pa snippeti ostaju isti kao za ručno pokretanje
+    let tajmer;   // mora da se ugasi, inače proces ostaje živ do isteka roka
     const e = await Promise.race([
       cdp.send('Runtime.evaluate', { expression: skripta, replMode: true, awaitPromise: true, returnByValue: true }),
-      new Promise((_, n) => setTimeout(() => n(new Error('isteklo vreme skripte')), ROK_SKRIPTE)),
-    ]);
+      new Promise((_, n) => { tajmer = setTimeout(() => n(new Error('isteklo vreme skripte')), ROK_SKRIPTE); }),
+    ]).finally(() => clearTimeout(tajmer));
     if (e.exceptionDetails) throw new Error((e.exceptionDetails.exception?.description || e.exceptionDetails.text).split('\n')[0]);
     if (typeof e.result.value !== 'string') throw new Error('skripta nije vratila JSON');
     return JSON.parse(e.result.value);
@@ -69,7 +71,7 @@ async function pokreni(ctx, url, skripta) {
 }
 
 async function main() {
-  const arg = process.argv.slice(2), ODMAH = arg.includes('--odmah');
+  const arg = process.argv.slice(2), ODMAH = arg.includes('--odmah'), KLIK = arg.includes('--klik');
   const samo = (arg.find(a => a.startsWith('--samo=')) || '').slice(7).split(',').filter(Boolean);
   fs.mkdirSync(IZLAZ, { recursive: true });
   const st = citaj(STANJE, { knjige: {}, pocetci: [] });
@@ -79,13 +81,19 @@ async function main() {
     for (const [k, v] of Object.entries(st.knjige)) console.log(k, JSON.stringify(v));
     return;
   }
-  try { azuriraj({ log }); } catch (e) { log('rezultati GREŠKA: ' + String(e.message).split('\n')[0]); }   // greška kod rezultata ne sme da zaustavi kvote
+  // dok traje preračun iz aplikacije, zapamceno.json se ne dira (rezultati stižu na sledećem taktu)
+  const brava = path.join(IZLAZ, '.osvezi_traje');
+  if (KLIK || !fs.existsSync(brava) || sada - fs.statSync(brava).mtimeMs > ROK_BRAVE) {
+    try { azuriraj({ log }); } catch (e) { log('rezultati GREŠKA: ' + String(e.message).split('\n')[0]); }   // greška kod rezultata ne sme da zaustavi kvote
+  }
   const razmakMin = razmak(st.pocetci, sada);
   const vremeJe = (k) => {
     const b = st.knjige[k] || {};
     if (samo.length) return samo.includes(k);
     if (ODMAH) return true;
-    const cekaj = (b.greske || 0) >= POSLE_GRESAKA ? PAUZA_GRESKE : razmakMin;
+    const blokira = (b.greske || 0) >= POSLE_GRESAKA;
+    if (KLIK && !blokira) return !b.pokusano || sada - b.pokusano >= POSLE_KLIKA * MIN;   // dvostruki klik ne šalje iste zahteve ponovo
+    const cekaj = blokira ? PAUZA_GRESKE : razmakMin;
     return !b.pokusano || sada - b.pokusano >= (cekaj - 2) * MIN;   // 2 min rezerve da kašnjenje okidača ne preskoči takt
   };
   const red = KNJIGE.filter(([k]) => vremeJe(k));

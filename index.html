@@ -91,6 +91,11 @@ body{padding:16px;max-width:1100px;margin:0 auto}button,select{font:inherit;colo
 [data-dash-source-state=refreshing]{opacity:.5;transition:opacity var(--cds-dur-slow)}
 
 @media (max-width:640px){.el-table td{white-space:normal;padding:4px 5px}.el-table th{padding:4px 5px}.el-table td.num,.el-table th{white-space:nowrap}.el-table{font-size:13px}.el-res{min-width:0}}
+.el-osv{display:flex;flex-wrap:wrap;align-items:center;gap:var(--cds-gap-sm);margin:0 0 var(--cds-gap-sm)}
+.el-osv button{font:inherit;font-size:var(--cds-font-size-caption);font-weight:var(--cds-font-weight-medium);border:0;border-radius:999px;padding:var(--cds-pad-xs) var(--cds-pad-md);min-height:36px;background:var(--color-fg);color:var(--color-bg);cursor:pointer}
+.el-osv button:disabled{opacity:.55;cursor:default}
+.el-osvp{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);margin:0 0 var(--cds-gap-sm)}
+.el-osvp div{margin:2px 0}.el-osvp b{color:var(--color-fg)}.el-osvp .el-osvnije{color:var(--color-bad)}.el-osvp .el-osvupoz{color:var(--color-warn)}
 </style></head><body>
 <p class="web-azur" id="web-azur">Učitavanje…</p>
 
@@ -732,4 +737,39 @@ dash.onData(updateMsgs);
 window.elMsgs=updateMsgs;
 </script>
 <script>window.__ucitaj(); setInterval(()=>{ if(document.visibilityState==='visible') window.__ucitaj(); }, 5*60*1000);</script>
+<script>
+// Dugme Osveži: postoji samo u lokalnoj aplikaciji (servis/app_server.js); na GitHub sajtu nema servera, pa se ne prikazuje
+(function(){
+  if(!/^(localhost|127\.0\.0\.1)$/.test(location.hostname))return;
+  const azur=document.getElementById('web-azur');
+  const bar=document.createElement('div');bar.className='el-osv';
+  const btn=document.createElement('button');btn.type='button';btn.textContent='Osveži';btn.title='Povlači nove granice i kvote, preračunava preporuke i šalje na GitHub';
+  const info=document.createElement('div');info.className='el-osvp';info.setAttribute('aria-live','polite');
+  const IK={radi:'…',ok:'✓',preskoceno:'–',greska:'✗'};
+  const crtaj=d=>{
+    info.replaceChildren();
+    if(d.statusiStari){const u=document.createElement('div');u.className='el-osvupoz';u.textContent='Povrede nisu proverene u poslednjih 6 sati: dugme osvežava kvote, ali ne i izveštaj o povredama.';info.appendChild(u);}
+    const p=d.posao; if(!p)return;
+    for(const k of p.koraci){const r=document.createElement('div');if(k.status==='greska')r.className='el-osvnije';const b=document.createElement('b');b.textContent=(IK[k.status]||'')+' '+k.naziv;r.appendChild(b);if(k.poruka)r.appendChild(document.createTextNode(': '+k.poruka));info.appendChild(r);}
+    if(p.greska){const g=document.createElement('div');g.className='el-osvnije';g.textContent=p.greska;info.appendChild(g);}
+  };
+  let tajmer=null;
+  const stanje=()=>fetch('/api/stanje',{cache:'no-store'}).then(r=>{if(!r.ok)throw 0;return r.json();});
+  const prati=()=>{clearTimeout(tajmer);tajmer=setTimeout(()=>stanje().then(d=>{crtaj(d);
+      if(d.posao&&d.posao.radi){btn.disabled=true;btn.textContent='Osvežavam…';prati();}
+      else{btn.disabled=false;btn.textContent='Osveži';window.__ucitaj();}
+    }).catch(()=>{btn.disabled=false;btn.textContent='Osveži';}),1500);};
+  btn.addEventListener('click',async()=>{
+    btn.disabled=true;
+    try{
+      const d=await stanje();
+      if(d.uskoro.length&&!confirm('Utakmica počinje za manje od 60 minuta ('+d.uskoro.join(', ')+'). Preporuke za nju će se konačno zaključati. Nastaviti?')){btn.disabled=false;return;}
+      const r=await fetch('/api/osvezi',{method:'POST'});
+      if(!r.ok&&r.status!==409)throw 0;
+      btn.textContent='Osvežavam…';prati();
+    }catch(e){btn.disabled=false;info.textContent='Lokalni server nije dostupan.';}
+  });
+  stanje().then(d=>{bar.appendChild(btn);azur.after(bar);bar.after(info);crtaj(d);if(d.posao&&d.posao.radi){btn.disabled=true;btn.textContent='Osvežavam…';prati();}}).catch(()=>{});
+})();
+</script>
 </body></html>
