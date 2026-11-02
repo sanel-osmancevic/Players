@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="sr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Evroliga Maxbet</title>
+<title>Evroliga</title>
 <meta name="theme-color" content="#1f1e1b"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="ikona.svg">
 <link rel="apple-touch-icon" href="ikona-192.png"><meta name="apple-mobile-web-app-capable" content="yes">
 <style>:root{--font-anthropic-sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--font-anthropic-serif:Georgia,"Times New Roman",serif;
@@ -101,7 +101,7 @@ body{padding:16px;max-width:1100px;margin:0 auto}button,select{font:inherit;colo
 
 <div class="el-wrap">
   <header class="el-head">
-    <h1>EuroLeague – Maxbet preporuke</h1>
+    <h1>EuroLeague</h1>
     <p>Aktuelno kolo: <b data-draw="kolonow" data-source="utakmice">—</b></p>
   </header>
 
@@ -142,6 +142,7 @@ body{padding:16px;max-width:1100px;margin:0 auto}button,select{font:inherit;colo
         <tbody data-draw="picks"></tbody>
       </table>
     </div>
+    <p class="el-note" id="el-izvor" hidden>Izvor: Maxbet</p>
     <div id="el-uckola" hidden>
     <h3 class="el-sub">Učinak po kolima</h3>
     <p class="el-note">Profit: prošla opklada donosi kvotu − 1, pala −1, uz ulog 1 po opkladi; „nije igrao“ se ne računa. Profit (ulozi): sa predloženim ulogom za svaku opkladu (1 j. = 1% kase). Vrednost vs tržište: koliko je naša Maxbet kvota vredela prema završnoj ceni pet kladionica bez marže; plus znači da smo dobili bolju cenu od tržišta, što je najpouzdaniji znak da sistem ima prednost, i pre rezultata. Pad kvote: koliko je Maxbet kvota pala od prve preporuke do početka.</p>
@@ -592,7 +593,7 @@ dash.draw('picks',tb=>{
   tb.replaceChildren();
   const m=window.elState.rmod;
   const r=redovi(), ranije=curKolo()!==trenutnoKolo(), imaRez=ranije||r.some(done);   // trenutno kolo: rezultati tek kad ih ima, učinak samo za ranija kola
-  document.getElementById('el-tabpick').classList.toggle('el-bezrez',!imaRez); document.getElementById('el-tabpick').parentElement.hidden=!r.length;
+  document.getElementById('el-tabpick').classList.toggle('el-bezrez',!imaRez); document.getElementById('el-tabpick').parentElement.hidden=!r.length; document.getElementById('el-izvor').hidden=!r.length;
   document.getElementById('el-ucred').hidden=!imaRez; document.getElementById('el-uckola').hidden=!ranije;
   let last=null,ng=0,zav=false;
   r.forEach(x=>{
@@ -743,12 +744,12 @@ window.elMsgs=updateMsgs;
   if(!/^(localhost|127\.0\.0\.1)$/.test(location.hostname))return;
   const azur=document.getElementById('web-azur');
   const bar=document.createElement('div');bar.className='el-osv';
-  const btn=document.createElement('button');btn.type='button';btn.textContent='Osveži';btn.title='Povlači nove granice i kvote, preračunava preporuke i šalje na GitHub';
+  const btn=document.createElement('button');btn.type='button';btn.textContent='Osveži';btn.title='Povlači granice, kvote, povrede i sudije, preračunava preporuke i šalje na GitHub';
   const info=document.createElement('div');info.className='el-osvp';info.setAttribute('aria-live','polite');
   const IK={radi:'…',ok:'✓',preskoceno:'–',greska:'✗'};
   const crtaj=d=>{
     info.replaceChildren();
-    if(d.statusiStari){const u=document.createElement('div');u.className='el-osvupoz';u.textContent='Povrede nisu proverene u poslednjih 6 sati: dugme osvežava kvote, ali ne i izveštaj o povredama.';info.appendChild(u);}
+    if(d.statusiStari){const u=document.createElement('div');u.className='el-osvupoz';u.textContent='Povrede nisu osvežene u poslednjih 6 sati.';info.appendChild(u);}
     const p=d.posao; if(!p)return;
     for(const k of p.koraci){const r=document.createElement('div');if(k.status==='greska')r.className='el-osvnije';const b=document.createElement('b');b.textContent=(IK[k.status]||'')+' '+k.naziv;r.appendChild(b);if(k.poruka)r.appendChild(document.createTextNode(': '+k.poruka));info.appendChild(r);}
     if(p.greska){const g=document.createElement('div');g.className='el-osvnije';g.textContent=p.greska;info.appendChild(g);}

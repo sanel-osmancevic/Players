@@ -1,4 +1,4 @@
-// Lokalna aplikacija: služi dashboard na http://localhost:8765 i na dugme Osveži redom povlači kvote, preračunava i šalje na GitHub.
+// Lokalna aplikacija: služi dashboard na http://localhost:8765 i na dugme Osveži redom povlači kvote i povrede, preračunava i šalje na GitHub.
 // Sluša samo na ovom računaru, a API prima zahteve samo sa ove stranice. Fajlovi van sajta (profil pregledača, .git) se ne služe.
 // Upotreba: node app_server.js   (pokreni_aplikaciju.vbs ga diže u pozadini i otvara pregledač)
 const http = require('http'), fs = require('fs'), path = require('path'), { osvezi } = require('./tok');

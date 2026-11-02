@@ -1,4 +1,4 @@
-// Tok osvežavanja: kvote, preračun i slanje podataka na GitHub. Koriste ga dugme Osveži (app_server.js) i automatika (tik.js).
+// Tok osvežavanja: kvote, povrede, preračun i slanje podataka na GitHub. Koriste ga dugme Osveži (app_server.js) i automatika (tik.js).
 const fs = require('fs'), path = require('path'), { spawn } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..', '..'), SISTEM = path.join(ROOT, 'sistem'), PRIK = path.join(SISTEM, 'prikupljeno');
@@ -58,7 +58,11 @@ async function osvezi(posao) {
         return b.pokusano >= start ? `${n}: ${b.greske ? 'nije uspelo' : (b.n || 0) + ' igrača'}` : `${n}: ${(b.greske || 0) >= 3 ? 'preskočeno (blokira)' : 'nedavno osveženo'}`; }).join(', ');
       if (r.code) zavrsi(k, 'greska', posl(r.izlaz)); else zavrsi(k, st.mb?.greske ? 'greska' : 'ok', opis);   // bez Maxbeta nema osvežavanja
     }
-    // 2) preračun
+    // 2) povrede i sudije; neuspeh ne zaustavlja osvežavanje, a aplikacija tada upozorava da su statusi stari
+    const kp = korak('Povrede');
+    const rp = await pokreni(process.execPath, ['povrede_servis.js'], __dirname, 3 * MIN);
+    zavrsi(kp, rp.code ? 'greska' : 'ok', posl(rp.izlaz, 1));
+    // 3) preračun
     const k2 = korak('Preračun');
     const mb = maxbetSnimak(start);
     if (!mb.ima || !mb.igraca) zavrsi(k2, 'preskoceno', 'Maxbet još nema igrače u ponudi, pa preporuke ostaju iste');
@@ -67,9 +71,9 @@ async function osvezi(posao) {
       if (r.code) { zavrsi(k2, 'greska', posl(r.izlaz)); posao.greska = 'Preračun nije uspeo, pa ništa nije poslato na GitHub.'; return; }
       zavrsi(k2, 'ok', r.izlaz.split('\n').find(l => l.startsWith('Zapamćena')) || 'gotovo');
     }
-    // kvote su povučene (preračun je možda preskočen), pa se vreme vidi i na sajtu
-    if (posao.koraci.every(k => k.status !== 'greska')) upisiOsvezeno();
-    // 3) GitHub: samo podaci; izmene koda idu posebno, sa svojim opisom
+    // kvote su povučene (preračun je možda preskočen), pa se vreme vidi i na sajtu; pad povreda se vidi posebno
+    if (posao.koraci.every(k => k.status !== 'greska' || k.naziv === 'Povrede')) upisiOsvezeno();
+    // 4) GitHub: samo podaci; izmene koda idu posebno, sa svojim opisom
     const k3 = korak('GitHub');
     await pokreni('git', ['add', '-A', '--', 'data', 'sistem', ...['py', 'js', 'html', 'md', 'vbs', 'ps1'].map(e => `:(exclude,glob)**/*.${e}`)], ROOT, 2 * MIN);
     const bez = await pokreni('git', ['diff', '--cached', '--quiet'], ROOT, MIN);

@@ -1,5 +1,5 @@
 // Windows zadatak ovo poziva na 10 min. Danima sa utakmicama, od 8:00 do 1:30 sledećeg jutra, jednom na sat radi ceo tok
-// (kvote, preračun, GitHub); inače samo snima kvote i upisuje rezultate po svom rasporedu. Kad se kolo završi, sam priprema sledeće.
+// (kvote, povrede, preračun, GitHub); inače samo snima kvote i upisuje rezultate po svom rasporedu. Kad se kolo završi, sam priprema sledeće.
 // SADA zadaje trenutno vreme samo za probe.
 const fs = require('fs'), path = require('path');
 const { osvezi, pokreni } = require('./tok');
