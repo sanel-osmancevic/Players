@@ -63,7 +63,6 @@
 .el-seg button{font:inherit;font-size:var(--cds-font-size-caption);font-weight:var(--cds-font-weight-medium);border:0;border-radius:999px;padding:var(--cds-pad-xs) var(--cds-pad-md);min-height:36px;background:none;color:var(--color-fg-muted);cursor:pointer}
 .el-seg button[aria-pressed=true]{background:var(--color-fg);color:var(--color-bg)}
 .el-bezrez .el-rezk{display:none}
-.el-tabs button.el-samotab{display:none}.el-lokalno .el-tabs button.el-samotab{display:block}
 .el-samokol{display:none}.el-lokalno .el-samokol{display:table-cell}
 .el-stv-kocke{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:var(--cds-gap-sm);margin:0 0 var(--cds-gap-md)}
 .el-stv-kocka{padding:var(--cds-pad-sm) var(--cds-pad-md);background:var(--color-bg);border-radius:var(--cds-radius);font-variant-numeric:tabular-nums}
@@ -117,7 +116,7 @@
   <div class="el-tabs" role="tablist">
     <button role="tab" id="tab-preporuke" aria-controls="preporuke" aria-selected="true">Preporuke</button>
     <button role="tab" id="tab-tiketi" aria-controls="tiketi" aria-selected="false">Tiketi</button>
-    <button role="tab" id="tab-stvarni" class="el-samotab" aria-controls="stvarni" aria-selected="false">Stvarni učinak</button>
+    <button role="tab" id="tab-stvarni" aria-controls="stvarni" aria-selected="false">Stvarni učinak</button>
   </div>
   <div class="el-bar" id="el-filterbar" style="padding-top:var(--cds-pad-sm)">
     <label for="el-kolo">Kolo</label>
@@ -625,7 +624,7 @@ dash.draw('picks',tb=>{
 (()=>{const tabs=[...document.querySelectorAll('.el-tabs button')];
  const show=id=>{tabs.forEach(b=>{const on=b.getAttribute('aria-controls')===id;b.setAttribute('aria-selected',on);document.getElementById(b.getAttribute('aria-controls')).hidden=!on;});const rez=id==='preporuke';const fb=document.getElementById('el-filterbar');if(fb)fb.hidden=!rez;document.querySelectorAll('#el-oldkolo').forEach(e=>{e.dataset.tab=rez?'1':'';if(!rez)e.hidden=true;});try{localStorage.setItem('el-tab',id);}catch(e){}};
  tabs.forEach(b=>b.addEventListener('click',()=>show(b.getAttribute('aria-controls'))));
- let t=null;try{t=localStorage.getItem('el-tab');}catch(e){} window.elState.tabZelja=t; show(t==='tiketi'?'tiketi':'preporuke');})();
+ let t=null;try{t=localStorage.getItem('el-tab');}catch(e){} show(t==='tiketi'||t==='stvarni'?t:'preporuke');})();
 (()=>{const bs=document.getElementById('mod-sig'), bg=document.getElementById('mod-gl');
  if(!bs||!bg)return;
  const set=m=>{window.elState.rmod=m;bs.setAttribute('aria-pressed',m==='sig');bg.setAttribute('aria-pressed',m==='gl');
@@ -741,7 +740,7 @@ dash.draw('thist',tb=>{
     if(x.nivo==='dan') tikDan(tb,x,'triplovi',t=>t.noge,'3');
   }
 });
-// Stvarni učinak (samo na računaru): dinari uz stalne uloge, samo za opklade označene kao odigrane.
+// Stvarni učinak: dinari uz stalne uloge, samo za opklade označene kao odigrane.
 const STV_ULOG={1:1000,2:500,3:300}, STV_VRSTA={1:'Singl',2:'Dubl',3:'Tripl'};
 const stvDin=(n,plus)=>{const v=Math.round(n);return (plus&&v>0?'+':'')+(v<0?'−':'')+Math.abs(v).toLocaleString('sr-RS')+' din';};
 const stvDan=t=>String(t).split(' ').slice(0,2).join(' ');
