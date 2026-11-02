@@ -82,7 +82,6 @@ body{padding:16px;max-width:1100px;margin:0 auto}button,select{font:inherit;colo
 .el-samolok{display:none}.el-lokalno .el-samolok{display:table-cell}
 .el-table tr.el-odigrano td{background:color-mix(in srgb,var(--color-warn) 13%,transparent)}
 .el-odig{font:inherit;font-size:var(--cds-font-size-caption);font-weight:var(--cds-font-weight-medium);border:1px solid var(--color-border-line);border-radius:999px;padding:2px var(--cds-pad-sm);min-height:32px;background:none;color:inherit;cursor:pointer}
-@media (max-width:640px){.el-odig{min-width:36px;min-height:36px;padding:0}.el-lokalno .el-table td,.el-lokalno .el-table th{padding-left:2px;padding-right:2px}}
 .el-seg+.el-seg{margin-left:var(--cds-gap-sm)}
 .el-table td.el-dan{padding-left:var(--cds-pad-lg);color:var(--color-fg-muted)}
 .el-table tr.el-kolo td{font-weight:600;border-bottom:2px solid var(--color-border-line)}
@@ -619,7 +618,7 @@ dash.draw('picks',tb=>{
       td(tr,p===null?'—':d3.format('+.2f')(p),p===null?'num el-hide el-rezk sub':p>=0?'num el-hide el-rezk el-good':'num el-hide el-rezk el-bad');
     }else{td(tr,'—','num el-rezk sub');td(tr,'—','num el-hide el-rezk sub');}
     const co=document.createElement('td');co.className='num el-samolok';
-    if(x.zapamceno&&!done(x)){const b=document.createElement('button');b.type='button';b.className='el-odig';const usko=window.matchMedia&&matchMedia('(max-width:640px)').matches, oznaka=x.odigrano?'Poništi':'Odigrano';b.textContent=usko?(x.odigrano?'✕':'✓'):oznaka;b.title=oznaka;b.setAttribute('aria-label',oznaka);
+    if(x.zapamceno&&!done(x)){const b=document.createElement('button');b.type='button';b.className='el-odig';b.textContent=x.odigrano?'Poništi':'Odigrano';
       b.addEventListener('click',async ev=>{ev.stopPropagation();b.disabled=true;
         try{const r=await fetch('/api/odigrano',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({kolo:x.kolo,kljuc:x.kljuc,opklada:x.opklada,odigrano:!x.odigrano})});
           if(!r.ok){const d=await r.json().catch(()=>({}));alert(d.greska||'Nije uspelo.');b.disabled=false;return;}
@@ -753,9 +752,9 @@ window.elMsgs=updateMsgs;
 </script>
 <script>window.__ucitaj(); setInterval(()=>{ if(document.visibilityState==='visible') window.__ucitaj(); }, 5*60*1000);</script>
 <script>
-// Dugme Osveži: postoji samo kad stranicu služi aplikacija sa računara (servis/app_server.js), lokalno ili preko Tailscale-a; na GitHub sajtu se ne prikazuje
+// Dugme Osveži: postoji samo u lokalnoj aplikaciji (servis/app_server.js); na GitHub sajtu i telefonu se samo gleda
 (function(){
-  if(location.hostname.endsWith('github.io'))return;
+  if(!/^(localhost|127\.0\.0\.1)$/.test(location.hostname))return;
   const azur=document.getElementById('web-azur');
   const bar=document.createElement('div');bar.className='el-osv';
   const btn=document.createElement('button');btn.type='button';btn.textContent='Osveži';btn.title='Povlači granice, kvote, povrede i sudije, preračunava preporuke i šalje na GitHub';
@@ -764,7 +763,6 @@ window.elMsgs=updateMsgs;
   const crtaj=d=>{
     info.replaceChildren();
     if(d.statusiStari){const u=document.createElement('div');u.className='el-osvupoz';u.textContent='Povrede nisu osvežene u poslednjih 6 sati.';info.appendChild(u);}
-    if(d.telefon&&/^(localhost|127\.0\.0\.1)$/.test(location.hostname)){const t=document.createElement('div');t.textContent='Adresa za telefon (uz Tailscale): '+d.telefon;info.appendChild(t);}
     const p=d.posao; if(!p)return;
     for(const k of p.koraci){const r=document.createElement('div');if(k.status==='greska')r.className='el-osvnije';const b=document.createElement('b');b.textContent=(IK[k.status]||'')+' '+k.naziv;r.appendChild(b);if(k.poruka)r.appendChild(document.createTextNode(': '+k.poruka));info.appendChild(r);}
     if(p.greska){const g=document.createElement('div');g.className='el-osvnije';g.textContent=p.greska;info.appendChild(g);}

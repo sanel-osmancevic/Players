@@ -66,7 +66,6 @@
 .el-samolok{display:none}.el-lokalno .el-samolok{display:table-cell}
 .el-table tr.el-odigrano td{background:color-mix(in srgb,var(--color-warn) 13%,transparent)}
 .el-odig{font:inherit;font-size:var(--cds-font-size-caption);font-weight:var(--cds-font-weight-medium);border:1px solid var(--color-border-line);border-radius:999px;padding:2px var(--cds-pad-sm);min-height:32px;background:none;color:inherit;cursor:pointer}
-@media (max-width:640px){.el-odig{min-width:36px;min-height:36px;padding:0}.el-lokalno .el-table td,.el-lokalno .el-table th{padding-left:2px;padding-right:2px}}
 .el-seg+.el-seg{margin-left:var(--cds-gap-sm)}
 .el-table td.el-dan{padding-left:var(--cds-pad-lg);color:var(--color-fg-muted)}
 .el-table tr.el-kolo td{font-weight:600;border-bottom:2px solid var(--color-border-line)}
@@ -569,7 +568,7 @@ dash.draw('picks',tb=>{
       td(tr,p===null?'—':d3.format('+.2f')(p),p===null?'num el-hide el-rezk sub':p>=0?'num el-hide el-rezk el-good':'num el-hide el-rezk el-bad');
     }else{td(tr,'—','num el-rezk sub');td(tr,'—','num el-hide el-rezk sub');}
     const co=document.createElement('td');co.className='num el-samolok';
-    if(x.zapamceno&&!done(x)){const b=document.createElement('button');b.type='button';b.className='el-odig';const usko=window.matchMedia&&matchMedia('(max-width:640px)').matches, oznaka=x.odigrano?'Poništi':'Odigrano';b.textContent=usko?(x.odigrano?'✕':'✓'):oznaka;b.title=oznaka;b.setAttribute('aria-label',oznaka);
+    if(x.zapamceno&&!done(x)){const b=document.createElement('button');b.type='button';b.className='el-odig';b.textContent=x.odigrano?'Poništi':'Odigrano';
       b.addEventListener('click',async ev=>{ev.stopPropagation();b.disabled=true;
         try{const r=await fetch('/api/odigrano',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({kolo:x.kolo,kljuc:x.kljuc,opklada:x.opklada,odigrano:!x.odigrano})});
           if(!r.ok){const d=await r.json().catch(()=>({}));alert(d.greska||'Nije uspelo.');b.disabled=false;return;}

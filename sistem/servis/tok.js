@@ -41,6 +41,23 @@ function maxbetSnimak(od) {
   return { ima: true, igraca: Object.keys(naj.raw || {}).length };
 }
 
+// Šalje samo podatke; izmene koda idu posebno, sa svojim opisom. Šalje i ono što je ranije ostalo neposlato (npr. kad veza nije radila).
+async function posaljiPodatke(naslov) {
+  await pokreni('git', ['add', '-A', '--', 'data', 'sistem', ...['py', 'js', 'html', 'md', 'vbs', 'ps1'].map(e => `:(exclude,glob)**/*.${e}`)], ROOT, 2 * MIN);
+  const bez = await pokreni('git', ['diff', '--cached', '--quiet'], ROOT, MIN);
+  if (bez.code !== 0) {
+    const t = new Intl.DateTimeFormat('sr-RS', { timeZone: 'Europe/Belgrade', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date());
+    const c = await pokreni('git', ['commit', '-q', '-m', `${naslov} ${t}`], ROOT, 2 * MIN);
+    if (c.code) return { status: 'greska', poruka: posl(c.izlaz), greska: 'Podaci su osveženi lokalno, ali commit nije uspeo.' };
+  }
+  const ceka = await pokreni('git', ['rev-list', '--count', 'origin/main..HEAD'], ROOT, MIN);
+  if (ceka.code === 0 && ceka.izlaz.trim() === '0') return { status: 'preskoceno', poruka: 'nema novih podataka za slanje' };
+  let p;
+  for (let i = 0; i < 3; i++) { p = await pokreni('git', ['push', 'origin', 'main'], ROOT, 2 * MIN); if (!p.code) break; await new Promise(r => setTimeout(r, 15000)); }
+  if (p.code) return { status: 'greska', poruka: posl(p.izlaz, 2), greska: 'Podaci su osveženi lokalno, ali slanje na GitHub nije uspelo.' };
+  return { status: 'ok', poruka: 'poslato, sajt se ažurira za oko minut' };
+}
+
 async function osvezi(posao) {
   const start = Date.now();
   // dugme i automatika ne smeju da rade istovremeno
@@ -75,22 +92,9 @@ async function osvezi(posao) {
     if (posao.koraci.every(k => k.status !== 'greska' || k.naziv === 'Povrede')) upisiOsvezeno();
     // 4) GitHub: samo podaci; izmene koda idu posebno, sa svojim opisom
     const k3 = korak('GitHub');
-    await pokreni('git', ['add', '-A', '--', 'data', 'sistem', ...['py', 'js', 'html', 'md', 'vbs', 'ps1'].map(e => `:(exclude,glob)**/*.${e}`)], ROOT, 2 * MIN);
-    const bez = await pokreni('git', ['diff', '--cached', '--quiet'], ROOT, MIN);
-    if (bez.code !== 0) {
-      const d = new Date(), t = new Intl.DateTimeFormat('sr-RS', { timeZone: 'Europe/Belgrade', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(d);
-      const c = await pokreni('git', ['commit', '-q', '-m', `Podaci ${t}`], ROOT, 2 * MIN);
-      if (c.code) { zavrsi(k3, 'greska', posl(c.izlaz)); posao.greska = 'Podaci su osveženi lokalno, ali commit nije uspeo.'; return; }
-    }
-    // šalje se i ono što je ranije ostalo neposlato (npr. kad veza nije radila)
-    const ceka = await pokreni('git', ['rev-list', '--count', 'origin/main..HEAD'], ROOT, MIN);
-    if (ceka.code === 0 && ceka.izlaz.trim() === '0') zavrsi(k3, 'preskoceno', 'nema novih podataka za slanje');
-    else {
-      let p;
-      for (let i = 0; i < 3; i++) { p = await pokreni('git', ['push', 'origin', 'main'], ROOT, 2 * MIN); if (!p.code) break; await new Promise(r => setTimeout(r, 15000)); }
-      if (p.code) { zavrsi(k3, 'greska', posl(p.izlaz, 2)); posao.greska = 'Podaci su osveženi lokalno, ali slanje na GitHub nije uspelo.'; return; }
-      zavrsi(k3, 'ok', 'poslato, sajt se ažurira za oko minut');
-    }
+    const g = await posaljiPodatke('Podaci');
+    zavrsi(k3, g.status, g.poruka);
+    if (g.greska) { posao.greska = g.greska; return; }
     posao.ishod = 'gotovo';
   } catch (e) {
     posao.greska = String(e.message); log('PAD ' + e.message);
@@ -101,4 +105,4 @@ async function osvezi(posao) {
   return posao;
 }
 
-module.exports = { osvezi, pokreni };
+module.exports = { osvezi, pokreni, posaljiPodatke };
