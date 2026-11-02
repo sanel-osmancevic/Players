@@ -79,7 +79,8 @@ for x in P:
     if x['status']=='Ne igra':
         mates=[y for y in P if y['t']==x['t'] and y['status']!='Ne igra' and grp(y['pos'])==grp(x['pos'])]
         tot=sum(y['mproj'] for y in mates)
-        for y in mates: y['bonus']=min(4.0,y.get('bonus',0)+x['mproj']*0.7*y['mproj']/tot) if tot else 0
+        # bt_minuti.py, kola 3-9: stvarni višak posle prvog izostanka je oko 1 min, pa je 0.7 i najviše 4 min bilo previše
+        for y in mates: y['bonus']=min(2.0,y.get('bonus',0)+x['mproj']*0.3*y['mproj']/tot) if tot else 0
 MINFIX={}  # ručni dodatak minuta po kolu, npr. {'HAYES, KEVARRIUS|PAR':4.0}
 for x in P:
     b=MINFIX.get(f"{x['n']}|{x['t']}")

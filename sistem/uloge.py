@@ -1,5 +1,5 @@
 # Preraspodela uloge kad saigrač ne igra (tačka 2).
-# Iz play-by-play (onoff_k8.json): za igrača i i odsutnog saigrača j -> učinak po minuti kad je j van terena
+# Iz play-by-play (onoff.json, osvežava ga pripremi_kolo.py): za igrača i i odsutnog saigrača j -> učinak po minuti kad je j van terena
 # naspram ukupnog proseka. Poeni preko šuteva (FGA + 0.44*FTA), skokovi i asistencije direktno.
 # Skupljanje ka proseku (K minuta), više odsutnih se množi, ukupna korekcija ograničena na ±20%.
 # Upisuje faktore u igraci2.json (pts/reb/ast_proj) i uloge.json (objašnjenje).
@@ -15,7 +15,8 @@ for _r in citaj('igraci2.json'):
 K = 60.0      # minuta "prior" uzorka
 KE = 10.0     # i bar 10 događaja (šuteva, skokova, asistencija)
 CAP = 0.15    # najviše ±15% ukupno
-DAMP = 1.0
+# bt_uloge2.py, kola 3-9: kod skokova korekcija merljivo kvari procenu, a kod poena i asistencija pola jačine je bar jednako dobro kao puna
+JACINA = {'pts': 0.5, 'reb': 0.0, 'ast': 0.5}
 # kola u kojima je odsutni igrao, da bi se korekcija računala prema težinama modela (0.85^(poslednje kolo - kolo))
 _P = citaj('statistika.json')['P']
 IGRAO = {p[0]: [int(x) for x in p[3].split(',')] for p in _P}
@@ -42,7 +43,7 @@ def sur(name):  # "HAYES, KEVARRIUS" -> hayes ; "Kevarrius Hayes" -> hayes
     t = [w for w in name.split() if w.lower().strip('.') not in ('iv', 'iii', 'jr', 'ii')]
     return norm(t[-1])
 
-D = citaj('onoff_k8.json')
+D = citaj('onoff.json' if os.path.exists('onoff.json') else 'onoff_k8.json')
 
 def usage(v): return v[2] + 0.44 * v[3]
 
@@ -71,7 +72,7 @@ for tc, outs in OUT.items():
             if any(abs(v - 1) >= 0.05 for v in parts.values()):
                 zbog.append(f"{j.split(',')[0].title()}: " + ', '.join(f"{k} {100*(v-1):+.0f}%" for k, v in parts.items() if abs(v - 1) >= 0.05))
         for k in f:
-            f[k] = max(1 - CAP, min(1 + CAP, f[k] ** DAMP))
+            f[k] = max(1 - CAP, min(1 + CAP, 1 + JACINA[k] * (f[k] - 1)))
         fakt[(sur(i), TEAM[tc])] = dict(f, zbog=zbog)
 
 if __name__ == '__main__':

@@ -114,6 +114,12 @@ def pripremi(k):
     M = citaj('minute_timovi.json')
     M['odmor_dana'] = {t: (beograd(u).date() - posl[t]).days - 1 for h, a, _, u in games for t in (h, a) if t in posl}
     pisi(M, 'minute_timovi.json', ensure_ascii=False)
+    # uloge saigrača: play-by-play odigranih utakmica; nova kola se povlače, stara su u kešu. Neuspeh ostavlja stari onoff.json.
+    for r in range(1, k):
+        for g in utakmice(r):
+            if g['played']: preuzmi(f"https://live.euroleague.net/api/PlayByPlay?gamecode={g['gameCode']}&seasoncode={SEZONA}", f"b{g['gameCode']}.json")
+    o = subprocess.run(['node', 'onoff_kes.js'], capture_output=True, text=True, encoding='utf8')
+    print(o.stdout.strip() or o.stderr.strip())
     print(f"{k}. kolo: {len(games)} utakmica, prva {games[0][2]}, poslednja {games[-1][2]}; statistika {len(novo['P'])} igrača, kola do {k - 1}")
 
 if __name__ == '__main__':

@@ -99,7 +99,6 @@ for r in rows:
     m_new = sum(v * w for v, w in vals); base = osnovno(i)
     stari = r['minuti_proj']
     bonus = max(0.0, stari - base) if (nevidjeno or os.environ.get("KEEPB")) else 0.0
-    if 'HAYES, KEVARRIUS' == i and not nevidjeno: bonus = 0.0
     novi = base + SHR * (m_new - base) + bonus
     novi = max(stari - CAP_ABS, min(stari + CAP_ABS, novi))
     novi = max(stari * (1 - CAP_REL), min(stari * (1 + CAP_REL), novi))

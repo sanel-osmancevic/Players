@@ -72,6 +72,7 @@ na 10 min u poslednjih 90 min pred meč, na 30 min na dan meča, na 2 h do 36 h 
 ## Provere modela
 
 - `backtest.py` – provera projekcija na celoj sezoni (vraćanje vremena kolo po kolo), podešavanje parametara
+- `bt_faktori.py` i `bt_minuti.py` – vrednost svakog faktora i varijante modela minuta; ništa ne upisuju
 - `bt_*.py`, `korel.py` – posebne provere (raspodela, uloge, prilike za skok/asistenciju, rotacije, povezanost opklada)
 
 ## Napomene
@@ -80,5 +81,5 @@ na 10 min u poslednjih 90 min pred meč, na 30 min na dan meča, na 2 h do 36 h 
 - Pre svakog kola: `py -X utf8 pripremi_kolo.py KOLO` (statistika iz zvaničnog API-ja, raspored, odmor). Kolo i dan drže se u `kolo.json` i `kolo.py`;
   dan je prvi dan sa utakmicom koja još nije počela. Na Windowsu se sistem pokreće sa `py -X utf8 osvezi.py SNIMAK.json`.
 - `KEYOUT` i `MINFIX` u `build5.py` su ručne izmene po kolu. Poslednji poznati statusi su u `extras.json`, a novi se upisuju u `statusi.json`.
-- `onoff_k8.json` (uloge kad saigrač ne igra) je i dalje iz prvih 8 kola; osvežava se preko `snippets/onoff.js`.
+- `onoff.json` (uloge kad saigrač ne igra) pravi `pripremi_kolo.py` preko `onoff_kes.js`, iz sačuvanog play-by-play zapisa.
 - Python 3.10+, Node 18+ (za `t28.js`); bez dodatnih paketa, osim Playwright-a za servis.
