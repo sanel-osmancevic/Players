@@ -1,0 +1,35 @@
+{
+ "bias": {
+  "pts": 0.2,
+  "reb": -0.05,
+  "ast": 0.0
+ },
+ "c": 1.099,
+ "raspodela": "normal",
+ "w": [
+  0.279,
+  0.238,
+  0.483
+ ],
+ "n": 294,
+ "n_po_kategoriji": {
+  "Poeni": 143,
+  "Asistencije": 66,
+  "Skokovi": 85
+ },
+ "dijagnostika": {
+  "logloss_normal": 0.4917,
+  "logloss_nb": 0.4987,
+  "najbolja_sirina": 1.2,
+  "tezine_sirovo": {
+   "model": 0.2,
+   "istorija": 0.1,
+   "trziste": 0.7
+  },
+  "n_tezine": 206,
+  "w_ls_sirovo": 0.8,
+  "n_ls": 145
+ },
+ "w_naucene_bez_trzista": null,
+ "w_ls": 0.396
+}

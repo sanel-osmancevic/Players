@@ -1,0 +1,6 @@
+# nastaje pri radu servisa; profil pregledača sadrži kolačiće
+sistem/servis/node_modules/
+sistem/servis/profil/
+sistem/prikupljeno/
+__pycache__/
+*.tmp
