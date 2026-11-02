@@ -3,6 +3,7 @@
 # (normalna raspodela sa sd iz modela). Prosek medijana = konsenzus tržišta.
 # Upisuje u kvote_pet.json i kvote.json polje trz_vise (verovatnoća da linija prođe na više po tržištu).
 import json, math, re, unicodedata, sys, glob, os
+from pomocno import citaj, pisi
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 from statistics import NormalDist
 from datetime import datetime as _dt
@@ -36,7 +37,7 @@ def snaps(prefix):
     # ručni snimci (books/) i snimci servisa (prikupljeno/DATUM/, bez foldera sumnjivo); snimci iz prošlih kola se ne računaju
     po_vremenu = {}
     for f in glob.glob(f'books/{prefix}_*.json') + glob.glob(f'prikupljeno/*/{prefix}_*.json'):
-        s = json.load(open(f))
+        s = citaj(f)
         if 'out' not in s: s = dict(t=s['t'], out=glavne_mb(s.get('raw') or {}))
         if s['out'] and s['t'].replace('Z', '') >= OD.replace('Z', ''): po_vremenu[s['t']] = s
     return [po_vremenu[t] for t in sorted(po_vremenu)]
@@ -59,7 +60,7 @@ def index(snap, kind):
         if tim(t): out[(sn, tim(t))] = d
     return out
 
-ig = {r['igrac']: r for r in json.load(open('igraci2.json')) if r['termin'].startswith(DAN)}
+ig = {r['igrac']: r for r in citaj('igraci2.json') if r['termin'].startswith(DAN)}
 # istorija snimaka po kladionici: lista (vreme, indeks)
 HIST = {'maxbet': [(s['t'], index(s, 'maxbet')) for s in snaps('mb')],
         'soccer': [(s['t'], index(s, 'soccer')) for s in snaps('sb')],
@@ -69,7 +70,7 @@ HIST = {'maxbet': [(s['t'], index(s, 'maxbet')) for s in snaps('mb')],
         'stoiximan': [(s['t'], index(s, 'stoiximan')) for s in snaps('sx')]}
 # težine u konsenzusu: Soccer deli izvor kvota sa Maxbetom pa vredi pola; ostali su nezavisni (uče se iz rezultata)
 TEZ_K = {'soccer': 0.5, 'merkur': 1.0, 'mozzart': 1.0, 'meridian': 1.0, 'stoiximan': 1.0}
-if os.path.exists('tezine_kladionica.json'): TEZ_K.update(json.load(open('tezine_kladionica.json')))
+if os.path.exists('tezine_kladionica.json'): TEZ_K.update(citaj('tezine_kladionica.json'))
 # kladionica čiji je poslednji snimak stariji 6 h od najnovijeg ne ulazi u konsenzus (zastarele kvote bi dale lažan ⚡)
 _t = lambda s: _dt.fromisoformat(s.replace('Z', '+00:00')).timestamp()
 _najnoviji = max((_t(h[-1][0]) for h in HIST.values() if h), default=0)
@@ -115,7 +116,7 @@ def market(igrac, tim, kat):
     return mu, sd, now, kret, odst
 
 def apply(fn):
-    rows = json.load(open(fn)); n = 0
+    rows = citaj(fn); n = 0
     for x in rows:
         if x.get('kolo') != KOLO or x.get('igrac') not in ig: continue
         m = market(x['igrac'], x['tim'], x['kategorija'])
@@ -130,7 +131,7 @@ def apply(fn):
         x['trz_knjige_nez'] = len(nz)
         x['trz_kretanje'] = round(kret, 2); x['mb_odstupanje'] = round(odst, 2)
         n += 1
-    json.dump(rows, open(fn, 'w'), ensure_ascii=False)
+    pisi(rows, fn, ensure_ascii=False)
     return n
 
 if __name__ == '__main__':

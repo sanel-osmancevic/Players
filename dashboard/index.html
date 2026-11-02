@@ -63,7 +63,14 @@
 .el-seg button{font:inherit;font-size:var(--cds-font-size-caption);font-weight:var(--cds-font-weight-medium);border:0;border-radius:999px;padding:var(--cds-pad-xs) var(--cds-pad-md);min-height:36px;background:none;color:var(--color-fg-muted);cursor:pointer}
 .el-seg button[aria-pressed=true]{background:var(--color-fg);color:var(--color-bg)}
 .el-bezrez .el-rezk{display:none}
-.el-samolok{display:none}.el-lokalno .el-samolok{display:table-cell}
+.el-tabs button.el-samotab{display:none}.el-lokalno .el-tabs button.el-samotab{display:block}
+.el-samokol{display:none}.el-lokalno .el-samokol{display:table-cell}
+.el-stv-kocke{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:var(--cds-gap-sm);margin:0 0 var(--cds-gap-md)}
+.el-stv-kocka{padding:var(--cds-pad-sm) var(--cds-pad-md);background:var(--color-bg);border-radius:var(--cds-radius);font-variant-numeric:tabular-nums}
+.el-stv-kocka span{display:block;font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.el-stv-kocka b{font-size:var(--cds-font-size-heading);font-weight:var(--cds-font-weight-medium)}
+.el-samolok{display:none}.el-lokalno .el-samolok{display:inline-block}
+.el-tikbox.el-tikig{border-left-color:var(--el-akcent,#fa5500)}.el-tikig .el-tikoz{font-weight:var(--cds-font-weight-medium)}
 .el-table tr.el-odigrano td{background:color-mix(in srgb,var(--color-warn) 13%,transparent)}
 .el-odig{font:inherit;font-size:var(--cds-font-size-caption);font-weight:var(--cds-font-weight-medium);border:1px solid var(--color-border-line);border-radius:999px;padding:2px var(--cds-pad-sm);min-height:32px;background:none;color:inherit;cursor:pointer}
 .el-seg+.el-seg{margin-left:var(--cds-gap-sm)}
@@ -76,10 +83,33 @@
 .el-panel .el-scroll{max-height:none}
 @media (max-width:640px){.el-wrap .el-card{padding:var(--cds-pad-sm)}.el-filters select{flex:1 1 40%;min-width:0}.el-filters label{display:none}}
 [data-dash-source-state=refreshing]{opacity:.5;transition:opacity var(--cds-dur-slow)}
+/* izgled: logo, narandžasta iz logotipa kao jedini akcenat, mirnija tabela */
+:root{--el-akcent:#fa5500}
+.el-top{display:flex;align-items:center;justify-content:space-between;gap:var(--cds-gap-sm);margin:0 0 var(--cds-gap-sm)}
+.el-top .web-azur,.el-top .el-osv{margin:0}
+.el-osv button{background:var(--el-akcent);color:#101820}
+.el-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--cds-gap-sm) var(--cds-gap-md);padding:var(--cds-pad-sm) 0 0}
+.el-head h1{margin:0;line-height:0}
+.el-logo{display:block;height:38px;width:auto}
+.el-head p{font-size:var(--cds-font-size-caption);padding:5px 12px;border:1px solid var(--color-border-line);border-radius:999px;background:var(--color-panel);white-space:nowrap}
+.el-head p b{color:var(--color-fg)}
+.el-filters{border-bottom:0;padding-bottom:var(--cds-pad-xs)}
+.el-tabs button{padding-top:var(--cds-pad-md);padding-bottom:var(--cds-pad-md)}
+.el-tabs button[aria-selected=true]{border-bottom-color:var(--el-akcent)}
+.el-wrap .el-card{border-radius:14px;box-shadow:0 1px 2px rgba(16,24,32,.05),0 10px 28px rgba(16,24,32,.05)}
+.el-seg button[aria-pressed=true]{background:var(--color-fg);color:var(--color-bg)}
+.el-ucinak{padding:var(--cds-pad-sm) var(--cds-pad-md);background:var(--color-bg);border-radius:var(--cds-radius);font-size:var(--cds-font-size-caption)}
+.el-table th{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--color-fg-muted);padding-bottom:var(--cds-pad-sm)}
+.el-table td{padding-top:7px;padding-bottom:7px}
+.el-table tbody tr.el-klik:hover td{background:color-mix(in srgb,var(--el-akcent) 7%,transparent)}
+.el-table tr.el-split td{border-top:2px solid var(--color-fg-muted)}
+.el-table tr.el-daysep td{padding-top:var(--cds-pad-md);font-size:11px;font-weight:var(--cds-font-weight-medium);letter-spacing:.04em;text-transform:uppercase;color:var(--color-fg-muted)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--el-akcent:#ff6a1a}.el-wrap .el-card{box-shadow:none}}
+@media (max-width:640px){.el-logo{height:30px}.el-table td{padding-top:5px;padding-bottom:5px}.el-table th{font-size:10px;letter-spacing:0}.el-wrap .el-card{border-radius:12px}}
 </style>
 <div class="el-wrap">
   <header class="el-head">
-    <h1>EuroLeague</h1>
+    <h1><img class="el-logo" src="logo-evroliga.svg" alt="EuroLeague" width="166" height="38"></h1>
     <p>Aktuelno kolo: <b data-draw="kolonow" data-source="utakmice">—</b></p>
   </header>
 
@@ -87,6 +117,7 @@
   <div class="el-tabs" role="tablist">
     <button role="tab" id="tab-preporuke" aria-controls="preporuke" aria-selected="true">Preporuke</button>
     <button role="tab" id="tab-tiketi" aria-controls="tiketi" aria-selected="false">Tiketi</button>
+    <button role="tab" id="tab-stvarni" class="el-samotab" aria-controls="stvarni" aria-selected="false">Stvarni učinak</button>
   </div>
   <div class="el-bar" id="el-filterbar" style="padding-top:var(--cds-pad-sm)">
     <label for="el-kolo">Kolo</label>
@@ -116,7 +147,7 @@
           <th data-field="istorija" class="num el-hide">Sezona · posl. 5</th>
           <th data-field="rezultat" class="num el-rezk">Rezultat</th>
           <th data-field="profit" class="num el-hide el-rezk">Profit</th>
-          <th class="num el-samolok"><span class="sr-odig" hidden>Odigrano</span></th>
+          <th class="num el-samokol"></th>
         </tr></thead>
         <tbody data-draw="picks"></tbody>
       </table>
@@ -199,6 +230,14 @@
       <tbody data-draw="thist"></tbody>
     </table>
   </section>
+  <section class="el-card el-panel" id="stvarni" role="tabpanel" aria-labelledby="tab-stvarni" hidden>
+    <p class="el-note">Ulog: singl 1.000 din, dubl 500 din, tripl 300 din. Prošla opklada donosi ulog × (kvota − 1), a pala gubi ulog. Igrač koji nije igrao vraća ulog kod singla, a na tiketu se računa kvotom 1. Računaju se samo opklade označene dugmetom Odigrano.</p>
+    <div class="el-stv-kocke" data-draw="stvarni" data-source="zapamceno dublovi triplovi zakljucano"></div>
+    <div class="el-scroll"><table class="el-table">
+      <thead><tr><th>Vrsta</th><th class="num">Opklada</th><th class="num">Prošlo</th><th class="num">Palo</th><th class="num">Čeka</th><th class="num">Uloženo</th><th class="num">Profit</th><th class="num">Povraćaj</th></tr></thead>
+      <tbody id="stv-vrste"></tbody>
+    </table></div>
+  </section>
 </div>
 <script>
 window.elState={kolo:'',game:'',day:'',q:'',rmod:'sig',tmod:'sig'};
@@ -218,7 +257,7 @@ const dayMap=()=>new Map(gamesOf(curKolo()).map(g=>[g.g,g.d]));
 const inSel=x=>+x.kolo===curKolo()&&(!window.elState.game||x.utakmica===window.elState.game)&&(!window.elState.day||dayMap().get(x.utakmica)===window.elState.day);
 const td=(tr,v,c)=>{const e=document.createElement('td');e.textContent=v;if(c)e.className=c;tr.appendChild(e);};
 const applyKolo=()=>{const old=curKolo()!==trenutnoKolo();document.querySelectorAll('#el-oldkolo').forEach(e=>e.hidden=!old||e.dataset.tab!=='1');};
-const redrawAll=()=>{applyKolo();if(window.elMsgs)window.elMsgs();['daysel','uc','picks','hist','dubl','dhist','tripl','thist'].forEach(n=>dash.draw(n));};
+const redrawAll=()=>{applyKolo();if(window.elMsgs)window.elMsgs();['daysel','uc','picks','hist','dubl','dhist','tripl','thist','stvarni'].forEach(n=>dash.draw(n));};
 const dayLabel={'čet':'Četvrtak','pet':'Petak','sub':'Subota','ned':'Nedelja','pon':'Ponedeljak','uto':'Utorak','sre':'Sreda'};
 
 dash.onData(applyKolo);
@@ -346,7 +385,7 @@ dash.calc('dublovi',{
         out.push({kljuc:k+'|'+n,vrsta:v,kolo:+kolo,dan:d,termin:a.termin,rb:n,
           igrac1:a.igrac,opklada1:a.opklada,utakmica1:a.utakmica,kvota1:Number(a.kvota),ishod1:a.ishod||null,
           igrac2:b.igrac,opklada2:b.opklada,utakmica2:b.utakmica,kvota2:Number(b.kvota),ishod2:b.ishod||null,
-          kvota:Math.round(Number(a.kvota)*Number(b.kvota)*100)/100,kvota_obracun:kv,sansa:Math.round(Number(a.sansa)*Number(b.sansa)*1000)/1000,ishod:st});
+          nogeK:[a,b].map(z=>({kljuc:z.kljuc,opklada:z.opklada})),kvota:Math.round(Number(a.kvota)*Number(b.kvota)*100)/100,kvota_obracun:kv,sansa:Math.round(Number(a.sansa)*Number(b.sansa)*1000)/1000,ishod:st});
       }
     }
     return out;
@@ -394,6 +433,7 @@ dash.calc('triplovi',{
         const st=legs.some(z=>z.ishod==='palo')?'palo':legs.every(z=>z.ishod==='prošlo'||z.ishod==='nije igrao')?(legs.every(z=>z.ishod==='nije igrao')?'nije igrao':'prošlo'):null;
         out.push({kljuc:k+'|'+n,vrsta:v,kolo:+kolo,dan:d,termin:legs[0].termin,rb:n,
           noge:legs.map(z=>({igrac:z.igrac,opklada:z.opklada,utakmica:z.utakmica,kvota:Number(z.kvota),ishod:z.ishod||null})),
+          nogeK:legs.map(z=>({kljuc:z.kljuc,opklada:z.opklada})),
           kvota:Math.round(legs.reduce((a,z)=>a*Number(z.kvota),1)*100)/100,kvota_obracun:Math.round(legs.reduce((a,z)=>a*leg(z),1)*100)/100,
           sansa:Math.round(legs.reduce((a,z)=>a*Number(z.sansa),1)*1000)/1000,ishod:st});
       }
@@ -555,7 +595,7 @@ dash.draw('picks',tb=>{
     const tr=document.createElement('tr');tr.dataset.key=x.kljuc;
     if(m==='sig'&&x.grupa!==last){if(ng++)tr.className='el-split';last=x.grupa;}
     td(tr,x.igrac,(m==='sig'?x.grupa==='Najsigurnije':x.sansa>=0.65)?'el-good':'');tdGame(tr,x);tdOp(tr,x);
-    if(x.odigrano){tr.classList.add('el-odigrano');const k=document.createElement('span');k.textContent=' 🔒';k.title='Odigrano: granica i kvota su zaključane';tr.firstChild.appendChild(k);}
+    if(x.odigrano){tr.classList.add('el-odigrano');const k=document.createElement('span');k.textContent=' 🔒';k.title='Odigrano: igrač i granica su zaključani';tr.firstChild.appendChild(k);}
     td(tr,d3.format('.2f')(x.kvota),'num');td(tr,pct(x.sansa),'num');tdUlog(tr,x);td(tr,x.istorija+(x.forma5?' · '+x.forma5:''),'num el-hide');
     if(done(x)){
       const has=x.rezultat!==null&&x.rezultat!==undefined&&x.rezultat!=='';
@@ -567,12 +607,15 @@ dash.draw('picks',tb=>{
       const u=Number(x.ulog)>0?Number(x.ulog):1, p=x.ishod==='prošlo'?(Number(x.kvota)-1)*u:x.ishod==='palo'?-u:null;
       td(tr,p===null?'—':d3.format('+.2f')(p),p===null?'num el-hide el-rezk sub':p>=0?'num el-hide el-rezk el-good':'num el-hide el-rezk el-bad');
     }else{td(tr,'—','num el-rezk sub');td(tr,'—','num el-hide el-rezk sub');}
-    const co=document.createElement('td');co.className='num el-samolok';
-    if(x.zapamceno&&!done(x)){const b=document.createElement('button');b.type='button';b.className='el-odig';b.textContent=x.odigrano?'Poništi':'Odigrano';
-      b.addEventListener('click',async ev=>{ev.stopPropagation();b.disabled=true;
-        try{const r=await fetch('/api/odigrano',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({kolo:x.kolo,kljuc:x.kljuc,opklada:x.opklada,odigrano:!x.odigrano})});
+    const co=document.createElement('td');co.className='num el-samokol';
+    if(x.zapamceno&&!done(x)){const dn=stvDan(x.termin),sk='s|'+x.kolo+'|'+dn+'|'+x.kljuc+'|'+x.opklada,zd=dash.data('zakljucano'),igr=!!(zd&&zd.status==='ok'&&zd.data&&zd.data.tiketi&&zd.data.tiketi[sk]);
+      const b=document.createElement('button');b.type='button';b.className='el-odig';b.textContent=igr?'Poništi':'Odigrano';
+      b.addEventListener('click',async ev=>{ev.stopPropagation();
+        if(!confirm(igr?'Poništiti opkladu? Ako nema drugih odigranih za ovaj dan, osvežavanje se ponovo uključuje.':'Označiti opkladu kao odigranu? Igrači i granice se više ne menjaju, a osvežavanje za ovaj dan se isključuje.'))return;
+        b.disabled=true;
+        try{const r=await fetch('/api/tiket',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({kolo:x.kolo,dan:dn,kljuc:sk,noge:[{kljuc:x.kljuc,opklada:x.opklada}],odigrano:!igr})});
           if(!r.ok){const d=await r.json().catch(()=>({}));alert(d.greska||'Nije uspelo.');b.disabled=false;return;}
-          window.__ucitaj();}catch(e){alert('Lokalni server nije dostupan.');b.disabled=false;}});
+          await window.__ucitaj();if(window.__osveziStanje)window.__osveziStanje();}catch(e){alert('Lokalni server nije dostupan.');b.disabled=false;}});
       co.appendChild(b);}
     tr.appendChild(co);
     tb.appendChild(tr); kartica(tb,tr,x,'picks');
@@ -582,7 +625,7 @@ dash.draw('picks',tb=>{
 (()=>{const tabs=[...document.querySelectorAll('.el-tabs button')];
  const show=id=>{tabs.forEach(b=>{const on=b.getAttribute('aria-controls')===id;b.setAttribute('aria-selected',on);document.getElementById(b.getAttribute('aria-controls')).hidden=!on;});const rez=id==='preporuke';const fb=document.getElementById('el-filterbar');if(fb)fb.hidden=!rez;document.querySelectorAll('#el-oldkolo').forEach(e=>{e.dataset.tab=rez?'1':'';if(!rez)e.hidden=true;});try{localStorage.setItem('el-tab',id);}catch(e){}};
  tabs.forEach(b=>b.addEventListener('click',()=>show(b.getAttribute('aria-controls'))));
- let t=null;try{t=localStorage.getItem('el-tab');}catch(e){} show(t==='tiketi'?'tiketi':'preporuke');})();
+ let t=null;try{t=localStorage.getItem('el-tab');}catch(e){} window.elState.tabZelja=t; show(t==='tiketi'?'tiketi':'preporuke');})();
 (()=>{const bs=document.getElementById('mod-sig'), bg=document.getElementById('mod-gl');
  if(!bs||!bg)return;
  const set=m=>{window.elState.rmod=m;bs.setAttribute('aria-pressed',m==='sig');bg.setAttribute('aria-pressed',m==='gl');
@@ -630,6 +673,16 @@ const tikDan=(tb,x,src,legsOf,n)=>{
     const sk=document.createElement('span'); sk.className='sub'; sk.textContent='Kvota '+d3.format('.2f')(t.kvota)+' · šansa '+pct(t.sansa)+' · '; f.appendChild(sk);
     const is=document.createElement('span'); is.className=t.ishod==='prošlo'?'el-good':t.ishod==='palo'?'el-bad':'sub';
     is.textContent=t.ishod==='prošlo'?'✓ Prošao':t.ishod==='palo'?'✗ Pao':t.ishod==='nije igrao'?'Nije igrao':'Čeka'; f.appendChild(is);
+    const zk=(n==='2'?'d|':'t|')+t.kljuc, zd=dash.data('zakljucano'), ig=!!(zd&&zd.status==='ok'&&zd.data&&zd.data.tiketi&&zd.data.tiketi[zk]);   // dubl i tripl imaju iste redne brojeve
+    if(ig){box.classList.add('el-tikig');const oz=document.createElement('span');oz.className='el-tikoz';oz.textContent=' · 🔒 Odigrano';f.appendChild(oz);}
+    if(!t.ishod&&(t.nogeK||[]).length){const b=document.createElement('button');b.type='button';b.className='el-odig el-samolok';b.style.marginLeft='8px';b.textContent=ig?'Poništi':'Odigrano';
+      b.addEventListener('click',async()=>{
+        if(!confirm(ig?'Poništiti tiket? Ako nema drugih odigranih tiketa za ovaj dan, osvežavanje se ponovo uključuje.':'Označiti tiket kao odigran? Igrači i granice se više ne menjaju, a osvežavanje za ovaj dan se isključuje.'))return;
+        b.disabled=true;
+        try{const r=await fetch('/api/tiket',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({kolo:t.kolo,dan:t.dan,kljuc:zk,noge:t.nogeK,odigrano:!ig})});
+          if(!r.ok){const d=await r.json().catch(()=>({}));alert(d.greska||'Nije uspelo.');b.disabled=false;return;}
+          await window.__ucitaj();if(window.__osveziStanje)window.__osveziStanje();}catch(e){alert('Lokalni server nije dostupan.');b.disabled=false;}});
+      f.appendChild(b);}
     box.appendChild(f); c.appendChild(box); row.appendChild(c); tb.appendChild(row);
   }
   if(!r.length){const row=document.createElement('tr');const c=document.createElement('td');c.colSpan=6;c.className='sub';c.textContent='Nema tiketa za ovaj dan.';row.appendChild(c);tb.appendChild(row);}
@@ -687,6 +740,40 @@ dash.draw('thist',tb=>{
     tb.appendChild(tr);
     if(x.nivo==='dan') tikDan(tb,x,'triplovi',t=>t.noge,'3');
   }
+});
+// Stvarni učinak (samo na računaru): dinari uz stalne uloge, samo za opklade označene kao odigrane.
+const STV_ULOG={1:1000,2:500,3:300}, STV_VRSTA={1:'Singl',2:'Dubl',3:'Tripl'};
+const stvDin=(n,plus)=>{const v=Math.round(n);return (plus&&v>0?'+':'')+(v<0?'−':'')+Math.abs(v).toLocaleString('sr-RS')+' din';};
+const stvDan=t=>String(t).split(' ').slice(0,2).join(' ');
+const stvProfit=b=>b.ishod==='prošlo'?b.ulog*(b.kvota-1):b.ishod==='palo'?-b.ulog:b.ishod==='nije igrao'?0:null;
+const stvOdigrane=()=>{
+  const zd=dash.data('zakljucano'), tik=zd.status==='ok'&&zd.data&&zd.data.tiketi||{}, z=(rowsOf('zapamceno')||[]).filter(x=>x.igrac), du=rowsOf('dublovi')||[], tr=rowsOf('triplovi')||[], out=[];
+  for(const [k,t] of Object.entries(tik)){
+    const n=t.noge.length;
+    if(n===1){const x=z.find(r=>+r.kolo===+t.kolo&&r.kljuc===t.noge[0].kljuc&&r.opklada===t.noge[0].opklada); if(x)out.push({n,v:vrstaOf(x),kolo:+x.kolo,dan:t.dan,ulog:STV_ULOG[1],kvota:Number(x.kvota),ishod:x.ishod||null,opis:x.igrac+' '+x.opklada});}
+    else{const x=(n===2?du:tr).find(r=>r.kljuc===k.slice(2)); if(x)out.push({n,v:x.vrsta,kolo:+x.kolo,dan:t.dan,ulog:STV_ULOG[n],kvota:x.kvota_obracun,ishod:x.ishod||null,opis:n===2?x.igrac1+' + '+x.igrac2:x.noge.map(l=>l.igrac).join(' + ')});}
+  }
+  return out;
+};
+const stvZbir=l=>{const gotove=l.filter(b=>b.ishod==='prošlo'||b.ishod==='palo'),uz=gotove.reduce((a,b)=>a+b.ulog,0),pr=l.reduce((a,b)=>a+(stvProfit(b)||0),0);
+  return {broj:l.length,proslo:l.filter(b=>b.ishod==='prošlo').length,palo:l.filter(b=>b.ishod==='palo').length,ceka:l.filter(b=>!b.ishod).length,uz,pr,roi:uz?pr/uz:null,naCekanju:l.filter(b=>!b.ishod).reduce((a,b)=>a+b.ulog,0)};};
+const stvRed=(tb,naziv,z,kl)=>{const tr=document.createElement('tr');if(kl)tr.className=kl;td(tr,naziv);return tr;};
+const stvBoja=v=>v>0?'num el-good':v<0?'num el-bad':'num';
+dash.draw('stvarni',el=>{
+  el.replaceChildren();
+  const l=stvOdigrane(), Z=stvZbir(l), $=id=>document.getElementById(id); if(!$('stv-vrste'))return;
+  const k=(n,v,c)=>{const d=document.createElement('div');d.className='el-stv-kocka';const a=document.createElement('span');a.textContent=n;const b=document.createElement('b');b.textContent=v;if(c)b.className=c;d.append(a,b);el.appendChild(d);};
+  const GRUPE=[['sig','Sigurnije'],['gl','Glavne linije']], stavke=GRUPE.flatMap(([g,naz])=>[1,2,3].map(n=>({naz:STV_VRSTA[n]+', '+naz,z:stvZbir(l.filter(b=>b.v===g&&b.n===n))}))).filter(x=>x.z.uz);
+  const naj=stavke.reduce((a,x)=>!a||x.z.pr>a.z.pr?x:a,null);
+  k('Najviše donosi',naj?naj.naz:'—');k('Profit najboljeg',naj?stvDin(naj.z.pr,true):'—',naj&&naj.z.pr>0?'el-good':naj&&naj.z.pr<0?'el-bad':'');k('Ukupan profit',Z.uz?stvDin(Z.pr,true):'—',Z.pr>0?'el-good':Z.pr<0?'el-bad':'');k('Trenutno u igri',stvDin(Z.naCekanju));
+  const v=$('stv-vrste');v.replaceChildren();
+  const redV=(naz,z,kl)=>{const tr=document.createElement('tr');if(kl)tr.className=kl;td(tr,naz);td(tr,String(z.broj),'num');td(tr,String(z.proslo),'num');td(tr,String(z.palo),'num');td(tr,String(z.ceka),'num');td(tr,stvDin(z.uz),'num');td(tr,z.uz?stvDin(z.pr,true):'—',stvBoja(z.pr));td(tr,z.roi==null?'—':d3.format('+.1%')(z.roi),stvBoja(z.roi||0));v.appendChild(tr);};
+  for(const [g,naz] of GRUPE){
+    const zag=document.createElement('tr');zag.className='el-daysep';const c=document.createElement('td');c.colSpan=8;c.textContent=naz;zag.appendChild(c);v.appendChild(zag);
+    for(const n of [1,2,3])redV(STV_VRSTA[n]+' ('+STV_ULOG[n].toLocaleString('sr-RS')+' din)',stvZbir(l.filter(b=>b.v===g&&b.n===n)));
+  }
+  redV('Ukupno',Z,'el-kolo');
+  if(!l.length){const tr=document.createElement('tr');const c=document.createElement('td');c.colSpan=8;c.className='sub';c.textContent='Još nema odigranih opklada. Označi ih dugmetom Odigrano u Preporukama ili Tiketima.';tr.appendChild(c);v.appendChild(tr);}
 });
 // poruke "nema podataka": prikazuje i sakriva onData (pre crteža), i prekidači posle promene
 const msgSet=(id,show)=>document.querySelectorAll('#'+id).forEach(e=>e.hidden=!show);

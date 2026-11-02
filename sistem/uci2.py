@@ -6,6 +6,7 @@
 # Sve se skuplja ka podrazumevanim vrednostima dok je uzorak mali (efektivno n = broj različitih igrač-kategorija).
 # Piše tezine.json koji primenjuje tezine_primeni.py.
 import json, math, os
+from pomocno import citaj, pisi
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 from dist import p_over as nb_over
 Phi = lambda z: 0.5 * (1 + math.erf(z / math.sqrt(2)))
@@ -13,7 +14,7 @@ K = {'Poeni': 'pts', 'Skokovi': 'reb', 'Asistencije': 'ast'}
 DEF = dict(bias={'pts': 0.0, 'reb': 0.0, 'ast': 0.0}, c=1.0, raspodela='normal', w=[1/3, 1/3, 1/3])
 PRIOR_N = 300  # koliko "efektivnih" primera vredi podrazumevano podešavanje
 
-ev = [e for e in json.load(open('evidencija.json')) if e.get('proslo_vise') in (True, False) and e.get('rezultat') is not None]
+ev = [e for e in citaj('evidencija.json') if e.get('proslo_vise') in (True, False) and e.get('rezultat') is not None]
 eff = {}
 for e in ev: eff.setdefault(e['kategorija'], set()).add((e['kolo'], e['igrac']))
 n_eff = {k: len(v) for k, v in eff.items()}
@@ -92,5 +93,5 @@ if ls_rows:
     lam = nls / (nls + PRIOR_N)
     out['w_ls'] = round(W_LS0 + lam * (best_w - W_LS0), 3)
     out['dijagnostika']['w_ls_sirovo'] = best_w; out['dijagnostika']['n_ls'] = nls
-json.dump(out, open('tezine.json', 'w'), ensure_ascii=False, indent=1)
+pisi(out, 'tezine.json', ensure_ascii=False, indent=1)
 print(json.dumps(out, ensure_ascii=False))

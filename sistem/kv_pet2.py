@@ -1,6 +1,7 @@
 import json,re,unicodedata
+from pomocno import citaj, pisi
 from kolo import KOLO,DAN,tim
-raw=json.load(open('mb_pet_raw2.json')); rows=json.load(open('igraci2.json'))
+raw=citaj('mb_pet_raw2.json'); rows=citaj('igraci2.json')
 AL={'Both Tut Gach':'Both Gach','Santiago Yusta':'Santi Yusta','Aleksander Balcerowski':'Olek Balcerowski','AJ Lawson':'A.J. Lawson','T.J. Shorts':'TJ Shorts','Daniel Oturu':'Dan Oturu'}
 def key(n):
     n=unicodedata.normalize('NFKD',n).encode('ascii','ignore').decode().lower().replace("'",'')
@@ -20,7 +21,7 @@ for k,lines in raw.items():
 print('nema u modelu:',miss)
 # ostali dani istog kola ostaju u kvote.json
 danas={r['utakmica'] for r in idx.values()}
-cet=[x for x in json.load(open('kvote.json')) if x.get('kolo')==KOLO and x['utakmica'] not in danas]
-json.dump(cet+out,open('kvote.json','w'),ensure_ascii=False)
-json.dump(out,open('kvote_pet.json','w'),ensure_ascii=False)
+cet=[x for x in citaj('kvote.json') if x.get('kolo')==KOLO and x['utakmica'] not in danas]
+pisi(cet+out, 'kvote.json', ensure_ascii=False)
+pisi(out, 'kvote_pet.json', ensure_ascii=False)
 print(len(cet),len(out))

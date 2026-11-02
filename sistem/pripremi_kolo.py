@@ -3,6 +3,7 @@
 #           py -X utf8 pripremi_kolo.py --provera   -> računa kola 1-8 i poredi sa data9*.json, ništa ne upisuje
 # Zapisnici odigranih utakmica čuvaju se u api_kes/, pa se isti zahtev ne šalje dvaput.
 import json, os, subprocess, sys, time, datetime, collections
+from pomocno import citaj, pisi
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 A, SEZONA, KES = 'https://api-live.euroleague.net', 'E2026', 'api_kes'
 RACKET = 'ABC'                  # zone blizu koša u Points API-ju; H, I, J su trojke
@@ -12,14 +13,15 @@ DANI = ['pon', 'uto', 'sre', 'čet', 'pet', 'sub', 'ned']
 
 def preuzmi(u, f=None):
     p = os.path.join(KES, f) if f else None
-    if p and os.path.exists(p): return json.load(open(p, encoding='utf8'))
+    if p and os.path.exists(p): return citaj(p)
     for pokusaj in range(8):
         o = subprocess.run(['curl', '-s', '-w', '\n%{http_code}', '--max-time', '30', u], capture_output=True)
         telo, _, kod = o.stdout.rpartition(b'\n')
         if kod == b'200':
             time.sleep(1 if not p else 3)   # server ograničava brzinu
             if p:
-                os.makedirs(KES, exist_ok=True); open(p, 'wb').write(telo)
+                os.makedirs(KES, exist_ok=True)
+                with open(p, 'wb') as h: h.write(telo)
             return json.loads(telo)
         print('zahtev', u.split('/')[-1], 'vratio', kod.decode(), '- čekam', flush=True)
         time.sleep(300 if kod == b'429' else 30)
@@ -77,7 +79,7 @@ def statistika(do_kola):
                 pace={t: round(c['pos'] / c['g'], 1) for t, c in tim.items()}), {k: [v[0], round(v[1]), int(v[2]), v[3]] for k, v in faul.items()}
 
 def provera():
-    novo, fa = statistika(8); st = [json.load(open(f, encoding='utf8')) for f in ('data9.json', 'data9b.json', 'data9c.json')]
+    novo, fa = statistika(8); st = [citaj(f) for f in ('data9.json', 'data9b.json', 'data9c.json')]
     oP, oS = {(p[0], p[2]): p for d in st for p in d['P']}, {(s[0], s[1]): s for d in st for s in d['SP']}
     nP, nS = {(p[0], p[2]): p for p in novo['P']}, {(s[0], s[1]): s for s in novo['SP']}
     print('igrača staro', len(oP), 'novo', len(nP), 'fale u novom', [k for k in oP if k not in nP])
@@ -89,7 +91,7 @@ def provera():
     oA = {(r[0], r[1]): r for r in st[0]['posAllow']}
     print('posAllow najveća razlika', round(max(pog(oA[(r[0], r[1])], r, (2, 3, 4, 5)) for r in novo['posAllow']), 2))
     print('pace najveća razlika', round(max(abs(v - st[0]['pace'][t]) for t, v in novo['pace'].items()), 2))
-    oF = json.load(open('faulovi.json', encoding='utf8'))
+    oF = citaj('faulovi.json')
     print('faulovi razlika', sum(1 for k, v in oF.items() if fa.get(k) != v), 'od', len(oF), [(k, v, fa.get(k)) for k, v in oF.items() if fa.get(k) != v][:3])
 
 def pripremi(k):
@@ -97,21 +99,21 @@ def pripremi(k):
     if not gs: raise SystemExit(f'nema rasporeda za {k}. kolo')
     pre = utakmice(k - 1)
     novo, fa = statistika(k - 1)
-    json.dump(novo, open('statistika.json', 'w'), ensure_ascii=False)
-    json.dump(fa, open('faulovi.json', 'w'), ensure_ascii=False)
+    pisi(novo, 'statistika.json', ensure_ascii=False)
+    pisi(fa, 'faulovi.json', ensure_ascii=False)
     games = []
     for g in gs:
         b = beograd(g['utcDate'])
         games.append([g['local']['club']['code'], g['road']['club']['code'], f"{DANI[b.weekday()]} {b:%d.%m. %H:%M}", g['utcDate']])
     od = max(g['utcDate'] for g in pre)    # snimci kvota stariji od ovoga pripadaju prošlom kolu
-    json.dump(dict(kolo=k, od=od, games=games), open('kolo.json', 'w'), ensure_ascii=False, indent=0)
+    pisi(dict(kolo=k, od=od, games=games), 'kolo.json', ensure_ascii=False, indent=0)
     # odmor: dana između prethodne utakmice tima i ove
     posl = {}
     for g in pre:
         for s in ('local', 'road'): posl[g[s]['club']['code']] = beograd(g['utcDate']).date()
-    M = json.load(open('minute_timovi.json', encoding='utf8'))
+    M = citaj('minute_timovi.json')
     M['odmor_dana'] = {t: (beograd(u).date() - posl[t]).days - 1 for h, a, _, u in games for t in (h, a) if t in posl}
-    json.dump(M, open('minute_timovi.json', 'w'), ensure_ascii=False)
+    pisi(M, 'minute_timovi.json', ensure_ascii=False)
     print(f"{k}. kolo: {len(games)} utakmica, prva {games[0][2]}, poslednja {games[-1][2]}; statistika {len(novo['P'])} igrača, kola do {k - 1}")
 
 if __name__ == '__main__':

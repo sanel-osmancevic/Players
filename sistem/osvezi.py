@@ -3,11 +3,21 @@
 #   bez argumenta: najnoviji Maxbet snimak servisa sa igračima (prikupljeno/), a ako ga nema, direktno povlačenje
 #   sa argumentom: koristi {raw, games} koji je vratio pregledač
 import json, sys, subprocess, re, os, datetime
+from pomocno import citaj, pisi, citaj_tekst, pisi_tekst, beograd
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 if not sys.flags.utf8_mode:   # na Windowsu open() inače ne čita fajlove kao UTF-8
     sys.exit(subprocess.run([sys.executable, '-X', 'utf8', *sys.argv], env=dict(os.environ, PYTHONUTF8='1')).returncode)
-from kolo import KOLO, DAN, tim
+from kolo import KOLO, DAN, GAMES, IME, tim
 os.environ['DAN'] = DAN; os.environ['PYTHONUTF8'] = '1'   # i za skripte koje se pozivaju odavde
+# Odigran tiket zaključava ceo dan: igrači, granice, kvote i tiketi tog dana se više ne menjaju
+if os.path.exists('zakljucano.json'):
+    _z = citaj('zakljucano.json')
+    if _z.get('sve'):   # dugme Zaključaj: nikakvo osvežavanje dok se ne otključa
+        print('Zapamćena lista nije menjana: sve je zaključano.')
+        sys.exit(0)
+    if any(t['kolo'] == KOLO and t['dan'].startswith(DAN + ' ') for t in _z['tiketi'].values()):
+        print(f'Zapamćena lista nije menjana: tiket za dan {DAN} je odigran.')
+        sys.exit(0)
 Q = '?annex=3&mobileVersion=1.21.18&locale=sr'
 BASE = 'https://www.maxbet.rs/restapi/offer/sr'
 
@@ -42,30 +52,30 @@ def fetch_direct():
 
 def najnoviji_snimak():
     import glob
-    sn = [s for s in (json.load(open(f)) for f in glob.glob('prikupljeno/*/mb_*.json')) if s.get('raw')]
+    sn = [s for s in (citaj(f) for f in glob.glob('prikupljeno/*/mb_*.json')) if s.get('raw')]
     if not sn: return None
     s = max(sn, key=lambda x: x['t'])
     print('Maxbet snimak servisa:', s['t'])
     return s
 _arg = [a for a in sys.argv[1:] if not a.startswith('--')]
-snap = json.load(open(_arg[0])) if _arg else (najnoviji_snimak() or fetch_direct())
+snap = citaj(_arg[0]) if _arg else (najnoviji_snimak() or fetch_direct())
 raw = snap['raw']
 for k, ls in raw.items():  # uskladi oblik: milestone linije imaju 3 polja
     raw[k] = [l[:3] if len(l) == 4 and l[3] is None else l for l in ls]
 
 # pomeranja linija u odnosu na prethodno stanje
-prev = json.load(open('mb_pet_raw2.json')) if os.path.exists('mb_pet_raw2.json') else {}
+prev = citaj('mb_pet_raw2.json') if os.path.exists('mb_pet_raw2.json') else {}
 moves = []
 for k in raw:
     A = {(l[0], l[1], len(l)): l for l in prev.get(k, [])}; B = {(l[0], l[1], len(l)): l for l in raw[k]}
     for kk in set(A) | set(B):
         if A.get(kk) != B.get(kk) and len(kk) and kk[2] == 4: moves.append((k.split('|')[0], A.get(kk), B.get(kk)))
 novi = [k for k in raw if k not in prev]; nestali = [k for k in prev if k not in raw]
-json.dump(raw, open('mb_pet_raw2.json', 'w'), ensure_ascii=False)
+pisi(raw, 'mb_pet_raw2.json', ensure_ascii=False)
 
 # snimak glavnih Maxbet linija za praćenje kretanja (books/mb_HHMM.json); Soccer i Merkur snimke
 # upisuju snippets/soccer.js i snippets/merkur.js u books/sb_HHMM.json i books/mk_HHMM.json
-t_snap = snap.get('t') or datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+t_snap = snap.get('t') or datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
 glavne = {}
 for k, ls in raw.items():
     d = {}
@@ -73,44 +83,50 @@ for k, ls in raw.items():
         if len(l) == 4 and l[2] and l[3] and l[0] not in d: d[l[0]] = [l[1], l[2], l[3]]
     glavne[k] = d
 os.makedirs('books', exist_ok=True)
-lok = datetime.datetime.fromisoformat(t_snap.replace('Z', '+00:00')).astimezone(datetime.timezone(datetime.timedelta(hours=1)))
-json.dump({'t': t_snap, 'out': glavne}, open(f"books/mb_{lok.strftime('%m%d_%H%M')}.json", 'w'), ensure_ascii=False)
+lok = beograd(datetime.datetime.fromisoformat(t_snap.replace('Z', '+00:00')))
+pisi({'t': t_snap, 'out': glavne}, f"books/mb_{lok.strftime('%m%d_%H%M')}.json", ensure_ascii=False)
 
 # kvote utakmica -> adjust
 G = {}
 for h, a, t, hdp, ou, oh, oa in snap['games']:
     if ou and oh and oa: G[f"{tim(h) or h} – {tim(a) or a}"] = (float(ou), float(oh), float(oa))
-adj = open('adjust2.py').read()
+adj = citaj_tekst('adjust2.py')
 adj = re.sub(r"G=\{.*?\}\nLG", "G=" + repr(G) + "\nLG", adj, flags=re.S)
-open('adjust3.py', 'w').write(adj)
+pisi_tekst(adj, 'adjust3.py')
 
 run = lambda *c: subprocess.run([sys.executable if c[0] == 'python3' else c[0], *c[1:]], check=True, capture_output=True, text=True).stdout
 print(run('python3', 'nestanak.py').strip()); run('python3', 'build5.py'); print(run('python3', 'dostupnost.py').strip()); run('python3', 'adjust3.py'); print(run('python3', 'minute.py').strip()); print(run('python3', 'uloge2.py' if os.path.exists('uloge_faktori.json') else 'uloge.py').strip()); run('python3', 'uci2.py'); print(run('python3', 'tezine_primeni.py', 'igraci').strip()); print(run('python3', 'faul.py').strip())
 # ručna isključenja (rizik) iz iskljuci.json
-ex = json.load(open('iskljuci.json')) if os.path.exists('iskljuci.json') else {}
-rows = json.load(open('igraci2.json'))
+ex = citaj('iskljuci.json') if os.path.exists('iskljuci.json') else {}
+rows = citaj('igraci2.json')
 for r in rows:
     if r['igrac'] in ex and r['termin'].startswith(DAN): r['iskljuci'] = ex[r['igrac']]
     elif r.get('rizik_uloge'): r['iskljuci'] = 'Rizik uloge: ' + r['rizik_uloge']   # upitan saigrač ili izgubljen start
-json.dump(rows, open('igraci2.json', 'w'), ensure_ascii=False)
+pisi(rows, 'igraci2.json', ensure_ascii=False)
 print(run('python3', 'kv_pet2.py').strip())
+# Maxbet nema igrače za ovaj dan (npr. objavio je samo sledeći): zapamćene preporuke ostaju, da ih ovaj preračun ne obriše
+if not citaj('kvote_pet.json'):
+    print(f'Zapamćena lista nije menjana: Maxbet nema igrače za dan {DAN}.')
+    print(subprocess.run([sys.executable, 'objavi_web.py'], capture_output=True, text=True).stdout.strip())
+    sys.exit(0)
 print(run('python3', 'market.py').strip().splitlines()[0]); print(run('python3', 'kalibracija.py').strip()); print(run('python3', 'tezine_primeni.py', 'kvote').strip()); print(run('python3', 'prosla_kvote.py').strip())
 run('python3', 'evidencija.py', 'kvote_pet.json', DAN)
 run('node', 't28.js')
 
 # zaključaj nove preporuke samo za utakmice koje još nisu počele
-picks = [dict(p, vrsta='sigurnije') for p in json.load(open('picks_pet3.json'))] + json.load(open('glavne_pet.json'))
-now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=1)))
+picks = [dict(p, vrsta='sigurnije') for p in citaj('picks_pet3.json')] + citaj('glavne_pet.json')
+now = beograd()
 if os.environ.get('SADA'): now = datetime.datetime.fromisoformat(os.environ['SADA'])  # samo za probe
-start = {}
+# početak iz rasporeda kola: Maxbet izbacuje utakmicu iz liste kad počne, a ona ipak mora da važi kao počela
+start = {f"{IME[h]} – {IME[a]}": datetime.datetime.fromisoformat(u.replace('Z', '+00:00')).astimezone(now.tzinfo) for h, a, _, u in GAMES}
 for h, a, t, *_ in snap['games']:
     if t: start[f"{tim(h) or h} – {tim(a) or a}"] = datetime.datetime.fromtimestamp(t / 1000, now.tzinfo)
-z = json.load(open('zapamceno.json'))
+z = citaj('zapamceno.json')
 KS = ['konacno','vrsta','kljuc','kolo','termin','red','igrac','utakmica','kategorija','smer','linija','opklada','kvota','sansa','razmak','stabilan','istorija','forma5','vrednost','minuti','rang','grupa','zapamceno','rezultat','ishod','kvota_prva','zapamceno_prvo','kvota_zavrsna','clv','brzo','zaostatak','klupa','ulog','sansa_kor','prednost','povezano','trz_prva','trz_zavrsna','clv_trz','sansa_sirova','model','trziste','kretanje']
 def pocela(u): return start.get(u) is not None and start[u] <= now
 # trenutna Maxbet kvota za svaku opkladu (za završnu kvotu / CLV)
 KV = {}
-for x in json.load(open('kvote_pet.json')):
+for x in citaj('kvote_pet.json'):
     for smer, q in (('više', x.get('kvota_vise')), ('manje', x.get('kvota_manje'))):
         if q: KV[(x['igrac'], x['kategorija'], float(x['linija']), smer)] = q
 stari = [r for r in z if r['kolo'] == KOLO and r['termin'].startswith(DAN)]
@@ -120,14 +136,14 @@ PRED_MEC = 60      # minuta pre početka: opklade za tu utakmicu se konačno zak
 ZAKLJUCAJ_SVE = '--zakljucaj' in sys.argv
 # Maxbet zaostaje za Soccerom i Merkurom -> "igraj odmah" (⚡): medijana Soccer/Merkur je za 0.5+ poena
 # (skokovi/asistencije 0.25+) na strani opklade u odnosu na Maxbet (provera petak: 8/11 u 13h, 7/7 u 15h)
-ODST = {(x['igrac'], x['kategorija'], float(x['linija'])): x.get('mb_odstupanje') for x in json.load(open('kvote_pet.json'))}
+ODST = {(x['igrac'], x['kategorija'], float(x['linija'])): x.get('mb_odstupanje') for x in citaj('kvote_pet.json')}
 def brzo(p):
     o = ODST.get((p['igrac'], p['kategorija'], float(p['linija'])))
     if o is None: return None, None
     lag = (-o if p['smer'] == 'više' else o)
     jed = 1 if p['kategorija'] == 'Poeni' else 0.5
     return (lag / jed >= 0.5), f"Soccer/Merkur {lag:+.1f} u odnosu na Maxbet"
-KAL = json.load(open('kalibracija.json')) if os.path.exists('kalibracija.json') else {'a': 1, 'b': 0}
+KAL = citaj('kalibracija.json') if os.path.exists('kalibracija.json') else {'a': 1, 'b': 0}
 def kal(p):   # usklađena šansa (kalibracija.py); prikaz, tiketi i ulozi koriste nju, izbor opklada ostaje isti
     import math
     p = min(max(float(p), 0.02), 0.98); return round(1 / (1 + math.exp(-(KAL['a'] * math.log(p / (1 - p)) + KAL['b']))), 3)
@@ -159,7 +175,7 @@ print(f"Zapamćena lista ažurirana {ts}: konačno zaključanih utakmica {n_z}, 
 # završna kvota: poslednja Maxbet kvota pre početka utakmice; CLV = prva / završna − 1 (plus = kvota je pala posle naše preporuke)
 # CLV prema tržištu: verovatnoća konsenzusa (Soccer, Merkur, Mozzart, Meridian, Stoiximan, bez marže) za našu stranu pred početak;
 # clv_trz = prva Maxbet kvota × ta verovatnoća − 1 = koliko je naša kvota vredela prema "pravoj" završnoj ceni tržišta
-TRZ = {(x['igrac'], x['kategorija'], float(x['linija'])): x.get('trz_vise') for x in json.load(open('kvote_pet.json'))}
+TRZ = {(x['igrac'], x['kategorija'], float(x['linija'])): x.get('trz_vise') for x in citaj('kvote_pet.json')}
 for d in novi_red:
     if pocela(d['utakmica']): continue
     q = KV.get((d['igrac'], d['kategorija'], float(d['linija']), d['smer']))
@@ -182,7 +198,7 @@ if gotove:
     k_raw = (hr - 0.5) / (mp - 0.5) if mp > 0.5 else 0.85
     K_KAL = max(0.5, min(1.0, (len(gotove) * k_raw + 30 * 1.0) / (len(gotove) + 30)))   # šanse su već usklađene: polazno bez dodatne korekcije
 else: K_KAL = 1.0
-IG_TIM = {r['igrac']: r['tim'] for r in json.load(open('igraci2.json'))}
+IG_TIM = {r['igrac']: r['tim'] for r in citaj('igraci2.json')}
 def ulog(d):
     kv, p = float(d['kvota']), 0.5 + K_KAL * (float(d['sansa']) - 0.5)
     pr = p * kv - 1
@@ -208,7 +224,7 @@ if dn > 10:
         if d.get('ulog'): d['ulog'] = max(0.25, round(d['ulog'] * 10 / dn * 4) / 4)
 print(f"Ulozi: kalibracija k={K_KAL:.2f}; ukupno {sum(d.get('ulog') or 0 for d in otvorene):.2f} j. na {sum(1 for d in otvorene if d.get('ulog'))} opklada")
 keep = [r for r in z if not (r['kolo'] == KOLO and r['termin'].startswith(DAN))] + novi_red
-json.dump(keep, open('zapamceno.json', 'w'), ensure_ascii=False)
+pisi(keep, 'zapamceno.json', ensure_ascii=False)
 
 print('Novi igrači:', [k.split('|')[0] for k in novi], 'Nestali:', [k.split('|')[0] for k in nestali])
 print('Pomeranja osnovnih linija (staro -> novo):')

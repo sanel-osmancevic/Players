@@ -7,6 +7,7 @@
 #                                   igrač dobija oznaku "rizik uloge" i ne ulazi u preporuke
 # Pokreće se posle build5.py, pre adjust3.py. Menja minuti_proj i srazmerno pts/reb/ast_proj u igraci2.json.
 import json, os, re, sys
+from pomocno import citaj, pisi
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 from uloge import OUT, IGRAO
 
@@ -20,7 +21,7 @@ SHR = float(os.environ.get('SHR',0.5))   # koliko verujemo razlici (ostatak ide 
 RECENT = int(os.environ.get('RECENT',3))  # izostanak u poslednja 3 kola čini igrača bitnim za sastav
 P_POVRATAK = float(os.environ.get('PPOV',0.65))  # prvi meč posle izostanka: minuti obično ograničeni
 
-P = [p for f in ('statistika.json',) for p in json.load(open(f))['P']]
+P = [p for f in ('statistika.json',) for p in citaj(f)['P']]
 LOG = {}
 for n, pos, t, rr, mm, *_ in P:
     LOG[n] = dict(t=t, r=[int(x) for x in rr.split(',')], m=[float(x) for x in mm.split(',')])
@@ -28,7 +29,7 @@ TEAMR = {}
 for n, x in LOG.items(): TEAMR.setdefault(x['t'], set()).update(x['r'])
 LAST = max(max(v) for v in TEAMR.values())
 
-rows = json.load(open('igraci2.json'))
+rows = citaj('igraci2.json')
 CODE = {}
 for r in rows:
     if r['api'] in LOG: CODE[r['tim']] = LOG[r['api']]['t']
@@ -55,7 +56,7 @@ def tim(j):
 
 # ključni igrači po timu (čije se prisustvo menjalo kroz kola ili su danas van/upitni)
 KEY = {}
-for j in set(LOG) | set(IGRAO):
+for j in sorted(set(LOG) | set(IGRAO)):   # stalan redosled, da se objašnjenja ne menjaju bez razloga
     tc = tim(j)
     if not tc: continue
     pl = odigrao(j); avg = (sum(LOG[j]['m']) / len(LOG[j]['m'])) if j in LOG else 20.0
@@ -159,7 +160,7 @@ for r in rows:
     r['starter_status'] = ('siguran starter' if s5 and sum(s5) == len(s5) and x['r'][-1] == LAST else
                            'pretežno starter' if s5 and sum(s5) / len(s5) >= 0.6 else 'klupa')
     r['nemir_tim'] = round(NEMR.get(x['t'], 1.0), 2); r['nemir_tim_visok'] = NEMR.get(x['t'], 1.0) >= PRAG
-json.dump(rows, open('igraci2.json', 'w'), ensure_ascii=False)
+pisi(rows, 'igraci2.json', ensure_ascii=False)
 print('sastav: korigovano', len(out), 'igrača; rizik uloge:', sum(1 for o in out if o[4]))
 if '-v' in sys.argv:
     for o in sorted(out, key=lambda o: -abs(o[3] - o[2])): print(f"{o[0][:22]:22s} {o[1][:12]:12s} {o[2]:5.1f} -> {o[3]:5.1f}  {o[4]} {o[5]} | {o[6]}")

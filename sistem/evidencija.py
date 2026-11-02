@@ -1,17 +1,20 @@
 # Usage: python3 evidencija.py <kvote.json> <dan_label> [results.json]  -> appends to evidencija.json
 import json,sys,math,re,unicodedata,os
-kv=json.load(open(sys.argv[1])); dan=sys.argv[2]; resf=sys.argv[3] if len(sys.argv)>3 else None
-ig={(r['igrac'],r['kolo']):r for r in json.load(open('igraci2.json'))}
+from pomocno import citaj, pisi
+kv=citaj(sys.argv[1])
+if not kv: sys.exit('nema kvota za evidenciju')
+dan=sys.argv[2]; resf=sys.argv[3] if len(sys.argv)>3 else None
+ig={(r['igrac'],r['kolo']):r for r in citaj('igraci2.json')}
 def key(n):
     n=unicodedata.normalize('NFKD',n).encode('ascii','ignore').decode().lower().replace("'",'')
     n=re.sub(r'\b(iv|iii|jr)\b','',n); n=re.sub(r'\b[a-z]\b','',n); return re.sub(r'[^a-z]','',n)
 R={}
 if resf:
-    for n,mn,p,r,a in json.load(open(resf)):
+    for n,mn,p,r,a in citaj(resf):
         l,f=n.split(', ',1) if ', ' in n else (n,''); R[key(f+' '+l)]=dict(min=mn,Poeni=p,Skokovi=r,Asistencije=a)
 Phi=lambda z:0.5*(1+math.erf(z/math.sqrt(2)))
 K={'Poeni':'pts','Skokovi':'reb','Asistencije':'ast'}
-ev=json.load(open('evidencija.json')) if os.path.exists('evidencija.json') else []
+ev=citaj('evidencija.json') if os.path.exists('evidencija.json') else []
 ev=[e for e in ev if not (e['kolo']==kv[0]['kolo'] and e['dan']==dan)]
 for o in kv:
     p=ig.get((o['igrac'],o['kolo']))
@@ -32,7 +35,7 @@ for o in kv:
         if r is None or r['min']==0: row['proslo_vise']='nije igrao'
         else: row['rezultat']=r[o['kategorija']]; row['minuti_stvarno']=r['min']; row['proslo_vise']=r[o['kategorija']]>L
     ev.append(row)
-json.dump(ev,open('evidencija.json','w'),ensure_ascii=False)
+pisi(ev, 'evidencija.json', ensure_ascii=False)
 print(len(ev))
 
 # puni zapisnik i u pozadinsku arhivu (arhiva/kolo{K}_rezultati.json)

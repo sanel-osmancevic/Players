@@ -1,7 +1,8 @@
 # Zajedničko podešavanje kola: koje je kolo i dan i kako se timovi zovu. kolo.json pravi pripremi_kolo.py.
 # DAN je prvi dan sa utakmicom koja još nije počela; može se zadati promenljivom DAN, a SADA menja trenutno vreme (za probe).
-import json, os, re, datetime, unicodedata
-_d = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'kolo.json'), encoding='utf8'))
+import os, re, datetime, unicodedata
+from pomocno import citaj
+_d = citaj(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'kolo.json'))
 KOLO, OD, GAMES = _d['kolo'], _d['od'], _d['games']
 
 def _sada():

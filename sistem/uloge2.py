@@ -4,10 +4,11 @@
 # Primenjuje se sa težinom TEZ (provera na kolu 9: učinak po minuti se nije merljivo popravio, pa je težina umerena;
 # asistencije se ne primenjuju dok podaci ne pokažu da pomažu). Težine se preispituju posle svakog kola.
 import json, os, sys
+from pomocno import citaj, pisi
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 TEZ = {'pts': 0.5, 'reb': 0.5, 'ast': 0.0}
-F = json.load(open('uloge_faktori.json'))
-rows = json.load(open('igraci2.json')); out = []
+F = citaj('uloge_faktori.json')
+rows = citaj('igraci2.json'); out = []
 for r in rows:
     if r['status'] == 'Ne igra': continue
     f = F.get(r['api'])
@@ -24,8 +25,8 @@ for r in rows:
     r['uloga_zbog'] = f[4] if len(f) > 4 else ''
     if max(abs(f[0]), abs(f[1]), abs(f[3])) >= 8:
         out.append(dict(igrac=r['igrac'], tim=r['tim'], pts=f[0], reb=f[1], ast=f[2], sutevi=f[3], zbog=r['uloga_zbog']))
-json.dump(rows, open('igraci2.json', 'w'), ensure_ascii=False)
-json.dump(out, open('uloge.json', 'w'), ensure_ascii=False)
+pisi(rows, 'igraci2.json', ensure_ascii=False)
+pisi(out, 'uloge.json', ensure_ascii=False)
 print('uloge (sastav): korigovano', len(out), 'igrača sa većom promenom šuteva/poena/skokova')
 if '-v' in sys.argv:
     for o in out: print(f"{o['igrac'][:22]:22s} šutevi {o['sutevi']:+d}% poeni {o['pts']:+d}% skok {o['reb']:+d}% ast {o['ast']:+d}% | {o['zbog'][:100]}")

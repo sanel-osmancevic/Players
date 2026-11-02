@@ -1,15 +1,15 @@
 // Lokalna aplikacija: služi dashboard na http://localhost:8765 i na dugme Osveži redom povlači kvote i povrede, preračunava i šalje na GitHub.
 // Sluša samo na ovom računaru; telefon samo gleda objavljeni sajt. API prima zahteve samo sa ove stranice. Fajlovi van sajta (profil pregledača, .git) se ne služe.
 // Upotreba: node app_server.js   (pokreni_aplikaciju.vbs ga diže u pozadini i otvara pregledač)
-const http = require('http'), fs = require('fs'), path = require('path'), { osvezi, posaljiPodatke } = require('./tok');
+const http = require('http'), fs = require('fs'), path = require('path'), { osvezi, posaljiPodatke, zakljucanDan } = require('./tok');
 
 const ROOT = path.resolve(__dirname, '..', '..'), SISTEM = path.join(ROOT, 'sistem'), PRIK = path.join(SISTEM, 'prikupljeno');
-const ZAP = path.join(SISTEM, 'zapamceno.json');
+const ZAP = path.join(SISTEM, 'zapamceno.json'), ZAK = path.join(SISTEM, 'zakljucano.json');
 const PORT = +process.env.PORT || 8765, MIN = 60000;
 const DNEVNIK = path.join(PRIK, 'app.log');
 const STARI_STATUSI = 6 * 60 * MIN, PRAZAN_HOD = 6 * 60 * MIN;
 const TIP = { '.html': 'text/html; charset=utf-8', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.webmanifest': 'application/manifest+json' };
-const SAJT = /^\/(index\.html|manifest\.webmanifest|ikona[-\w]*\.(svg|png)|data\/[\w-]+\.json)$/;
+const SAJT = /^\/(index\.html|manifest\.webmanifest|logo-evroliga\.svg|ikona[-\w]*\.(svg|png)|data\/[\w-]+\.json)$/;
 const DOZVOLJEN = new Set([`localhost:${PORT}`, `127.0.0.1:${PORT}`]);
 
 const POSLE_KLIKA = 30000;   // više klikova zaredom ide na sajt zajedno
@@ -22,10 +22,10 @@ function informacije() {
   const statusi = fs.existsSync(s) ? fs.statSync(s).mtimeMs : null;
   const k = citaj(path.join(SISTEM, 'kolo.json'), { games: [] });
   const uskoro = k.games.filter(g => { const t = Date.parse(g[3]); return t > sada && t - sada <= 60 * MIN; }).map(g => g[2]);
-  return { statusiStari: !statusi || sada - statusi > STARI_STATUSI, statusiVreme: statusi, uskoro, auto: citaj(path.join(PRIK, 'auto.json'), null) };
+  return { statusiStari: !statusi || sada - statusi > STARI_STATUSI, statusiVreme: statusi, uskoro, auto: citaj(path.join(PRIK, 'auto.json'), null), zakljucan: zakljucanDan() };
 }
 
-// Dugme Odigrano: opklada zadržava granicu i kvotu pri svakom sledećem preračunu (osvezi.py), a oznaka ide na sajt, da se vidi i na telefonu.
+// Oznake odigranih tiketa idu na sajt, da se vide i na telefonu; više klikova zaredom ide zajedno
 function zakaziSlanje() {
   clearTimeout(tajmerSlanja);
   tajmerSlanja = setTimeout(async () => {
@@ -35,21 +35,67 @@ function zakaziSlanje() {
     log(`slanje oznaka: ${g.status} ${g.poruka}`);
   }, POSLE_KLIKA);
 }
-function odigrano({ kolo, kljuc, opklada, odigrano: da }) {
-  if (posao?.radi || fs.existsSync(path.join(PRIK, '.osvezi_traje'))) return [409, 'Osvežavanje je u toku, pokušaj za minut.'];
-  const redovi = JSON.parse(fs.readFileSync(ZAP, 'utf8'));
-  const r = redovi.find(x => x.igrac && +x.kolo === +kolo && x.kljuc === kljuc && x.opklada === opklada);
-  if (!r) return [404, 'Opklada nije u zapamćenoj listi.'];
-  if (r.ishod) return [409, 'Opklada je već završena.'];
-  if (da) r.odigrano = true; else delete r.odigrano;
-  const s = JSON.stringify(redovi);
+function upisiPodatke(redovi, z) {
+  const s = JSON.stringify(redovi), zs = JSON.stringify(z);
   fs.writeFileSync(ZAP + '.tmp', s); fs.renameSync(ZAP + '.tmp', ZAP);
+  fs.writeFileSync(ZAK + '.tmp', zs); fs.renameSync(ZAK + '.tmp', ZAK);
   fs.writeFileSync(path.join(ROOT, 'data', 'zapamceno.json'), s);
+  fs.writeFileSync(path.join(ROOT, 'data', 'zakljucano.json'), zs);
   // novo v: telefon inače može da zadrži staru kopiju podataka
   const m = path.join(ROOT, 'data', 'meta.json');
   fs.writeFileSync(m, JSON.stringify({ ...citaj(m, {}), v: Math.floor(Date.now() / 1000) }));
   zakaziSlanje();
-  log(`odigrano ${da ? 'da' : 'ne'}: ${kljuc} ${opklada}`);
+}
+// Dugme Zaključaj: trenutne granice i kvote postaju poslednje, a osvežavanje je isključeno dok se ne otključa
+function zakljucaj({ zakljucano: da }) {
+  if (posao?.radi || fs.existsSync(path.join(PRIK, '.osvezi_traje'))) return [409, 'Osvežavanje je u toku, pokušaj za minut.'];
+  const z = citaj(ZAK, { tiketi: {} }), redovi = JSON.parse(fs.readFileSync(ZAP, 'utf8')), kolo = citaj(path.join(SISTEM, 'kolo.json'), {}).kolo;
+  const sada = process.env.SADA ? Date.parse(process.env.SADA) : Date.now();
+  if (da) {
+    const otvoreni = redovi.filter(x => x.igrac && +x.kolo === +kolo && !x.ishod && pocetak(x.termin) > sada);
+    if (!otvoreni.length) return [409, 'Nema preporuka koje mogu da se zaključaju. Osveži kad Maxbet objavi igrače.'];
+    const t = new Intl.DateTimeFormat('sr-RS', { timeZone: 'Europe/Belgrade', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(sada));
+    for (const x of otvoreni) if (!x.konacno) { x.konacno = t; x.konacno_dugme = true; }
+    z.sve = { vreme: t };
+  } else {
+    for (const x of redovi) if (x.konacno_dugme) { delete x.konacno; delete x.konacno_dugme; }
+    delete z.sve;
+  }
+  upisiPodatke(redovi, z);
+  log(da ? 'sve zaključano' : 'sve otključano');
+  return [200, 'ok'];
+}
+// Početak utakmice iz termina reda, npr. "sre 04.11. 20:45"
+function pocetak(t) {
+  const m = String(t).match(/(\d+)\.(\d+)\.\s+(\d+):(\d+)/); if (!m) return null;
+  const n = new Date(), d = new Date(n.getFullYear(), +m[2] - 1, +m[1], +m[3], +m[4]);
+  if (d - n > 180 * 864e5) d.setFullYear(d.getFullYear() - 1);
+  return +d;
+}
+// Dugme Odigrano na singlu (jedna noga) ili tiketu: igrači dobijaju katanac, a ceo dan se zaključava (osvezi.py ga više ne dira, pa ni tiketi ne mogu da se promene).
+// Poništavanje je moguće samo dok nijedna utakmica sa tiketa nije počela.
+function tiket({ kolo, dan, kljuc, noge, odigrano: da }) {
+  if (posao?.radi || fs.existsSync(path.join(PRIK, '.osvezi_traje'))) return [409, 'Osvežavanje je u toku, pokušaj za minut.'];
+  const z = citaj(ZAK, { tiketi: {} }), redovi = JSON.parse(fs.readFileSync(ZAP, 'utf8'));
+  const sada = process.env.SADA ? Date.parse(process.env.SADA) : Date.now();
+  const nadji = n => redovi.find(x => x.igrac && +x.kolo === +kolo && x.kljuc === n.kljuc && x.opklada === n.opklada);
+  if (da) {
+    if (!Array.isArray(noge) || noge.length < 1 || noge.length > 3) return [400, 'Loš tiket.'];
+    const r = noge.map(nadji);
+    if (r.some(x => !x)) return [404, 'Opklada nije u zapamćenoj listi.'];
+    if (r.some(x => !String(x.termin).startsWith(dan + ' '))) return [400, 'Opklada nije iz tog dana.'];
+    if (r.some(x => x.ishod || pocetak(x.termin) <= sada)) return [409, 'Utakmica sa ovog tiketa je već počela.'];
+    z.tiketi[kljuc] = { kolo: +kolo, dan, noge: noge.map(n => ({ kljuc: n.kljuc, opklada: n.opklada })) };
+  } else {
+    const t = z.tiketi[kljuc]; if (!t) return [404, 'Tiket nije označen.'];
+    if (t.noge.some(n => { const x = nadji(n); return x && (x.ishod || pocetak(x.termin) <= sada); })) return [409, 'Utakmica sa ovog tiketa je već počela, pa ostaje zaključan.'];
+    delete z.tiketi[kljuc];
+  }
+  // katanac imaju tačno igrači sa odigranih tiketa
+  const igrani = new Set(Object.values(z.tiketi).flatMap(t => t.noge.map(n => `${t.kolo}|${n.kljuc}|${n.opklada}`)));
+  for (const r of redovi) if (r.igrac) { if (igrani.has(`${r.kolo}|${r.kljuc}|${r.opklada}`)) r.odigrano = true; else delete r.odigrano; }
+  upisiPodatke(redovi, z);
+  log(`tiket ${da ? 'odigran' : 'poništen'}: ${kljuc}`);
   return [200, 'ok'];
 }
 function posalji(res, kod, tip, telo) { res.writeHead(kod, { 'content-type': tip, 'cache-control': 'no-store' }); res.end(telo); }
@@ -67,16 +113,17 @@ function obrada(q, res) {
     if (u === '/api/osvezi' && q.method === 'POST') {
       if (!izvor) return json(res, 403, { greska: 'nije dozvoljeno' });
       if (posao?.radi) return json(res, 409, { greska: 'osvežavanje već traje' });
+      if (zakljucanDan()) return json(res, 409, { greska: 'Zaključano je, pa je osvežavanje isključeno.' });
       posao = { radi: true, pocetak: Date.now(), koraci: [], ishod: null, greska: null };
       osvezi(posao).catch(e => { posao.greska = String(e.message); posao.radi = false; });
       return json(res, 202, { posao });
     }
-    if (u === '/api/odigrano' && q.method === 'POST') {
+    if ((u === '/api/tiket' || u === '/api/zakljucaj') && q.method === 'POST') {
       if (!izvor) return json(res, 403, { greska: 'nije dozvoljeno' });
       let telo = '';
       q.on('data', d => { telo += d; if (telo.length > 2000) q.destroy(); });
       q.on('end', () => {
-        try { const [kod, poruka] = odigrano(JSON.parse(telo)); json(res, kod, kod === 200 ? { ok: true } : { greska: poruka }); }
+        try { const [kod, poruka] = (u === '/api/tiket' ? tiket : zakljucaj)(JSON.parse(telo)); json(res, kod, kod === 200 ? { ok: true } : { greska: poruka }); }
         catch (e) { json(res, 400, { greska: 'loš zahtev' }); }
       });
       return;

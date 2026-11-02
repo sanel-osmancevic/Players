@@ -2,9 +2,10 @@
 # i udeo utakmica sa 4+ faula. Igrač sa visokim rizikom: manje očekivanih minuta i veće rasipanje.
 #   višak = stopa po 40 − prosek;  minuti i projekcije × (1 − 1,5% po višku, najviše −6%);  sd × (1 + 3% po višku, najviše +12%)
 import json, re, unicodedata, os
+from pomocno import citaj, pisi
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 from kolo import DAN, IME as TEAM
-F = json.load(open('faulovi.json'))
+F = citaj('faulovi.json')
 tot_f = sum(v[2] for v in F.values()); tot_m = sum(v[1] for v in F.values())
 AVG = tot_f / tot_m * 40  # prosek lige po 40 minuta
 K = 60  # minuta skupljanja ka proseku
@@ -14,8 +15,8 @@ for k, (g, m, f, g4) in F.items():
     rate = (f + AVG / 40 * K) / (m + K) * 40
     idx[(n, TEAM[t])] = (round(rate, 2), g4, g)
 # sudije: sudije_kolo.json {"Domaćin – Gost": [["SUDIJA 1", ...], indeks_faulova, indeks_slobodnih_bacanja]} (dan utakmice, sa zvaničnog sajta)
-SK = json.load(open('sudije_kolo.json')) if os.path.exists('sudije_kolo.json') else {}
-rows = json.load(open('igraci2.json')); n_adj = 0
+SK = citaj('sudije_kolo.json') if os.path.exists('sudije_kolo.json') else {}
+rows = citaj('igraci2.json'); n_adj = 0
 for r in rows:
     if not r['termin'].startswith(DAN) or r['status'] == 'Ne igra': continue
     v = idx.get((r.get('api'), r['tim']))
@@ -39,5 +40,5 @@ for r in rows:
         if f'{k}_proj_sirovo' in r:
             r[f'{k}_proj_sirovo'] = round(r[f'{k}_proj_sirovo'] * mf, 1); r[f'{k}_sd_sirovo'] = round(r[f'{k}_sd_sirovo'] * sf, 2)
     n_adj += 1
-json.dump(rows, open('igraci2.json', 'w'), ensure_ascii=False)
+pisi(rows, 'igraci2.json', ensure_ascii=False)
 print(f'faulovi: prosek {AVG:.2f} po 40 min; korigovano {n_adj} igrača')

@@ -3,11 +3,12 @@
 # (b) kratak odmor: 1 dan između utakmica -> igrači sa 26+ minuta -2%.
 # Primenjuje se na minute i projekcije (poeni/skokovi/asistencije srazmerno minutima).
 import json, math, os
+from pomocno import citaj, pisi
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 from kolo import DAN, KOD as CODE
 from statistics import NormalDist
 N = NormalDist()
-M = json.load(open('minute_timovi.json')); G = json.load(open('kvote_utakmica.json'))
+M = citaj('minute_timovi.json'); G = citaj('kvote_utakmica.json')
 SD_MARGIN = 12.5
 r_all = [b / c for n, b, c in M['rasturi'].values() if n and b and c]
 R_LG = sum(r_all) / len(r_all)
@@ -15,7 +16,7 @@ def ratio(tc):
     n, b, c = M['rasturi'].get(tc, [0, None, None])
     r = b / c if n and b and c else R_LG
     return (n * r + 3 * R_LG) / (n + 3)
-rows = json.load(open('igraci2.json')); log = []
+rows = citaj('igraci2.json'); log = []
 for r in rows:
     g = G.get(r['utakmica'])
     if not g or r['status'] == 'Ne igra' or not r['termin'].startswith(DAN): continue
@@ -31,5 +32,5 @@ for r in rows:
         r['minuti_proj'] = round(r['minuti_proj'] * f, 1)
         for k in ('pts', 'reb', 'ast'): r[f'{k}_proj'] = round(r[f'{k}_proj'] * f, 1)
         log.append((r['igrac'], r['tim'], f, round(p_blow, 2)))
-json.dump(rows, open('igraci2.json', 'w'), ensure_ascii=False)
+pisi(rows, 'igraci2.json', ensure_ascii=False)
 print('minute korigovane za', len(log), 'igrača; prosek lige skraćenja startera', round(R_LG, 3))

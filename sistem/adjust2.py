@@ -1,5 +1,6 @@
 import json,math
-rows=json.load(open('igraci2.json'))
+from pomocno import citaj, pisi
+rows=citaj('igraci2.json')
 G={'Dubai – Hapoel TA':(174.5,1.75,2.4),'Anadolu Efes – Panathinaikos':(164.5,3.6,1.41),'Žalgiris – Partizan':(165.5,1.36,4.0),'ASVEL – Baskonia':(175.5,1.62,2.7),
    'Olympiacos – Olimpia Milano':(169.5,1.2,6.1),'Barcelona – Valencia':(182.5,1.77,2.4),'Virtus – Beşiktaş':(176.5,1.52,3.1)}
 LG=173.8
@@ -15,6 +16,6 @@ for r in rows:
         f=(tf if k=='pts' else math.sqrt(tf))*mf
         r[k+'_proj']=round(r[k+'_proj']*f,1)
     r['minuti_proj']=round(r['minuti_proj']*mf,1)
-json.dump(rows,open('igraci2.json','w'),ensure_ascii=False)
-json.dump(G,open('kvote_utakmica.json','w'),ensure_ascii=False)
+pisi(rows, 'igraci2.json', ensure_ascii=False)
+pisi(G, 'kvote_utakmica.json', ensure_ascii=False)
 print([(r['igrac'],r['faktor_utakmica'],r['pts_proj']) for r in rows if r.get('faktor_utakmica') and abs(r['faktor_utakmica']-1)>0.04][:12])

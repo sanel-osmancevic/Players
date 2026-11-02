@@ -5,6 +5,7 @@
 #   arhiva/kolo{K}_rezultati.json — stvarni učinak posle utakmica (puni zapisnik), upisuje arhiva_rezultati()
 # Kasnije se spajaju po (igrač, tim, utakmica) za proveru i podešavanje modela na mnogo većem uzorku.
 import json, os, sys, datetime
+from pomocno import citaj, pisi
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 os.makedirs('arhiva', exist_ok=True)
 
@@ -20,12 +21,12 @@ POLJA_KV = ['linija', 'kvota_vise', 'kvota_manje', 'trz_vise', 'trz_medijana', '
 def zabelezi(t_snap=None):
     import market as M
     t = t_snap or datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
-    ig = json.load(open('igraci2.json'))
+    ig = citaj('igraci2.json')
     kolo = max(int(r.get('kolo') or 0) for r in ig) or None
-    kv = json.load(open('kvote.json')) if os.path.exists('kvote.json') else []
+    kv = citaj('kvote.json') if os.path.exists('kvote.json') else []
     KV = {}
     for x in kv: KV.setdefault(x['igrac'], []).append({k: x.get(k) for k in ['kategorija'] + POLJA_KV})
-    raw = json.load(open('mb_pet_raw2.json')) if os.path.exists('mb_pet_raw2.json') else {}
+    raw = citaj('mb_pet_raw2.json') if os.path.exists('mb_pet_raw2.json') else {}
     # sve kladionice, poslednji snimak, po (prezime, tim); plus imena koja model ne prepoznaje
     knj = {b: h[-1][1] for b, h in M.HIST.items() if h}
     sirovo = {}
@@ -55,16 +56,16 @@ def zabelezi(t_snap=None):
 
 def arhiva_rezultati(box_file, kolo):
     """box_file: JSON {'p': [[ime, tim, min, pts, reb, ast, fga, fta, faulovi, starter, ...]], 'polja': [...]} ili lista [ime,min,pts,reb,ast]"""
-    d = json.load(open(box_file))
+    d = citaj(box_file)
     fn = f'arhiva/kolo{kolo}_rezultati.json'
-    sve = json.load(open(fn)) if os.path.exists(fn) else {}
+    sve = citaj(fn) if os.path.exists(fn) else {}
     if isinstance(d, dict):
         pol = d.get('polja') or ['ime', 'tim', 'min', 'pts', 'reb', 'ast', 'fga', 'fta', 'faulovi', 'starter']
         for p in d['p']: sve[p[0] + '|' + str(p[1])] = dict(zip(pol, p))
         if d.get('skor'): sve['_skor_' + os.path.basename(box_file)] = d['skor']
     else:
         for p in d: sve[p[0]] = dict(zip(['ime', 'min', 'pts', 'reb', 'ast'], p))
-    json.dump(sve, open(fn, 'w'), ensure_ascii=False)
+    pisi(sve, fn, ensure_ascii=False)
     return fn, len(sve)
 
 if __name__ == '__main__':

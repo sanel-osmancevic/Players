@@ -1,24 +1,14 @@
 import json, math, re
+from pomocno import citaj, pisi
 from kolo import KOLO, GAMES as GAMES_KOLA
-ex=json.load(open('extras.json')); d9=json.load(open('statistika.json')); d9b=dict(P=[],SP=[]); d9c=dict(P=[],SP=[])
-SKIP={'MILUTINOV, NIKOLA'}
-d9c['P']=[p for p in d9c['P'] if p[0] not in SKIP]
-for k in ['HIFI, NADIR|PRS','TUBELIS, AZUOLAS|ZAL','LESSORT, MATHIAS|PAN']: ex['status'].pop(k,None)
-ex['status'].pop('SIMMONS, KOBI|BAS',None)
-ex['status']['KURUCS, RODIONS|BAS']=['Ne igra','Van stroja (izveštaj 30.10.)']
-ex['status']['MIROTIC, NIKOLA|PAM']=['Ne igra','Van stroja (izveštaj 30.10.)']
-ex['status']['REUVERS, NATHAN|PAM']=['Ne igra','Van stroja (izveštaj 30.10.)']
-ex['status']['PETERS, ALEC|MIL']=['Ne igra','Koleno, upitan i verovatno ne igra (30.10.)']
+ex=citaj('extras.json'); d9=citaj('statistika.json'); d9b=dict(P=[],SP=[]); d9c=dict(P=[],SP=[])
 # poslednja provera sastava: statusi.json {"PREZIME, IME|TIM": ["Igra"/"Upitan"/"Ne igra", "izvor"]} ima prednost
 import os as _os
 for _f in ('statusi_auto.json','statusi.json'):   # auto (nestanak iz ponude) pa ručni (zvaničan izveštaj, vesti) koji ima prednost
   if _os.path.exists(_f):
-    for _k,_v in json.load(open(_f)).items():
+    for _k,_v in citaj(_f).items():
         if _v[0]=='Igra': ex['status'].pop(_k,None)
         else: ex['status'][_k]=_v
-ex['injuries']=[i for i in ex['injuries'] if i[1] not in ('Nadir Hifi','Stefan Miljenović','Azuolas Tubelis','Mathias Lessort')]
-for i in ex['injuries']:
-    if i[1]=='Frank Ntilikina': i[2]='Upitan'; i[3]='Bol u mišiću, Paris se nada da će igrati'
 ex['posAllow']=d9['posAllow']; ex['pace']=d9['pace']
 TEAM={'RED':'Crvena zvezda','MUN':'Bayern','TEL':'Maccabi TA','PRS':'Paris','MAD':'Real Madrid','ULK':'Fenerbahče','DUB':'Dubai','HTA':'Hapoel TA','IST':'Anadolu Efes','PAN':'Panathinaikos','ZAL':'Žalgiris','PAR':'Partizan','ASV':'ASVEL','BAS':'Baskonia','OLY':'Olympiacos','MIL':'Olimpia Milano','BAR':'Barcelona','PAM':'Valencia','VIR':'Virtus','BES':'Beşiktaş'}
 GAMES=[tuple(g[:3]) for g in GAMES_KOLA]
@@ -32,7 +22,7 @@ K=['pts','reb','ast']
 #   širina raspodele: više oslonca na opšti obrazac sqrt(proj)*c nego na rasipanje igrača iz malog uzorka (težina 16, bilo 4)
 MP={'decay':0.9,'pw':30,'sd_c':{'pts':2.2,'reb':1.35,'ast':1.35},'sd_w':16}
 LASTR=max(int(x) for p in d9['P']+d9b['P']+d9c['P'] for x in p[3].split(','))   # poslednje kolo u podacima
-LS=json.load(open('prosla_sezona.json')) if __import__('os').path.exists('prosla_sezona.json') else {}
+LS=citaj('prosla_sezona.json') if __import__('os').path.exists('prosla_sezona.json') else {}
 # PRAVILO: kad protivniku fali ključni igrač koji je bio u uzorku, faktor odbrane protivnika vuče se ka proseku lige Upisuje se po kolu, npr. {('PAR','C'):0.5}.
 KEYOUT={}
 # position allowed per40, league means
@@ -157,7 +147,7 @@ for i in inj: i['utakmica']=team2game.get(i['tim'],'')
 for d in (rows,safe,games,inj):
     for x in d: x['kolo']=KOLO
 for fn,d in [('igraci2.json',rows),('najsigurnije2.json',safe),('matchup.json',mt),('utakmice.json',games),('petorke.json',lus),('povrede.json',inj)]:
-    json.dump(d,open(fn,'w'),ensure_ascii=False)
+    pisi(d, fn, ensure_ascii=False)
 print(len(rows),len(safe),len(mt),len(lus),len(inj))
 
 for s in safe[:12]: print(s['igrac'],s['kategorija'],s['granica'],s['verovatnoca'],s['pogodak'])

@@ -5,11 +5,12 @@
 # minuti saigrača se računaju za oba scenarija, a igrači čija uloga zavisi od njega dobijaju "rizik uloge").
 # Kod svih kladionica u kojima je bio -> "Ne igra". Ručni statusi (statusi.json, zvaničan izveštaj) imaju prednost.
 import json, os, datetime
+from pomocno import citaj, pisi
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 import market as M
 
 MIN_KNJIGA = 2
-data9 = [p for f in ('statistika.json',) for p in json.load(open(f))['P']]
+data9 = [p for f in ('statistika.json',) for p in citaj(f)['P']]
 API = {}
 for n, pos, t, *_ in data9:
     l, f = (n.split(', ', 1) + [''])[:2]
@@ -40,5 +41,5 @@ for k, knj in nestao.items():
     tc = next((t for n, t in API.get(k[0], []) if n == api), None)
     if not api or not tc: continue
     out[f'{api}|{tc}'] = ['Ne igra' if sve else 'Upitan', f"Nestao iz ponude: {', '.join(sorted(knj))} ({datetime.datetime.now():%d.%m. %H:%M})"]
-json.dump(out, open('statusi_auto.json', 'w'), ensure_ascii=False, indent=0)
+pisi(out, 'statusi_auto.json', ensure_ascii=False, indent=0)
 print('nestanak iz ponude:', {k.split('|')[0]: v[0] for k, v in out.items()} or 'nema')

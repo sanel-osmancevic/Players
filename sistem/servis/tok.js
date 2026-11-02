@@ -58,8 +58,21 @@ async function posaljiPodatke(naslov) {
   return { status: 'ok', poruka: 'poslato, sajt se ažurira za oko minut' };
 }
 
+// Dan za koji se sada radi (prvi sa utakmicom koja nije počela, isto kao kolo.py) i da li je zaključan odigranim tiketom
+function danSada(sada = process.env.SADA ? Date.parse(process.env.SADA) : Date.now()) {
+  const k = citaj(path.join(SISTEM, 'kolo.json'), { games: [] }), g = k.games.find(x => Date.parse(x[3]) > sada) || k.games[k.games.length - 1];
+  return g ? { kolo: k.kolo, dan: g[2].split(' ').slice(0, 2).join(' ') } : null;
+}
+function zakljucanDan(sada) {
+  const d = danSada(sada), z = citaj(path.join(SISTEM, 'zakljucano.json'), { tiketi: {} });
+  if (z.sve) return 'sve';   // dugme Zaključaj važi dok se ne otključa
+  if (!d) return null;
+  return Object.values(z.tiketi).some(t => +t.kolo === +d.kolo && t.dan === d.dan) ? d.dan : null;
+}
+
 async function osvezi(posao) {
   const start = Date.now();
+  if (zakljucanDan()) { posao.greska = 'Zaključano je, pa je osvežavanje isključeno.'; posao.radi = false; posao.kraj = Date.now(); return posao; }
   // dugme i automatika ne smeju da rade istovremeno
   if (fs.existsSync(BRAVA) && start - fs.statSync(BRAVA).mtimeMs < ROK_BRAVE) { posao.greska = 'Osvežavanje već traje.'; posao.radi = false; posao.kraj = Date.now(); return posao; }
   const korak = naziv => { const k = { naziv, status: 'radi', poruka: '' }; posao.koraci.push(k); return k; };
@@ -105,4 +118,4 @@ async function osvezi(posao) {
   return posao;
 }
 
-module.exports = { osvezi, pokreni, posaljiPodatke };
+module.exports = { osvezi, pokreni, posaljiPodatke, zakljucanDan };
