@@ -37,7 +37,7 @@ def zabelezi(t_snap=None):
         if r.get('status') == 'Ne igra' and not r.get('minuti_proj'): pass
         key = (M.surname_full(r['igrac']), r['tim'])
         kn = {b: ix[key] for b, ix in knj.items() if key in ix}
-        mb_sve = next((v for k, v in raw.items() if k.split('|')[0] == r['igrac'] or M.surname_full(k.split('|')[0]) == key[0] and M.TEAM.get(k.split('|')[1]) == r['tim']), None)
+        mb_sve = next((v for k, v in raw.items() if k.split('|')[0] == r['igrac'] or M.surname_full(k.split('|')[0]) == key[0] and M.tim(k.split('|')[1]) == r['tim']), None)
         if not kn and not mb_sve: continue
         videni.add(key)
         out.append(dict(t=t, kolo=kolo, igrac=r['igrac'], **{k: r.get(k) for k in POLJA_IG}, knjige=kn, maxbet_sve=mb_sve,

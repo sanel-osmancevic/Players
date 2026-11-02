@@ -3,10 +3,8 @@
 #   višak = stopa po 40 − prosek;  minuti i projekcije × (1 − 1,5% po višku, najviše −6%);  sd × (1 + 3% po višku, najviše +12%)
 import json, re, unicodedata, os
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
+from kolo import DAN, IME as TEAM
 F = json.load(open('faulovi.json'))
-TEAM = {'DUB': 'Dubai', 'HTA': 'Hapoel TA', 'IST': 'Anadolu Efes', 'PAN': 'Panathinaikos', 'ZAL': 'Žalgiris', 'PAR': 'Partizan',
-        'ASV': 'ASVEL', 'BAS': 'Baskonia', 'OLY': 'Olympiacos', 'MIL': 'Olimpia Milano', 'BAR': 'Barcelona', 'PAM': 'Valencia',
-        'VIR': 'Virtus', 'BES': 'Beşiktaş'}
 tot_f = sum(v[2] for v in F.values()); tot_m = sum(v[1] for v in F.values())
 AVG = tot_f / tot_m * 40  # prosek lige po 40 minuta
 K = 60  # minuta skupljanja ka proseku
@@ -19,7 +17,7 @@ for k, (g, m, f, g4) in F.items():
 SK = json.load(open('sudije_kolo.json')) if os.path.exists('sudije_kolo.json') else {}
 rows = json.load(open('igraci2.json')); n_adj = 0
 for r in rows:
-    if not r['termin'].startswith('pet') or r['status'] == 'Ne igra': continue
+    if not r['termin'].startswith(DAN) or r['status'] == 'Ne igra': continue
     v = idx.get((r.get('api'), r['tim']))
     if not v: continue
     rate, g4, g = v

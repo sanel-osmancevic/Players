@@ -1,5 +1,6 @@
 import json, math, re
-ex=json.load(open('extras.json')); d9=json.load(open('data9.json')); d9b=json.load(open('data9b.json')); d9c=json.load(open('data9c.json'))
+from kolo import KOLO, GAMES as GAMES_KOLA
+ex=json.load(open('extras.json')); d9=json.load(open('statistika.json')); d9b=dict(P=[],SP=[]); d9c=dict(P=[],SP=[])
 SKIP={'MILUTINOV, NIKOLA'}
 d9c['P']=[p for p in d9c['P'] if p[0] not in SKIP]
 for k in ['HIFI, NADIR|PRS','TUBELIS, AZUOLAS|ZAL','LESSORT, MATHIAS|PAN']: ex['status'].pop(k,None)
@@ -20,7 +21,7 @@ for i in ex['injuries']:
     if i[1]=='Frank Ntilikina': i[2]='Upitan'; i[3]='Bol u mišiću, Paris se nada da će igrati'
 ex['posAllow']=d9['posAllow']; ex['pace']=d9['pace']
 TEAM={'RED':'Crvena zvezda','MUN':'Bayern','TEL':'Maccabi TA','PRS':'Paris','MAD':'Real Madrid','ULK':'Fenerbahče','DUB':'Dubai','HTA':'Hapoel TA','IST':'Anadolu Efes','PAN':'Panathinaikos','ZAL':'Žalgiris','PAR':'Partizan','ASV':'ASVEL','BAS':'Baskonia','OLY':'Olympiacos','MIL':'Olimpia Milano','BAR':'Barcelona','PAM':'Valencia','VIR':'Virtus','BES':'Beşiktaş'}
-GAMES=[('RED','MUN','čet 29.10. 20:00'),('TEL','PRS','čet 29.10. 20:05'),('MAD','ULK','čet 29.10. 20:45'),('DUB','HTA','pet 30.10. 17:00'),('IST','PAN','pet 30.10. 18:30'),('ZAL','PAR','pet 30.10. 19:00'),('ASV','BAS','pet 30.10. 20:00'),('OLY','MIL','pet 30.10. 20:15'),('BAR','PAM','pet 30.10. 20:30'),('VIR','BES','pet 30.10. 20:30')]
+GAMES=[tuple(g[:3]) for g in GAMES_KOLA]
 opp={};home={};gname={};gtime={};gord={}
 for i,(h,a,t) in enumerate(GAMES):
     g=f"{TEAM[h]} – {TEAM[a]}"
@@ -32,8 +33,8 @@ K=['pts','reb','ast']
 MP={'decay':0.9,'pw':30,'sd_c':{'pts':2.2,'reb':1.35,'ast':1.35},'sd_w':16}
 LASTR=max(int(x) for p in d9['P']+d9b['P']+d9c['P'] for x in p[3].split(','))   # poslednje kolo u podacima
 LS=json.load(open('prosla_sezona.json')) if __import__('os').path.exists('prosla_sezona.json') else {}
-# PRAVILO (kolo 9): kad protivniku fali ključni igrač koji je bio u uzorku, faktor odbrane protivnika vuče se ka proseku lige
-KEYOUT={('PAR','C'):0.5,('PAR','F'):0.2,('PAM','C'):0.35,('PAM','F'):0.25,('BAS','F'):0.3,('OLY','G'):0.2,('OLY','C'):0.15,('MIL','F'):0.15}
+# PRAVILO: kad protivniku fali ključni igrač koji je bio u uzorku, faktor odbrane protivnika vuče se ka proseku lige Upisuje se po kolu, npr. {('PAR','C'):0.5}.
+KEYOUT={}
 # position allowed per40, league means
 pa={}; lgpos={}
 for t,p,n,*v in ex['posAllow']:
@@ -89,7 +90,7 @@ for x in P:
         mates=[y for y in P if y['t']==x['t'] and y['status']!='Ne igra' and grp(y['pos'])==grp(x['pos'])]
         tot=sum(y['mproj'] for y in mates)
         for y in mates: y['bonus']=min(4.0,y.get('bonus',0)+x['mproj']*0.7*y['mproj']/tot) if tot else 0
-MINFIX={'HAYES, KEVARRIUS|PAR':4.0}  # Jekiri van stroja od 7. kola: Hayes 32.5 i 23.7 min
+MINFIX={}  # ručni dodatak minuta po kolu, npr. {'HAYES, KEVARRIUS|PAR':4.0}
 for x in P:
     b=MINFIX.get(f"{x['n']}|{x['t']}")
     if b: x['bonus']=max(x.get('bonus',0),b)
@@ -153,7 +154,6 @@ lus=[dict(kljuc=f'{TEAM[t]}: {l}',tim=TEAM[t],utakmica=gname[t],red=gord[t],peto
 inj=[dict(kljuc=f'{t} {p}',tim=t,igrac=p,status=s,opis=d) for t,p,s,d in ex['injuries']]
 team2game={TEAM[t]:gname[t] for t in opp}
 for i in inj: i['utakmica']=team2game.get(i['tim'],'')
-KOLO=9
 for d in (rows,safe,games,inj):
     for x in d: x['kolo']=KOLO
 for fn,d in [('igraci2.json',rows),('najsigurnije2.json',safe),('matchup.json',mt),('utakmice.json',games),('petorke.json',lus),('povrede.json',inj)]:

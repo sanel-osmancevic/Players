@@ -13,7 +13,7 @@ a model uči iz njih.
 | `sistem/books/` | Snimci kvota po kladionici i vremenu (mb = Maxbet, sb = Soccer, mk = Merkur, mz = Mozzart, md = Meridian, sx = Stoiximan). |
 | `sistem/arhiva/` | Pozadinska arhiva: svi igrači iz ponude pri svakom osvežavanju i pun zapisnik posle utakmica. |
 | `sistem/servis/` | Automatsko prikupljanje kvota u pozadini (vidi dole). |
-| `sistem/prikupljeno/` | Snimci servisa po danima, `stanje.json` i `servis.log`. Model ih još ne čita. |
+| `sistem/prikupljeno/` | Snimci servisa po danima, `stanje.json` i `servis.log`. `market.py` ih čita zajedno sa `books/`. |
 | `dashboard/index.html` | Stranica dashboarda: Preporuke (sa upisanim rezultatima i učinkom) i Tiketi. Isti sadržaj je u `index.html` i `sistem/index32.html`. |
 | `index.html`, `data/`, `ikona*`, `manifest.webmanifest` | Web aplikacija u korenu repozitorijuma, koju objavljuje GitHub Pages. |
 
@@ -43,10 +43,10 @@ zapisnik → `results_DAN.json` (zapisnici po utakmici su u `prikupljeno/rezulta
 
 Detaljan postupak pred meč: `sistem/provera_pred_mec.md`.
 
-## Servis za kvote (`sistem/servis/`, faza 1: samo snimanje)
+## Servis za kvote (`sistem/servis/`)
 
-Pokreće `snippets/*.js` u Chrome-u bez prozora (poseban profil, bez prijave na naloge) i snima u `prikupljeno/DATUM/`, a ne u `books/`,
-pa model i preporuke ostaju netaknuti. Windows zadatak ga okida na 10 min, a on sam bira učestalost prema rasporedu sa Maxbeta:
+Pokreće `snippets/*.js` u Chrome-u bez prozora (poseban profil, bez prijave na naloge) i snima u `prikupljeno/DATUM/`. Model koristi te snimke kad se pokrene
+`py -X utf8 osvezi.py` (bez argumenta uzima najnoviji Maxbet snimak sa igračima); preračun se i dalje pokreće ručno. Windows zadatak ga okida na 10 min, a on sam bira učestalost prema rasporedu sa Maxbeta:
 na 10 min u poslednjih 90 min pred meč, na 30 min na dan meča, na 2 h do 36 h pred meč, inače na 6 h.
 
 - Prva postavka: `npm install` u `sistem/servis/`, pa `powershell -ExecutionPolicy Bypass -File instaliraj_zadatak.ps1`.
@@ -67,5 +67,8 @@ na 10 min u poslednjih 90 min pred meč, na 30 min na dan meča, na 2 h do 36 h 
 ## Napomene
 
 - Kvote se mogu povući samo preko pregledača (sajtovi blokiraju direktan pristup iz oblaka).
-- Skripte su trenutno podešene za kolo 9 (raspored i dani u `build5.py` i filteri za dan); pre svakog kola se ažuriraju.
-- Python 3.10+, Node 18+ (za `t28.js`); bez dodatnih paketa.
+- Pre svakog kola: `py -X utf8 pripremi_kolo.py KOLO` (statistika iz zvaničnog API-ja, raspored, odmor). Kolo i dan drže se u `kolo.json` i `kolo.py`;
+  dan je prvi dan sa utakmicom koja još nije počela. Na Windowsu se sistem pokreće sa `py -X utf8 osvezi.py SNIMAK.json`.
+- `KEYOUT` i `MINFIX` u `build5.py` su ručne izmene po kolu. Poslednji poznati statusi su u `extras.json`, a novi se upisuju u `statusi.json`.
+- `onoff_k8.json` (uloge kad saigrač ne igra) je i dalje iz prvih 8 kola; osvežava se preko `snippets/onoff.js`.
+- Python 3.10+, Node 18+ (za `t28.js`); bez dodatnih paketa, osim Playwright-a za servis.

@@ -1,5 +1,6 @@
 # Nestanak iz ponude: igrač koji je danas bio u ponudi kladionice, a u poslednjem snimku je nema (dok su njegovi saigrači
 # iz iste utakmice i dalje tu), verovatno ne igra ili je upitan — kladionice to saznaju prve.
+# Mora da fali u poslednja dva snimka te kladionice: kladionice povremeno nakratko sklone igrača dok menjaju kvotu.
 # Ako je nestao kod bar MIN_KNJIGA kladionica: upisuje se u statusi_auto.json kao "Upitan" (build5 ga onda tretira kao upitnog:
 # minuti saigrača se računaju za oba scenarija, a igrači čija uloga zavisi od njega dobijaju "rizik uloge").
 # Kod svih kladionica u kojima je bio -> "Ne igra". Ručni statusi (statusi.json, zvaničan izveštaj) imaju prednost.
@@ -8,7 +9,7 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 import market as M
 
 MIN_KNJIGA = 2
-data9 = [p for f in ('data9.json', 'data9b.json', 'data9c.json') for p in json.load(open(f))['P']]
+data9 = [p for f in ('statistika.json',) for p in json.load(open(f))['P']]
 API = {}
 for n, pos, t, *_ in data9:
     l, f = (n.split(', ', 1) + [''])[:2]
@@ -19,15 +20,15 @@ def dan(t): return t[:10]
 nestao = {}   # (prezime, tim) -> [kladionice]
 bio = {}
 for b, h in M.HIST.items():
-    if len(h) < 2: continue
-    zadnji_t, zadnji = h[-1]
-    danas = [ix for t, ix in h[:-1] if dan(t) == dan(zadnji_t)]
+    if len(h) < 3: continue
+    pretposl = h[-2][1]; zadnji_t, zadnji = h[-1]
+    danas = [ix for t, ix in h[:-2] if dan(t) == dan(zadnji_t)]
     if not danas: continue
     ranije = set().union(*[set(ix) for ix in danas])
-    timovi_sada = {k[1] for k in zadnji}
+    timovi_sada = {k[1] for k in zadnji} & {k[1] for k in pretposl}
     for k in ranije:
         bio.setdefault(k, set()).add(b)
-        if k not in zadnji and k[1] in timovi_sada:
+        if k not in zadnji and k not in pretposl and k[1] in timovi_sada:
             nestao.setdefault(k, []).append(b)
 out = {}
 for k, knj in nestao.items():

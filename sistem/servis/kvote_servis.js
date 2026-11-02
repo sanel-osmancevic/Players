@@ -1,5 +1,5 @@
-// Prikupljanje kvota u pozadini (faza 1): pokreće snippets/*.js u Chrome-u (poseban profil) i snima u prikupljeno/DATUM/, a NE u books/,
-// pa model i preporuke ostaju netaknuti. Bez prijave na naloge i bez opklada; blokiran sajt se samo beleži i ređe proverava.
+// Prikupljanje kvota u pozadini: pokreće snippets/*.js u Chrome-u (poseban profil) i snima u prikupljeno/DATUM/, odakle ih čita market.py.
+// Preračun i preporuke se i dalje pokreću ručno (osvezi.py). Bez prijave na naloge i bez opklada; blokiran sajt se samo beleži i ređe proverava.
 // Upotreba: node kvote_servis.js [--odmah] [--samo=mb,sb] [--stanje]
 //   bez argumenata: poziva ga Task Scheduler na 10 min, a skripta sama odlučuje da li je vreme za novi snimak
 const fs = require('fs'), path = require('path');

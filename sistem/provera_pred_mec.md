@@ -2,9 +2,9 @@
 
 Redosled pri osvežavanju (pregledač na korisnikovom računaru):
 
-1. **Kvote** — Maxbet (osvezi.py snap), Soccer (snippets/soccer.js → books/sb_HHMM.json), Merkur (snippets/merkur.js → books/mk_),
-   Mozzart (snippets/mozzart.js → books/mz_), Meridian (snippets/meridian.js → books/md_), Stoiximan (snippets/stoiximan.js → books/sx_).
-2. **Nestanak iz ponude** — automatski (nestanak.py u osvezi.py): igrač nestao kod 2+ kladionice → statusi_auto.json "Upitan",
+1. **Kvote** — servis ih sam snima u prikupljeno/ (Maxbet, Soccer, Merkur, Meridian; odmah: `node servis/kvote_servis.js --odmah`).
+   Kladionice koje servis ne može da čita (Mozzart, Stoiximan): ručno snippets/mozzart.js → books/mz_, snippets/stoiximan.js → books/sx_.
+2. **Nestanak iz ponude** — automatski (nestanak.py u osvezi.py): igrač nestao u poslednja dva snimka kod 2+ kladionice → statusi_auto.json "Upitan",
    kod svih → "Ne igra".
 3. **Zvaničan izveštaj o povredama** — snippets/povrede.js na euroleaguebasketball.net (članak "Injury report, Round N").
    Za svaki tim dana upisati u statusi.json: "PREZIME, IME|KOD": ["Ne igra" | "Upitan" | "Igra", "Zvaničan izveštaj DD.MM. HH:MM"].
@@ -15,7 +15,7 @@ Redosled pri osvežavanju (pregledač na korisnikovom računaru):
    Novije od zvaničnog izveštaja ima prednost; upisati u statusi.json sa izvorom.
 5. **Sudije** — snippets/sudije.js (posle objave sudija na dan meča): za utakmice kola upisati sudije_kolo.json
    {"Domaćin – Gost": [["SUDIJA 1", "SUDIJA 2", "SUDIJA 3"], indeks_faulova, indeks_FT]} (indeksi iz sudije.json, prosek trojke).
-6. **osvezi.py** — preračun; utakmice u poslednjih 60 min se zaključavaju.
+6. **`py -X utf8 osvezi.py`** — preračun; utakmice u poslednjih 60 min se zaključavaju.
 
 7. **Arhiva** — osvezi.py na kraju sam beleži sve igrače u ponudi (arhiva/kolo{K}_ponuda.jsonl); posle utakmica evidencija.py sa
    fajlom rezultata upisuje puni zapisnik u arhiva/kolo{K}_rezultati.json. Za rezultate koristiti puni zapisnik (box format:

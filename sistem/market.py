@@ -5,6 +5,8 @@
 import json, math, re, unicodedata, sys, glob, os
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 from statistics import NormalDist
+from datetime import datetime as _dt
+from kolo import KOLO, OD, DAN, ALIAS, tim
 N = NormalDist()
 
 def norm(s):
@@ -19,25 +21,26 @@ def surname_merkur(name):
     t = name.split()
     return norm(' '.join(t[:-1]) if len(t) > 1 else t[0])
 
-TEAM = {'Dubai': 'Dubai', 'BC Dubai': 'Dubai', 'Hapoel Tel Aviv': 'Hapoel TA', 'H. Tel Aviv': 'Hapoel TA', 'Hapoel T.A.': 'Hapoel TA',
-        'Anadolu Efes': 'Anadolu Efes', 'Panathinaikos': 'Panathinaikos', 'Zalgiris Kaunas': 'Žalgiris', 'Zalgiris': 'Žalgiris',
-        'Partizan': 'Partizan', 'Lyon-Villeurbanne': 'ASVEL', 'Lyon-Villeurb.': 'ASVEL', 'ASVEL': 'ASVEL', 'Baskonia': 'Baskonia',
-        'Olympiacos': 'Olympiacos', 'Olimpia Milano': 'Olimpia Milano', 'Barcelona': 'Barcelona', 'Valencia': 'Valencia',
-        'Virtus Bologna': 'Virtus', 'Virtus': 'Virtus', 'Besiktas': 'Beşiktaş'}
 CAT = {'P': 'Poeni', 'S': 'Skokovi', 'A': 'Asistencije'}
 KEY = {'Poeni': 'pts', 'Skokovi': 'reb', 'Asistencije': 'ast'}
 
-def snaps(prefix):
-    fs = sorted(glob.glob(f'books/{prefix}_*.json'), key=lambda f: json.load(open(f))['t'])
-    return [json.load(open(f)) for f in fs]
+def glavne_mb(raw):   # Maxbet snimak servisa ima sve linije: za konsenzus se uzima prva dvostrana po igraču i kategoriji
+    out = {}
+    for k, ls in raw.items():
+        d = out.setdefault(k, {})
+        for l in ls:
+            if len(l) == 4 and l[2] and l[3] and l[0] not in d: d[l[0]] = [l[1], l[2], l[3]]
+    return out
 
-# nazivi timova kod raznih kladionica (uključujući grčku latinicu u Stoiximan adresama, npr. "olybiakos", "bartselona")
-ALIAS = {'Real Madrid': ['real'], 'Panathinaikos': ['panathinaikos', 'panatinaikos'], 'Anadolu Efes': ['efes'], 'Paris': ['paris', 'pari'],
-         'Crvena zvezda': ['zvezda', 'crvena', 'redstar', 'erythros'], 'Žalgiris': ['zalgiris'], 'Fenerbahče': ['fener'], 'Maccabi TA': ['maccabi', 'makabi'],
-         'Hapoel TA': ['hapoel', 'xapoel'], 'Beşiktaş': ['besiktas'], 'Olimpia Milano': ['milan', 'olimpia', 'olibia'], 'Bayern': ['bayern', 'munchen', 'bagern'],
-         'ASVEL': ['asvel', 'villeurb', 'lyon', 'vilerban'], 'Virtus': ['virtus', 'virtous'], 'Valencia': ['valencia', 'valenthia'], 'Dubai': ['dubai', 'doubai'],
-         'Partizan': ['partizan'], 'Barcelona': ['barcelona', 'barca', 'bartselona'], 'Baskonia': ['baskonia', 'vitoria'],
-         'Olympiacos': ['olympiacos', 'olimpijakos', 'olybiakos'], 'Monaco': ['monaco']}
+def snaps(prefix):
+    # ručni snimci (books/) i snimci servisa (prikupljeno/DATUM/, bez foldera sumnjivo); snimci iz prošlih kola se ne računaju
+    po_vremenu = {}
+    for f in glob.glob(f'books/{prefix}_*.json') + glob.glob(f'prikupljeno/*/{prefix}_*.json'):
+        s = json.load(open(f))
+        if 'out' not in s: s = dict(t=s['t'], out=glavne_mb(s.get('raw') or {}))
+        if s['out'] and s['t'].replace('Z', '') >= OD.replace('Z', ''): po_vremenu[s['t']] = s
+    return [po_vremenu[t] for t in sorted(po_vremenu)]
+
 def surname_mz(name):   # Mozzart "A.Black", "T.da Silva"
     return surname_full(name.split('.', 1)[-1])
 def surname_md(name):   # Meridian "da Silva, Tristan", "Carter Jr., Wendell"
@@ -53,10 +56,10 @@ def index(snap, kind):
             if len(kand) == 1: out[(sn, kand.pop())] = d
             continue
         sn = surname_merkur(n) if kind == 'merkur' else surname_full(n)
-        out[(sn, TEAM[t])] = d
+        if tim(t): out[(sn, tim(t))] = d
     return out
 
-ig = {r['igrac']: r for r in json.load(open('igraci2.json')) if r['termin'].startswith('pet')}
+ig = {r['igrac']: r for r in json.load(open('igraci2.json')) if r['termin'].startswith(DAN)}
 # istorija snimaka po kladionici: lista (vreme, indeks)
 HIST = {'maxbet': [(s['t'], index(s, 'maxbet')) for s in snaps('mb')],
         'soccer': [(s['t'], index(s, 'soccer')) for s in snaps('sb')],
@@ -67,7 +70,10 @@ HIST = {'maxbet': [(s['t'], index(s, 'maxbet')) for s in snaps('mb')],
 # težine u konsenzusu: Soccer deli izvor kvota sa Maxbetom pa vredi pola; ostali su nezavisni (uče se iz rezultata)
 TEZ_K = {'soccer': 0.5, 'merkur': 1.0, 'mozzart': 1.0, 'meridian': 1.0, 'stoiximan': 1.0}
 if os.path.exists('tezine_kladionica.json'): TEZ_K.update(json.load(open('tezine_kladionica.json')))
-books = {b: h[-1][1] for b, h in HIST.items() if h}
+# kladionica čiji je poslednji snimak stariji 6 h od najnovijeg ne ulazi u konsenzus (zastarele kvote bi dale lažan ⚡)
+_t = lambda s: _dt.fromisoformat(s.replace('Z', '+00:00')).timestamp()
+_najnoviji = max((_t(h[-1][0]) for h in HIST.values() if h), default=0)
+books = {b: h[-1][1] for b, h in HIST.items() if h and _najnoviji - _t(h[-1][0]) <= 6 * 3600}
 
 
 def median_from(L, ov, un, sd):
@@ -111,7 +117,7 @@ def market(igrac, tim, kat):
 def apply(fn):
     rows = json.load(open(fn)); n = 0
     for x in rows:
-        if x.get('kolo') != 9 or x.get('igrac') not in ig: continue
+        if x.get('kolo') != KOLO or x.get('igrac') not in ig: continue
         m = market(x['igrac'], x['tim'], x['kategorija'])
         if not m: continue
         mu, sd, mus, kret, odst = m

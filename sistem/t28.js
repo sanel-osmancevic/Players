@@ -1,4 +1,4 @@
-const fs=require('fs');const h=fs.readFileSync('index32.html','utf8');const src=h.split('<script>')[1].split('</script>')[0];
+const DAN=process.env.DAN;const fs=require('fs');const h=fs.readFileSync('index32.html','utf8');const src=h.split('<script>')[1].split('</script>')[0];
 const C={};global.window={};global.Option=function(t,v){this.text=t;this.value=v};
 const L=f=>JSON.parse(fs.readFileSync(f));
 const ig=L('igraci2.json'); const ex=new Set(ig.filter(r=>r.iskljuci).map(r=>r.igrac));
@@ -6,8 +6,8 @@ const kv=L('kvote.json').filter(k=>!ex.has(k.igrac));
 const dash={calc:(id,d)=>{C[id]=d},draw:()=>{},onData:()=>{},data:()=>({status:'loading',data:[]})};
 const mk=()=>({children:[],replaceChildren(){},appendChild(){},append(){},dataset:{},style:{}});
 new Function('dash','d3','document',src)(dash,{format:()=>x=>x,max:()=>1},{createElement:mk,querySelectorAll:()=>[],getElementById:()=>null,createTextNode:t=>t});
-const fri=C.preporuke.fn(ig,kv).filter(x=>x.termin.startsWith('pet'));
+const fri=C.preporuke.fn(ig,kv).filter(x=>x.termin.startsWith(DAN));
 fs.writeFileSync('picks_pet3.json',JSON.stringify(fri));
-const gl=C.glavne.fn(ig,kv).filter(x=>x.termin.startsWith('pet')).slice(0,10).map((x,i)=>({...x,grupa:'Glavne',rang:i+1,vrsta:'glavne'}));
+const gl=C.glavne.fn(ig,kv).filter(x=>x.termin.startsWith(DAN)).slice(0,10).map((x,i)=>({...x,grupa:'Glavne',rang:i+1,vrsta:'glavne'}));
 fs.writeFileSync('glavne_pet.json',JSON.stringify(gl));
 for(const x of fri) console.log(x.grupa,'|',x.igrac,'|',x.utakmica,'|',x.opklada,x.kvota,x.sansa,x.istorija,'ev',x.vrednost,'z',x.razmak,'min',x.minuti);

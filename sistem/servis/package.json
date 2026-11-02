@@ -1,7 +1,7 @@
 {
   "name": "evroliga-kvote-servis",
   "private": true,
-  "description": "Automatsko prikupljanje kvota (faza 1: samo snimanje, model se ne dira)",
+  "description": "Automatsko prikupljanje kvota i upis rezultata",
   "scripts": {
     "odmah": "node kvote_servis.js --odmah",
     "stanje": "node kvote_servis.js --stanje"

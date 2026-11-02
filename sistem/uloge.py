@@ -5,37 +5,32 @@
 # Upisuje faktore u igraci2.json (pts/reb/ast_proj) i uloge.json (objašnjenje).
 import json, re, unicodedata, os, sys
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
+from kolo import DAN, IME as TEAM, KOD
 
-OUT = {  # sigurno ne igraju danas (izveštaj o povredama 30.10.)
-    'PAR': ['JEKIRI, TONYE'], 'PAM': ['MIROTIC, NIKOLA', 'REUVERS, NATHAN'],
-    'BAS': ['KURUCS, RODIONS', 'SEDEKERSKIS, TADAS', 'DUARTE, CHRIS'],
-    'OLY': ['FOURNIER, EVAN', 'MONTERO, JEAN', 'DORSEY, TYLER'], 'MIL': ['PETERS, ALEC'],
-    'IST': ['JAMES, MIKE', 'DOZIER, PJ'], 'DUB': ['WALKUP, THOMAS'], 'BES': ['KORKMAZ, FURKAN']}
-TEAM = {'DUB': 'Dubai', 'HTA': 'Hapoel TA', 'IST': 'Anadolu Efes', 'PAN': 'Panathinaikos', 'ZAL': 'Žalgiris', 'PAR': 'Partizan',
-        'ASV': 'ASVEL', 'BAS': 'Baskonia', 'OLY': 'Olympiacos', 'MIL': 'Olimpia Milano', 'BAR': 'Barcelona', 'PAM': 'Valencia',
-        'VIR': 'Virtus', 'BES': 'Beşiktaş'}
+# sigurno ne igraju danas: statusi iz igraci2.json (build5.py), koji uključuju zvaničan izveštaj i ručne izmene
+OUT = {}
+for _r in json.load(open('igraci2.json')):
+    if _r['status'] == 'Ne igra' and 'upitan' not in (_r.get('napomena') or '').lower(): OUT.setdefault(KOD[_r['tim']], []).append(_r['api'])
 K = 60.0      # minuta "prior" uzorka
 KE = 10.0     # i bar 10 događaja (šuteva, skokova, asistencija)
 CAP = 0.15    # najviše ±15% ukupno
 DAMP = 1.0
-# kola u kojima je odsutni igrao (kola 1–8), da bi se korekcija računala prema težinama modela (0.85^(8-kolo))
-IGRAO = {'JEKIRI, TONYE': [1,2,3,4,5,6], 'MIROTIC, NIKOLA': [1,2,3,4,5,6,7,8], 'REUVERS, NATHAN': [1,2,3,4,5,6,7],
-         'KURUCS, RODIONS': [1,2,3,4,5,6,7], 'SEDEKERSKIS, TADAS': [1,2,3,4,5,6,7], 'DUARTE, CHRIS': [1,2,3,4,5,6],
-         'FOURNIER, EVAN': [1,2,3,4,5,6], 'MONTERO, JEAN': [1,2,3,4,5,6], 'DORSEY, TYLER': [1,2,3,4,5],
-         'PETERS, ALEC': [1,2,3,4,5,6,7], 'JAMES, MIKE': [1,2,3], 'DOZIER, PJ': [1,2,3,4,5,6],
-         'WALKUP, THOMAS': [1,2,3,4,5,6], 'KORKMAZ, FURKAN': [2,3,4,5,6]}
+# kola u kojima je odsutni igrao, da bi se korekcija računala prema težinama modela (0.85^(poslednje kolo - kolo))
+_P = json.load(open('statistika.json'))['P']
+IGRAO = {p[0]: [int(x) for x in p[3].split(',')] for p in _P}
+LASTR = max(r for v in IGRAO.values() for r in v)
 LOG = {}
 def _log():
     if not LOG:
-        for f_ in ('data9.json', 'data9b.json', 'data9c.json'):
+        for f_ in ('statistika.json',):
             for n, pos, t, rr, mm, *_ in json.load(open(f_))['P']:
                 LOG[(sur(n), t)] = ([int(x) for x in rr.split(',')], [float(x) for x in mm.split(',')])
     return LOG
 def udeo(i_sur, tc, j):
     """odnos: (težinski udeo minuta igrača i u kolima gde je j igrao) / (obični udeo)"""
-    lg = _log().get((i_sur, tc)); played = set(IGRAO.get(j, range(1, 9)))
+    lg = _log().get((i_sur, tc)); played = set(IGRAO.get(j, range(1, LASTR + 1)))
     if not lg: return 1.0
-    rr, mm = lg; w = [0.85 ** (8 - r) for r in rr]
+    rr, mm = lg; w = [0.85 ** (LASTR - r) for r in rr]
     sw = sum(wi * m for wi, m, r in zip(w, mm, rr) if r in played) / max(1e-9, sum(wi * m for wi, m in zip(w, mm)))
     su = sum(m for m, r in zip(mm, rr) if r in played) / max(1e-9, sum(mm))
     return sw / su if su > 0 else 1.0
@@ -81,7 +76,7 @@ for tc, outs in OUT.items():
 if __name__ == '__main__':
     rows = json.load(open('igraci2.json')); out = []
     for r in rows:
-        if not r['termin'].startswith('pet'): continue
+        if not r['termin'].startswith(DAN): continue
         f = fakt.get((sur(r['igrac']), r['tim']))
         if not f: continue
         for k in ('pts', 'reb', 'ast'):

@@ -2,5 +2,6 @@
 sistem/servis/node_modules/
 sistem/servis/profil/
 sistem/prikupljeno/
+sistem/api_kes/
 __pycache__/
 *.tmp

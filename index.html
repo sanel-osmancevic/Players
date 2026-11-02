@@ -611,7 +611,7 @@ dash.draw('picks',tb=>{
 });
 
 (()=>{const tabs=[...document.querySelectorAll('.el-tabs button')];
- const show=id=>{tabs.forEach(b=>{const on=b.getAttribute('aria-controls')===id;b.setAttribute('aria-selected',on);document.getElementById(b.getAttribute('aria-controls')).hidden=!on;});const rez=id==='preporuke';document.getElementById('el-filterbar').hidden=!rez;document.querySelectorAll('#el-oldkolo').forEach(e=>{e.dataset.tab=rez?'1':'';if(!rez)e.hidden=true;});try{localStorage.setItem('el-tab',id);}catch(e){}};
+ const show=id=>{tabs.forEach(b=>{const on=b.getAttribute('aria-controls')===id;b.setAttribute('aria-selected',on);document.getElementById(b.getAttribute('aria-controls')).hidden=!on;});const rez=id==='preporuke';const fb=document.getElementById('el-filterbar');if(fb)fb.hidden=!rez;document.querySelectorAll('#el-oldkolo').forEach(e=>{e.dataset.tab=rez?'1':'';if(!rez)e.hidden=true;});try{localStorage.setItem('el-tab',id);}catch(e){}};
  tabs.forEach(b=>b.addEventListener('click',()=>show(b.getAttribute('aria-controls'))));
  let t=null;try{t=localStorage.getItem('el-tab');}catch(e){} show(t==='tiketi'?'tiketi':'preporuke');})();
 (()=>{const bs=document.getElementById('mod-sig'), bg=document.getElementById('mod-gl');

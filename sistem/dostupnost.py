@@ -20,7 +20,7 @@ SHR = float(os.environ.get('SHR',0.5))   # koliko verujemo razlici (ostatak ide 
 RECENT = int(os.environ.get('RECENT',3))  # izostanak u poslednja 3 kola čini igrača bitnim za sastav
 P_POVRATAK = float(os.environ.get('PPOV',0.65))  # prvi meč posle izostanka: minuti obično ograničeni
 
-P = [p for f in ('data9.json', 'data9b.json', 'data9c.json') for p in json.load(open(f))['P']]
+P = [p for f in ('statistika.json',) for p in json.load(open(f))['P']]
 LOG = {}
 for n, pos, t, rr, mm, *_ in P:
     LOG[n] = dict(t=t, r=[int(x) for x in rr.split(',')], m=[float(x) for x in mm.split(',')])

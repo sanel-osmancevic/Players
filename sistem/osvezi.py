@@ -1,9 +1,13 @@
 # Osvežavanje Maxbet liste u jednom koraku.
-# Upotreba: python3 osvezi.py [mb_snapshot.json]
-#   bez argumenta: pokušava da povuče Maxbet direktno (radi kad su domeni dozvoljeni u podešavanjima)
+# Upotreba: py -X utf8 osvezi.py [mb_snapshot.json]
+#   bez argumenta: najnoviji Maxbet snimak servisa sa igračima (prikupljeno/), a ako ga nema, direktno povlačenje
 #   sa argumentom: koristi {raw, games} koji je vratio pregledač
 import json, sys, subprocess, re, os, datetime
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
+if not sys.flags.utf8_mode:   # na Windowsu open() inače ne čita fajlove kao UTF-8
+    sys.exit(subprocess.run([sys.executable, '-X', 'utf8', *sys.argv], env=dict(os.environ, PYTHONUTF8='1')).returncode)
+from kolo import KOLO, DAN, tim
+os.environ['DAN'] = DAN; os.environ['PYTHONUTF8'] = '1'   # i za skripte koje se pozivaju odavde
 Q = '?annex=3&mobileVersion=1.21.18&locale=sr'
 BASE = 'https://www.maxbet.rs/restapi/offer/sr'
 
@@ -36,7 +40,15 @@ def fetch_direct():
               (d.get('odds') or {}).get('1'), (d.get('odds') or {}).get('3')] for d in gm]
     return dict(raw=raw, games=games)
 
-snap = json.load(open(sys.argv[1])) if len(sys.argv) > 1 else fetch_direct()
+def najnoviji_snimak():
+    import glob
+    sn = [s for s in (json.load(open(f)) for f in glob.glob('prikupljeno/*/mb_*.json')) if s.get('raw')]
+    if not sn: return None
+    s = max(sn, key=lambda x: x['t'])
+    print('Maxbet snimak servisa:', s['t'])
+    return s
+_arg = [a for a in sys.argv[1:] if not a.startswith('--')]
+snap = json.load(open(_arg[0])) if _arg else (najnoviji_snimak() or fetch_direct())
 raw = snap['raw']
 for k, ls in raw.items():  # uskladi oblik: milestone linije imaju 3 polja
     raw[k] = [l[:3] if len(l) == 4 and l[3] is None else l for l in ls]
@@ -62,29 +74,28 @@ for k, ls in raw.items():
     glavne[k] = d
 os.makedirs('books', exist_ok=True)
 lok = datetime.datetime.fromisoformat(t_snap.replace('Z', '+00:00')).astimezone(datetime.timezone(datetime.timedelta(hours=1)))
-json.dump({'t': t_snap, 'out': glavne}, open(f"books/mb_{lok.strftime('%H%M')}.json", 'w'), ensure_ascii=False)
+json.dump({'t': t_snap, 'out': glavne}, open(f"books/mb_{lok.strftime('%m%d_%H%M')}.json", 'w'), ensure_ascii=False)
 
 # kvote utakmica -> adjust
-TM = {'Hapoel T.A.': 'Hapoel TA', 'Zalgiris': 'Žalgiris', 'Lyon-Villeurb.': 'ASVEL', 'Besiktas': 'Beşiktaş', 'Virtus Bologna': 'Virtus'}
 G = {}
 for h, a, t, hdp, ou, oh, oa in snap['games']:
-    if ou and oh and oa: G[f"{TM.get(h, h)} – {TM.get(a, a)}"] = (float(ou), float(oh), float(oa))
+    if ou and oh and oa: G[f"{tim(h) or h} – {tim(a) or a}"] = (float(ou), float(oh), float(oa))
 adj = open('adjust2.py').read()
 adj = re.sub(r"G=\{.*?\}\nLG", "G=" + repr(G) + "\nLG", adj, flags=re.S)
 open('adjust3.py', 'w').write(adj)
 
-run = lambda *c: subprocess.run(c, check=True, capture_output=True, text=True).stdout
+run = lambda *c: subprocess.run([sys.executable if c[0] == 'python3' else c[0], *c[1:]], check=True, capture_output=True, text=True).stdout
 print(run('python3', 'nestanak.py').strip()); run('python3', 'build5.py'); print(run('python3', 'dostupnost.py').strip()); run('python3', 'adjust3.py'); print(run('python3', 'minute.py').strip()); print(run('python3', 'uloge2.py' if os.path.exists('uloge_faktori.json') else 'uloge.py').strip()); run('python3', 'uci2.py'); print(run('python3', 'tezine_primeni.py', 'igraci').strip()); print(run('python3', 'faul.py').strip())
 # ručna isključenja (rizik) iz iskljuci.json
 ex = json.load(open('iskljuci.json')) if os.path.exists('iskljuci.json') else {}
 rows = json.load(open('igraci2.json'))
 for r in rows:
-    if r['igrac'] in ex and r['termin'].startswith('pet'): r['iskljuci'] = ex[r['igrac']]
+    if r['igrac'] in ex and r['termin'].startswith(DAN): r['iskljuci'] = ex[r['igrac']]
     elif r.get('rizik_uloge'): r['iskljuci'] = 'Rizik uloge: ' + r['rizik_uloge']   # upitan saigrač ili izgubljen start
 json.dump(rows, open('igraci2.json', 'w'), ensure_ascii=False)
 print(run('python3', 'kv_pet2.py').strip())
 print(run('python3', 'market.py').strip().splitlines()[0]); print(run('python3', 'kalibracija.py').strip()); print(run('python3', 'tezine_primeni.py', 'kvote').strip()); print(run('python3', 'prosla_kvote.py').strip())
-run('python3', 'evidencija.py', 'kvote_pet.json', 'pet')
+run('python3', 'evidencija.py', 'kvote_pet.json', DAN)
 run('node', 't28.js')
 
 # zaključaj nove preporuke samo za utakmice koje još nisu počele
@@ -93,7 +104,7 @@ now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=1)))
 if os.environ.get('SADA'): now = datetime.datetime.fromisoformat(os.environ['SADA'])  # samo za probe
 start = {}
 for h, a, t, *_ in snap['games']:
-    if t: start[f"{TM.get(h, h)} – {TM.get(a, a)}"] = datetime.datetime.fromtimestamp(t / 1000, now.tzinfo)
+    if t: start[f"{tim(h) or h} – {tim(a) or a}"] = datetime.datetime.fromtimestamp(t / 1000, now.tzinfo)
 z = json.load(open('zapamceno.json'))
 KS = ['konacno','vrsta','kljuc','kolo','termin','red','igrac','utakmica','kategorija','smer','linija','opklada','kvota','sansa','razmak','stabilan','istorija','forma5','vrednost','minuti','rang','grupa','zapamceno','rezultat','ishod','kvota_prva','zapamceno_prvo','kvota_zavrsna','clv','brzo','zaostatak','klupa','ulog','sansa_kor','prednost','povezano','trz_prva','trz_zavrsna','clv_trz','sansa_sirova','model','trziste','kretanje']
 def pocela(u): return start.get(u) is not None and start[u] <= now
@@ -102,7 +113,7 @@ KV = {}
 for x in json.load(open('kvote_pet.json')):
     for smer, q in (('više', x.get('kvota_vise')), ('manje', x.get('kvota_manje'))):
         if q: KV[(x['igrac'], x['kategorija'], float(x['linija']), smer)] = q
-stari = [r for r in z if r['kolo'] == 9 and r['termin'].startswith('pet')]
+stari = [r for r in z if r['kolo'] == KOLO and r['termin'].startswith(DAN)]
 prvi = {(r['kljuc'], r['opklada']): (r.get('kvota_prva') or r['kvota'], r.get('zapamceno_prvo') or r['zapamceno']) for r in stari}
 ts = now.strftime('%d.%m. %H:%M')
 PRED_MEC = 60      # minuta pre početka: opklade za tu utakmicu se konačno zaključavaju (poslednji talas)
@@ -194,7 +205,7 @@ if dn > 10:
     for d in otvorene:
         if d.get('ulog'): d['ulog'] = max(0.25, round(d['ulog'] * 10 / dn * 4) / 4)
 print(f"Ulozi: kalibracija k={K_KAL:.2f}; ukupno {sum(d.get('ulog') or 0 for d in otvorene):.2f} j. na {sum(1 for d in otvorene if d.get('ulog'))} opklada")
-keep = [r for r in z if not (r['kolo'] == 9 and r['termin'].startswith('pet'))] + novi_red
+keep = [r for r in z if not (r['kolo'] == KOLO and r['termin'].startswith(DAN))] + novi_red
 json.dump(keep, open('zapamceno.json', 'w'), ensure_ascii=False)
 
 print('Novi igrači:', [k.split('|')[0] for k in novi], 'Nestali:', [k.split('|')[0] for k in nestali])
@@ -207,4 +218,4 @@ import arhiva
 print('Arhiva:', arhiva.zabelezi(t_snap))
 
 # podaci za web aplikaciju (GitHub Pages)
-print(subprocess.run(['python3', 'objavi_web.py'], capture_output=True, text=True).stdout.strip())
+print(subprocess.run([sys.executable, 'objavi_web.py'], capture_output=True, text=True).stdout.strip())

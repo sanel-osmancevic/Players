@@ -4,11 +4,10 @@
 # Primenjuje se na minute i projekcije (poeni/skokovi/asistencije srazmerno minutima).
 import json, math, os
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
+from kolo import DAN, KOD as CODE
 from statistics import NormalDist
 N = NormalDist()
 M = json.load(open('minute_timovi.json')); G = json.load(open('kvote_utakmica.json'))
-CODE = {'Dubai': 'DUB', 'Hapoel TA': 'HTA', 'Anadolu Efes': 'IST', 'Panathinaikos': 'PAN', 'Žalgiris': 'ZAL', 'Partizan': 'PAR', 'ASVEL': 'ASV',
-        'Baskonia': 'BAS', 'Olympiacos': 'OLY', 'Olimpia Milano': 'MIL', 'Barcelona': 'BAR', 'Valencia': 'PAM', 'Virtus': 'VIR', 'Beşiktaş': 'BES'}
 SD_MARGIN = 12.5
 r_all = [b / c for n, b, c in M['rasturi'].values() if n and b and c]
 R_LG = sum(r_all) / len(r_all)
@@ -19,7 +18,7 @@ def ratio(tc):
 rows = json.load(open('igraci2.json')); log = []
 for r in rows:
     g = G.get(r['utakmica'])
-    if not g or r['status'] == 'Ne igra' or not r['termin'].startswith('pet'): continue
+    if not g or r['status'] == 'Ne igra' or not r['termin'].startswith(DAN): continue
     tot, oh, oa = g; ph = (1 / oh) / (1 / oh + 1 / oa)
     mu = SD_MARGIN * N.inv_cdf(min(max(ph, 0.02), 0.98))
     p_blow = (1 - N.cdf((15 - mu) / SD_MARGIN)) + N.cdf((-15 - mu) / SD_MARGIN)
