@@ -97,7 +97,7 @@ body{padding:16px;max-width:1100px;margin:0 auto}button,select{font:inherit;colo
 <div class="el-wrap">
   <header class="el-head">
     <h1>EuroLeague – Maxbet preporuke</h1>
-    <p>Aktuelno kolo: <b data-draw="kolonow" data-source="utakmice">—</b> Preporuke za poene, skokove i asistencije igrača iz Maxbet ponude, na osnovu modela (minuti i rotacija, protivnik po poziciji i zonama šuta, tempo, povrede) i učinka ove sezone. Posle kola upisuju se stvarni rezultati.</p>
+    <p>Aktuelno kolo: <b data-draw="kolonow" data-source="utakmice">—</b></p>
   </header>
 
   <div class="el-filters">
@@ -120,7 +120,6 @@ body{padding:16px;max-width:1100px;margin:0 auto}button,select{font:inherit;colo
       <button type="button" id="mod-gl" aria-pressed="false">Glavne linije</button>
     </div>
     <p class="el-ucinak" id="el-ucred">Izabrano kolo (ili dan): završeno <b data-draw="uc" data-source="ucinak" data-field="zavrseno">—</b> od <b data-draw="uc" data-source="ucinak" data-field="ukupno">—</b> · prošlo <b data-draw="uc" data-source="ucinak" data-field="proslo">—</b> · palo <b data-draw="uc" data-source="ucinak" data-field="palo">—</b> · profit uz ulog 1 po opkladi: <b data-draw="uc" data-source="ucinak" data-field="profit">—</b></p>
-    <p class="el-note" id="el-glnote" hidden>Osnovne Maxbet granice (kvote oko 1.90, kladionica ih vidi kao 50:50). Za svakog igrača prikazana je strana sa većom šansom; prikazano je 10 sa najvećom šansom (samo 55% ili više).</p>
     <p class="el-note el-warn" id="el-nopicks" hidden></p>
     <div class="el-scroll">
       <table class="el-table" id="el-tabpick" data-source="prikaz" data-row-key="kljuc">
@@ -166,8 +165,6 @@ body{padding:16px;max-width:1100px;margin:0 auto}button,select{font:inherit;colo
       <button type="button" id="tik-sig" aria-pressed="true">Sigurnije</button>
       <button type="button" id="tik-gl" aria-pressed="false">Glavne linije</button>
     </div>
-    <p class="el-note">Klikni na dan u učinku ispod da otvoriš tikete tog dana. Tiketi od zaključanih opklada za svaki dan: najjača opklada ide sa sledećom najjačom (za triplove sa sledeće dve) iz drugih utakmica. Kvota = proizvod kvota, šansa = proizvod šansi. Igrač koji ne igra računa se kvotom 1. U tikete ulaze samo opklade sa predloženim ulogom većim od 0 (one koje posle usklađivanja šanse imaju prednost); dve opklade iz iste utakmice nikad nisu na istom tiketu.</p>
-    <p class="el-note">Ulog 1 po tiketu: prošao tiket donosi kvotu − 1, pao −1.</p>
     <h3 class="el-sub">Dublovi</h3>
     <p class="el-note el-warn" id="el-nodubl" hidden>Za aktuelno kolo još nema zaključanih opklada za dublove.</p>
     <div class="el-scroll" hidden>
@@ -620,7 +617,6 @@ dash.draw('picks',tb=>{
 (()=>{const bs=document.getElementById('mod-sig'), bg=document.getElementById('mod-gl');
  if(!bs||!bg)return;
  const set=m=>{window.elState.rmod=m;bs.setAttribute('aria-pressed',m==='sig');bg.setAttribute('aria-pressed',m==='gl');
-   document.getElementById('el-glnote').hidden=m!=='gl';
    try{localStorage.setItem('el-rmod',m);}catch(e){} ['uc','picks','hist'].forEach(n=>dash.draw(n));if(window.elMsgs)window.elMsgs();};
  bs.addEventListener('click',()=>set('sig'));bg.addEventListener('click',()=>set('gl'));
  let m=null;try{m=localStorage.getItem('el-rmod');}catch(e){} if(m==='gl')set('gl');})();
