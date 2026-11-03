@@ -5,6 +5,11 @@ import json, sys, os
 from pomocno import citaj, pisi
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 T = citaj('tezine.json') if os.path.exists('tezine.json') else {'bias': {}, 'c': 1.0, 'w': [1/3, 1/3, 1/3]}
+# Tržište je stalnih 60%: na 9. kolu je bilo najbolja procena (bt_faktori.py), a model je precenjivao svoje opklade.
+# Odnos modela i istorije u preostalih 40% i dalje se uči iz rezultata.
+TEZ_TRZISTE = 0.6
+_m, _h = T['w'][0], T['w'][1]
+TEZ = [round((1 - TEZ_TRZISTE) * _m / (_m + _h), 3), round((1 - TEZ_TRZISTE) * _h / (_m + _h), 3), TEZ_TRZISTE]
 mode = sys.argv[1]
 if mode == 'igraci':
     rows = citaj('igraci2.json')
@@ -21,6 +26,6 @@ elif mode == 'kvote':
     for fn in ('kvote.json', 'kvote_pet.json'):
         rows = citaj(fn)
         for x in rows:
-            if x.get('igrac'): x['tez_m'], x['tez_h'], x['tez_t'] = T['w']; x['tez_ls'] = T.get('w_ls', 0.2)
+            if x.get('igrac'): x['tez_m'], x['tez_h'], x['tez_t'] = TEZ; x['tez_ls'] = T.get('w_ls', 0.2)
         pisi(rows, fn, ensure_ascii=False)
-    print('težine model/istorija/tržište', T['w'])
+    print('težine model/istorija/tržište', TEZ)

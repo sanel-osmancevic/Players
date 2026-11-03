@@ -280,6 +280,8 @@ dash.draw('daysel',sel=>{
 
 
 
+// najmanja vrednost opklade (šansa × kvota − 1): ispod ovoga razliku lako pojede greška procene
+const PRAG_VREDNOSTI=0.03;
 dash.calc('preporuke',{
   inputs:['igraci','kvote'],
   title:'Maxbet preporuke',
@@ -303,7 +305,7 @@ dash.calc('preporuke',{
         if(smer==='manje'&&o.kategorija==='Poeni'&&p.veca_uloga)continue;
         if(o.trz_raskorak!=null&&Number(o.trz_raskorak)>=(o.kategorija==='Poeni'?1.5:0.75))continue;
         const h=vals.filter(hit).length, lsn=Number(o.ls_n||0), lsh=o.ls_vise==null?0:(smer==='više'?Number(o.ls_vise):lsn-Number(o.ls_vise)), wl=o.tez_ls==null?0.2:Number(o.tez_ls), ph=(h+wl*lsh+1)/(vals.length+wl*lsn+2), tv=o.trz_vise==null?null:Number(o.trz_vise), pt=tv==null?null:(smer==='više'?tv:1-tv), wm=o.tez_m==null?1/3:Number(o.tez_m), wh=o.tez_h==null?1/3:Number(o.tez_h), wt=o.tez_t==null?1/3:Number(o.tez_t), pc=pt==null?(wm*pm+wh*ph)/(wm+wh):(wm*pm+wh*ph+wt*pt)/(wm+wh+wt), ev=pc*Number(kv)-1;
-        if(pm<0.55||ph<0.55||ev<0)continue;
+        if(pm<0.55||ph<0.55||ev<PRAG_VREDNOSTI)continue;
         if(klupa&&(pt==null||pt<0.5))continue;   // i tržište mora biti na strani opklade
         const z=(smer==='više'?1:-1)*(Number(p[k+'_proj'])-(Math.floor(L)+0.5))/Number(p[k+'_sd']);
         const l5=vals.slice(-5), h5=l5.filter(hit).length, tr=Number(p.minuti_trend||0), trOk=smer==='više'?tr>=-3:tr<=3;
@@ -358,7 +360,7 @@ dash.calc('glavne',{
         const c={kljuc:'G'+o.kolo+' '+o.igrac+' '+o.kategorija,kolo:+o.kolo,termin:p.termin,red:+p.red,igrac:o.igrac,tim:p.tim,utakmica:o.utakmica,kategorija:o.kategorija,smer,linija:L,opklada:o.kategorija.toLowerCase()+' '+smer+' '+L,kvota:kv,sansa:r3(pc),model:r3(pm),trziste:pt==null?null:r3(pt),istorija:h+'/'+vals.length,forma5:l5.filter(hit).length+'/'+l5.length,vrednost:r3(pc*kv-1),projekcija:Number(p[k+'_proj'])};
         if(!best||c.sansa>best.sansa)best=c;
       }
-      if(best&&best.sansa>=0.55)out.push(best);
+      if(best&&best.sansa>=0.55&&best.sansa*best.kvota-1>=PRAG_VREDNOSTI)out.push(best);
     }
     return out.sort((a,b)=>b.sansa-a.sansa);
   }
