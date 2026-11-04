@@ -81,6 +81,6 @@ na 10 min u poslednjih 90 min pred meč, na 30 min na dan meča, na 2 h do 36 h 
 - Kvote se mogu povući samo preko pregledača (sajtovi blokiraju direktan pristup iz oblaka).
 - Pre svakog kola: `py -X utf8 pripremi_kolo.py KOLO` (statistika iz zvaničnog API-ja, raspored, odmor). Kolo i dan drže se u `kolo.json` i `kolo.py`;
   dan je prvi dan sa utakmicom koja još nije počela. Na Windowsu se sistem pokreće sa `py -X utf8 osvezi.py SNIMAK.json`.
-- `KEYOUT` i `MINFIX` u `build5.py` su ručne izmene po kolu. Poslednji poznati statusi su u `extras.json`, a novi se upisuju u `statusi.json`.
+- `KEYOUT` u `build5.py` je ručna izmena po kolu. Statusi i dodatak minuta iz vesti idu u `rucno_kolo.json` (`kolo`, `statusi`, `minuti`), imaju prednost nad svim izvorima i važe samo za navedeno kolo. Poslednji poznati statusi su u `extras.json`, a novi se upisuju u `statusi.json`.
 - `onoff.json` (uloge kad saigrač ne igra) pravi `pripremi_kolo.py` preko `onoff_kes.js`, iz sačuvanog play-by-play zapisa.
 - Python 3.10+, Node 18+ (za `t28.js`); bez dodatnih paketa, osim Playwright-a za servis.

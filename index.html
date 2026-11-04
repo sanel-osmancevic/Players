@@ -84,6 +84,11 @@ body{padding:16px;max-width:1100px;margin:0 auto}button,select{font:inherit;colo
 .el-stv-kocka{padding:var(--cds-pad-sm) var(--cds-pad-md);background:var(--color-bg);border-radius:var(--cds-radius);font-variant-numeric:tabular-nums}
 .el-stv-kocka span{display:block;font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
 .el-stv-kocka b{font-size:var(--cds-font-size-heading);font-weight:var(--cds-font-weight-medium)}
+.el-dlg{border:1px solid var(--color-border-line);border-radius:14px;background:var(--color-panel);color:var(--color-fg);padding:var(--cds-pad-lg);max-width:min(420px,calc(100vw - 32px))}
+.el-dlg::backdrop{background:rgba(16,24,32,.45)}.el-dlg p{margin:0 0 var(--cds-gap-md);line-height:1.4}
+.el-dlg-red{display:flex;justify-content:flex-end;gap:var(--cds-gap-sm)}
+.el-dlg button{font:inherit;font-weight:var(--cds-font-weight-medium);border-radius:999px;padding:var(--cds-pad-xs) var(--cds-pad-md);min-height:36px;cursor:pointer;background:none;color:inherit;border:1px solid var(--color-border-line)}
+.el-dlg button.el-dlg-da{background:var(--el-akcent,#fa5500);color:#101820;border-color:transparent}
 .el-samolok{display:none}.el-lokalno .el-samolok{display:inline-block}
 .el-tikbox.el-tikig{border-left-color:var(--el-akcent,#fa5500)}.el-tikig .el-tikoz{font-weight:var(--cds-font-weight-medium)}
 .el-table tr.el-odigrano td{background:color-mix(in srgb,var(--color-warn) 13%,transparent)}
@@ -290,6 +295,18 @@ window.d3={format:f=>{const m=/^(\+)?\.(\d+)([f%])$/.exec(f);const plus=!!m[1],n
 })();
 </script>
 <script>
+// Sopstveni prozor za potvrdu: panel pregledača u Claude aplikaciji ne prikazuje confirm() i odmah vraća „ne“
+window.elPitaj=(poruka,da,ne)=>new Promise(res=>{
+  const d=document.createElement('dialog');d.className='el-dlg';
+  const p=document.createElement('p');p.textContent=poruka;
+  const r=document.createElement('div');r.className='el-dlg-red';
+  const kraj=v=>{d.close();d.remove();res(v);};
+  if(ne){const b=document.createElement('button');b.type='button';b.textContent=ne;b.addEventListener('click',()=>kraj(false));r.appendChild(b);}
+  const ok=document.createElement('button');ok.type='button';ok.className='el-dlg-da';ok.textContent=da;ok.addEventListener('click',()=>kraj(true));r.appendChild(ok);
+  d.addEventListener('cancel',e=>{e.preventDefault();kraj(false);});
+  d.append(p,r);document.body.appendChild(d);d.showModal();ok.focus();
+});
+window.elObavesti=poruka=>window.elPitaj(poruka,'U redu');
 window.elState={kolo:'',game:'',day:'',q:'',rmod:'sig',tmod:'sig'};
 const vrstaOf=x=>x.vrsta==='glavne'?'gl':'sig';
 const fmt1=d3.format('.1f'), pct=d3.format('.0%'), sgn=d3.format('+.1f');
@@ -663,11 +680,11 @@ dash.draw('picks',tb=>{
     if(x.zapamceno&&!done(x)){const dn=stvDan(x.termin),sk='s|'+x.kolo+'|'+dn+'|'+x.kljuc+'|'+x.opklada,zd=dash.data('zakljucano'),igr=!!(zd&&zd.status==='ok'&&zd.data&&zd.data.tiketi&&zd.data.tiketi[sk]);
       const b=document.createElement('button');b.type='button';b.className='el-odig';b.textContent=igr?'Poništi':'Odigrano';
       b.addEventListener('click',async ev=>{ev.stopPropagation();
-        if(!confirm(igr?'Poništiti opkladu? Ako nema drugih odigranih za ovaj dan, osvežavanje se ponovo uključuje.':'Označiti opkladu kao odigranu? Igrači i granice se više ne menjaju, a osvežavanje za ovaj dan se isključuje.'))return;
+        if(!await window.elPitaj(igr?'Poništiti opkladu? Ako nema drugih odigranih za ovaj dan, osvežavanje se ponovo uključuje.':'Označiti opkladu kao odigranu? Igrači i granice se više ne menjaju, a osvežavanje za ovaj dan se isključuje.',igr?'Poništi':'Odigrano','Odustani'))return;
         b.disabled=true;
         try{const r=await fetch('/api/tiket',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({kolo:x.kolo,dan:dn,kljuc:sk,noge:[{kljuc:x.kljuc,opklada:x.opklada}],odigrano:!igr})});
-          if(!r.ok){const d=await r.json().catch(()=>({}));alert(d.greska||'Nije uspelo.');b.disabled=false;return;}
-          await window.__ucitaj();if(window.__osveziStanje)window.__osveziStanje();}catch(e){alert('Lokalni server nije dostupan.');b.disabled=false;}});
+          if(!r.ok){const d=await r.json().catch(()=>({}));await window.elObavesti(d.greska||'Nije uspelo.');b.disabled=false;return;}
+          await window.__ucitaj();if(window.__osveziStanje)window.__osveziStanje();}catch(e){await window.elObavesti('Lokalni server nije dostupan.');b.disabled=false;}});
       co.appendChild(b);}
     tr.appendChild(co);
     tb.appendChild(tr); kartica(tb,tr,x,'picks');
@@ -729,11 +746,11 @@ const tikDan=(tb,x,src,legsOf,n)=>{
     if(ig){box.classList.add('el-tikig');const oz=document.createElement('span');oz.className='el-tikoz';oz.textContent=' · 🔒 Odigrano';f.appendChild(oz);}
     if(!t.ishod&&(t.nogeK||[]).length){const b=document.createElement('button');b.type='button';b.className='el-odig el-samolok';b.style.marginLeft='8px';b.textContent=ig?'Poništi':'Odigrano';
       b.addEventListener('click',async()=>{
-        if(!confirm(ig?'Poništiti tiket? Ako nema drugih odigranih tiketa za ovaj dan, osvežavanje se ponovo uključuje.':'Označiti tiket kao odigran? Igrači i granice se više ne menjaju, a osvežavanje za ovaj dan se isključuje.'))return;
+        if(!await window.elPitaj(ig?'Poništiti tiket? Ako nema drugih odigranih tiketa za ovaj dan, osvežavanje se ponovo uključuje.':'Označiti tiket kao odigran? Igrači i granice se više ne menjaju, a osvežavanje za ovaj dan se isključuje.',ig?'Poništi':'Odigrano','Odustani'))return;
         b.disabled=true;
         try{const r=await fetch('/api/tiket',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({kolo:t.kolo,dan:t.dan,kljuc:zk,noge:t.nogeK,odigrano:!ig})});
-          if(!r.ok){const d=await r.json().catch(()=>({}));alert(d.greska||'Nije uspelo.');b.disabled=false;return;}
-          await window.__ucitaj();if(window.__osveziStanje)window.__osveziStanje();}catch(e){alert('Lokalni server nije dostupan.');b.disabled=false;}});
+          if(!r.ok){const d=await r.json().catch(()=>({}));await window.elObavesti(d.greska||'Nije uspelo.');b.disabled=false;return;}
+          await window.__ucitaj();if(window.__osveziStanje)window.__osveziStanje();}catch(e){await window.elObavesti('Lokalni server nije dostupan.');b.disabled=false;}});
       f.appendChild(b);}
     box.appendChild(f); c.appendChild(box); row.appendChild(c); tb.appendChild(row);
   }
@@ -850,16 +867,27 @@ window.elMsgs=updateMsgs;
   const info=document.createElement('div');info.className='el-osvp';info.setAttribute('aria-live','polite');
   const zak=document.createElement('button');zak.type='button';zak.className='el-zak';zak.textContent='Zaključaj';zak.title='Trenutne granice i kvote postaju poslednje i osvežavanje se isključuje';
   const IK={radi:'…',ok:'✓',preskoceno:'–',greska:'✗'};
+  let zadnjiV=null;
   const crtaj=d=>{
     info.replaceChildren();
     zak.textContent=d.zakljucan==='sve'?'Otključaj':'Zaključaj';
     if(d.zakljucan){const z=document.createElement('div');z.className='el-osvupoz';z.textContent=d.zakljucan==='sve'?'Sve je zaključano: granice i kvote su poslednje, a osvežavanje je isključeno dok ne klikneš Otključaj. Rezultati se i dalje upisuju.':'Tiket je odigran: igrači i granice za '+d.zakljucan+' su zaključani, a osvežavanje je isključeno. Rezultati se i dalje upisuju.';info.appendChild(z);}
     if(d.statusiStari){const u=document.createElement('div');u.className='el-osvupoz';u.textContent='Povrede nisu osvežene u poslednjih 6 sati.';info.appendChild(u);}
     const p=d.posao; if(!p)return;
+    if(p.kraj&&zadnjiV&&zadnjiV*1000>p.kraj+5000)return;   // posle ovoga je automatika već upisala novije podatke
     for(const k of p.koraci){const r=document.createElement('div');if(k.status==='greska')r.className='el-osvnije';const b=document.createElement('b');b.textContent=(IK[k.status]||'')+' '+k.naziv;r.appendChild(b);if(k.poruka)r.appendChild(document.createTextNode(': '+k.poruka));info.appendChild(r);}
     if(p.greska){const g=document.createElement('div');g.className='el-osvnije';g.textContent=p.greska;info.appendChild(g);}
   };
   let tajmer=null;
+  // automatika radi bez ove stranice, pa se novi podaci proveravaju na 30 s i odmah prikazuju
+  const pratiPodatke=async()=>{
+    if(zadnjiV!==null&&document.visibilityState!=='visible')return;
+    try{const v=(await fetch('data/meta.json?'+Date.now()).then(r=>r.json())).v;
+      const novo=zadnjiV!==null&&v!==zadnjiV;zadnjiV=v;
+      if(novo){await window.__ucitaj();if(window.__osveziStanje)await window.__osveziStanje();}
+    }catch(e){}
+  };
+  setInterval(pratiPodatke,30000);
   const stanje=()=>fetch('/api/stanje',{cache:'no-store'}).then(r=>{if(!r.ok)throw 0;return r.json();});
   const prati=()=>{clearTimeout(tajmer);tajmer=setTimeout(()=>stanje().then(d=>{crtaj(d);
       if(d.posao&&d.posao.radi){btn.disabled=true;btn.textContent='Osvežavam…';prati();}
@@ -869,7 +897,7 @@ window.elMsgs=updateMsgs;
     btn.disabled=true;
     try{
       const d=await stanje();
-      if(d.uskoro.length&&!confirm('Utakmica počinje za manje od 60 minuta ('+d.uskoro.join(', ')+'). Preporuke za nju će se konačno zaključati. Nastaviti?')){btn.disabled=false;return;}
+      if(d.uskoro.length&&!await window.elPitaj('Utakmica počinje za manje od 60 minuta ('+d.uskoro.join(', ')+'). Preporuke za nju će se konačno zaključati. Nastaviti?','Nastavi','Odustani')){btn.disabled=false;return;}
       const r=await fetch('/api/osvezi',{method:'POST'});
       if(!r.ok&&r.status!==409)throw 0;
       btn.textContent='Osvežavam…';prati();
@@ -877,15 +905,15 @@ window.elMsgs=updateMsgs;
   });
   zak.addEventListener('click',async()=>{
     const sad=zak.textContent==='Zaključaj';
-    if(!confirm(sad?'Zaključati sve? Trenutne granice i kvote postaju poslednje, a osvežavanje se isključuje dok ne klikneš Otključaj, i za sledeće dane.':'Otključati? Osvežavanje se ponovo uključuje, a nezapočete preporuke mogu da se promene.'))return;
+    if(!await window.elPitaj(sad?'Zaključati sve? Trenutne granice i kvote postaju poslednje, a osvežavanje se isključuje dok ne klikneš Otključaj, i za sledeće dane.':'Otključati? Osvežavanje se ponovo uključuje, a nezapočete preporuke mogu da se promene.',sad?'Zaključaj':'Otključaj','Odustani'))return;
     zak.disabled=true;
     try{const r=await fetch('/api/zakljucaj',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({zakljucano:sad})});
-      if(!r.ok){const e=await r.json().catch(()=>({}));alert(e.greska||'Nije uspelo.');}
+      if(!r.ok){const e=await r.json().catch(()=>({}));await window.elObavesti(e.greska||'Nije uspelo.');}
       await window.__ucitaj();if(window.__osveziStanje)await window.__osveziStanje();
-    }catch(e){alert('Lokalni server nije dostupan.');}
+    }catch(e){await window.elObavesti('Lokalni server nije dostupan.');}
     zak.disabled=false;
   });
-  stanje().then(d=>{document.body.classList.add('el-lokalno');bar.appendChild(zak);bar.appendChild(btn);document.getElementById('el-top').appendChild(bar);document.getElementById('el-top').after(info);crtaj(d);btn.disabled=!!d.zakljucan;window.__osveziStanje=()=>stanje().then(x=>{crtaj(x);if(!(x.posao&&x.posao.radi))btn.disabled=!!x.zakljucan;}).catch(()=>{});if(d.posao&&d.posao.radi){btn.disabled=true;btn.textContent='Osvežavam…';prati();}}).catch(()=>{});
+  pratiPodatke().then(stanje).then(d=>{document.body.classList.add('el-lokalno');bar.appendChild(zak);bar.appendChild(btn);document.getElementById('el-top').appendChild(bar);document.getElementById('el-top').after(info);crtaj(d);btn.disabled=!!d.zakljucan;window.__osveziStanje=()=>stanje().then(x=>{crtaj(x);if(!(x.posao&&x.posao.radi))btn.disabled=!!x.zakljucan;}).catch(()=>{});if(d.posao&&d.posao.radi){btn.disabled=true;btn.textContent='Osvežavam…';prati();}}).catch(()=>{});
 })();
 </script>
 </body></html>

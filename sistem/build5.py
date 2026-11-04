@@ -9,6 +9,12 @@ for _f in ('statusi_auto.json','statusi.json'):   # auto (nestanak iz ponude) pa
     for _k,_v in citaj(_f).items():
         if _v[0]=='Igra': ex['status'].pop(_k,None)
         else: ex['status'][_k]=_v
+# rucno_kolo.json: ručne izmene iz vesti, važe samo za navedeno kolo pa se ne prenose dalje. Imaju prednost nad svim izvorima statusa.
+_rk=citaj('rucno_kolo.json') if _os.path.exists('rucno_kolo.json') else {}
+RUCNO=_rk if _rk.get('kolo')==KOLO else {}
+for _k,_v in RUCNO.get('statusi',{}).items():
+    if _v[0]=='Igra': ex['status'].pop(_k,None)
+    else: ex['status'][_k]=_v
 ex['posAllow']=d9['posAllow']; ex['pace']=d9['pace']
 TEAM={'RED':'Crvena zvezda','MUN':'Bayern','TEL':'Maccabi TA','PRS':'Paris','MAD':'Real Madrid','ULK':'Fenerbahče','DUB':'Dubai','HTA':'Hapoel TA','IST':'Anadolu Efes','PAN':'Panathinaikos','ZAL':'Žalgiris','PAR':'Partizan','ASV':'ASVEL','BAS':'Baskonia','OLY':'Olympiacos','MIL':'Olimpia Milano','BAR':'Barcelona','PAM':'Valencia','VIR':'Virtus','BES':'Beşiktaş'}
 GAMES=[tuple(g[:3]) for g in GAMES_KOLA]
@@ -81,7 +87,7 @@ for x in P:
         tot=sum(y['mproj'] for y in mates)
         # bt_minuti.py, kola 3-9: stvarni višak posle prvog izostanka je oko 1 min, pa je 0.7 i najviše 4 min bilo previše
         for y in mates: y['bonus']=min(2.0,y.get('bonus',0)+x['mproj']*0.3*y['mproj']/tot) if tot else 0
-MINFIX={}  # ručni dodatak minuta po kolu, npr. {'HAYES, KEVARRIUS|PAR':4.0}
+MINFIX=RUCNO.get('minuti',{})  # ručni dodatak minuta po kolu, npr. {'HAYES, KEVARRIUS|PAR':4.0}
 for x in P:
     b=MINFIX.get(f"{x['n']}|{x['t']}")
     if b: x['bonus']=max(x.get('bonus',0),b)
