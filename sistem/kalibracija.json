@@ -1,1 +1,1 @@
-{"a": 0.824, "b": -0.035, "n": 416, "a_sirovo": 0.4, "b_sirovo": -0.12, "logloss_pre": 0.6953, "logloss_posle": 0.6907}
+{"a": 1.0, "b": 0.0, "n": 294, "a_sirovo": 1.0, "b_sirovo": -0.26, "logloss_pre": 0.679, "logloss_posle": 0.679}
