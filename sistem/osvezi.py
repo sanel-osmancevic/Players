@@ -96,7 +96,14 @@ adj = re.sub(r"G=\{.*?\}\nLG", "G=" + repr(G) + "\nLG", adj, flags=re.S)
 pisi_tekst(adj, 'adjust3.py')
 
 run = lambda *c: subprocess.run([sys.executable if c[0] == 'python3' else c[0], *c[1:]], check=True, capture_output=True, text=True).stdout
-print(run('python3', 'nestanak.py').strip()); run('python3', 'build5.py'); print(run('python3', 'dostupnost.py').strip()); run('python3', 'adjust3.py'); print(run('python3', 'minute.py').strip()); print(run('python3', 'uloge2.py' if os.path.exists('uloge_faktori.json') else 'uloge.py').strip()); run('python3', 'uci2.py'); print(run('python3', 'tezine_primeni.py', 'igraci').strip()); print(run('python3', 'faul.py').strip())
+print(run('python3', 'nestanak.py').strip()); run('python3', 'build5.py')
+# posle svakog koraka: nijedan ne sme mnogo da pomeri zbir poena na utakmici, a greška kaže koji je
+trag = provera.TragZbira(citaj('igraci2.json'), DAN)
+def korak(naziv, *skripte):
+    izlaz = [run('python3', *s).strip() for s in skripte]
+    provera.obradi(f'zbira posle {naziv}', *trag.posle(naziv, citaj('igraci2.json')), tiho=True)
+    return '\n'.join(x for x in izlaz if x)
+print(korak('dostupnost', ['dostupnost.py'])); korak('adjust3', ['adjust3.py']); print(korak('minute', ['minute.py'])); print(korak('uloge', ['uloge2.py' if os.path.exists('uloge_faktori.json') else 'uloge.py'])); print(korak('pomeraj', ['uci2.py'], ['tezine_primeni.py', 'igraci'])); print(korak('faul', ['faul.py']))
 # ručna isključenja (rizik) iz iskljuci.json
 ex = citaj('iskljuci.json') if os.path.exists('iskljuci.json') else {}
 rows = citaj('igraci2.json')
@@ -105,6 +112,7 @@ for r in rows:
     elif r.get('rizik_uloge'): r['iskljuci'] = 'Rizik uloge: ' + r['rizik_uloge']   # upitan saigrač ili izgubljen start
 pisi(rows, 'igraci2.json', ensure_ascii=False)
 provera.obradi('projekcija', *provera.igraci(rows, G, DAN, citaj('tezine.json').get('bias')))
+pisi(provera.zbir_stanje(rows, G, DAN, trag), 'zbir_utakmica.json', ensure_ascii=False)
 print(run('python3', 'kv_pet2.py').strip())
 # Maxbet nema igrače za ovaj dan (npr. objavio je samo sledeći): zapamćene preporuke ostaju, da ih ovaj preračun ne obriše
 if not citaj('kvote_pet.json'):

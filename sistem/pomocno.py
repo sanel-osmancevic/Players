@@ -19,3 +19,11 @@ def beograd(d=None):
     d = (d or datetime.datetime.now(datetime.timezone.utc)).astimezone(datetime.timezone.utc)
     pn = lambda m: max(datetime.datetime(d.year, m, x, 1, tzinfo=datetime.timezone.utc) for x in range(25, 32) if datetime.date(d.year, m, x).weekday() == 6)
     return d.astimezone(datetime.timezone(datetime.timedelta(hours=2 if pn(3) <= d < pn(10) else 1)))
+
+# Učenje čeka bar ovoliko ocenjenih utakmica u kolu, da jedna utakmica (npr. sa produžetkom) ne pomera težine za sve ostale
+NAJMANJE_UTAKMICA_ZA_UCENJE = 4
+def redovi_za_ucenje(redovi):
+    ut = {}
+    for e in redovi:
+        if e.get('rezultat') is not None: ut.setdefault(e['kolo'], set()).add(e['utakmica'])
+    return [e for e in redovi if len(ut.get(e['kolo'], ())) >= NAJMANJE_UTAKMICA_ZA_UCENJE]

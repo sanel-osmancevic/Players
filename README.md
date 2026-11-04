@@ -31,7 +31,7 @@ a model uči iz njih.
    - `uloge.py` (`uloge2.py` samo ako postoji `uloge_faktori.json`) – preraspodela poena i asistencija kad fale igrači, „veća uloga“
    - `uci2.py`, `tezine_primeni.py` – naučene težine (model / istorija / tržište), pomeraj, širina
    - `faul.py` – sklonost faulovima i sudije
-   - `provera.py` – projekcije u granicama, zbir poena prema kvotama; greška zaustavlja osvežavanje i lista ostaje ista
+   - `provera.py` – projekcije u granicama, zbir poena sveden na 400 minuta prema kvotama (upozorenje iznad 10%, stop iznad 25%) i po koraku modela (stop kad jedan korak pomeri zbir više od 15%); greška zaustavlja osvežavanje i lista ostaje ista. Stanje je u `zbir_utakmica.json`.
    - `kv_pet2.py`, `market.py` – Maxbet linije, konsenzus 5 kladionica (Soccer sam se ne računa kao tržište), raskorak, ⚡ (Maxbet kasni za kladionicama sa drugim izvorom)
    - `kalibracija.py` – usklađivanje šansi sa stvarnošću
    - `evidencija.py` – evidencija svih linija
@@ -42,7 +42,7 @@ a model uči iz njih.
 
 Posle utakmica: ocena `zapamceno.json` radi se sama po utakmici (`servis/rezultati_servis.js`, vidi Servis). Posle kola ručno:
 zapisnik → `results_DAN.json` (zapisnici po utakmici su u `prikupljeno/rezultati/`), `evidencija.py kvote_pet.json DAN results_DAN.json [KOLO]` (dopunjuje redove tog dana i ne briše utakmice van ponude),
-`uci2.py`, `kalibracija.py`.
+`uci2.py`, `kalibracija.py`. Kolo ulazi u učenje tek kad ima bar 4 ocenjene utakmice (`NAJMANJE_UTAKMICA_ZA_UCENJE`).
 
 Detaljan postupak pred meč: `sistem/provera_pred_mec.md`.
 
@@ -76,9 +76,11 @@ na 10 min u poslednjih 90 min pred meč, na 30 min na dan meča, na 2 h do 36 h 
 
 - `backtest.py` – provera projekcija na celoj sezoni (vraćanje vremena kolo po kolo), podešavanje parametara
 - `bt_faktori.py`, `bt_minuti.py`, `bt_minuti2.py` i `bt_prenos.py` – vrednost svakog faktora, varijante modela minuta, dopuna do zbira tima i prenos minuta i učinka odsutnih; ništa ne upisuju
+- `bt_niski.py` – projekcija poena prema stvarnim poenima po grupama igrača (niski strelci); ništa ne upisuje
+- `bt_uloga.py` – prenos minuta odsutnog po ulozi: tri pravila prema sadašnjem; ništa ne upisuje
 - `bt_total.py` – da li ukupan broj poena i hendikep iz kvota popravljaju projekcije poena (samo 9. kolo); ništa ne upisuje
 - Ulog je najviše 0,5 j. kad tržište nije na strani opklade; ista opklada na obe liste dobija ulog samo jednom. `kalibracija.py` uči na šansi koja se stvarno koristi, a pomak ka jednoj strani uči tek od 3 kola.
-- `osvezi.py` preko `provera.py` staje bez izmene liste ako zbir poena na utakmici tog dana odstupa više od 30% od kvota, ako poslednji koraci promene projekciju više od 20% ili ako je model na poenima iskošen prema tržištu
+- `osvezi.py` preko `provera.py` staje bez izmene liste ako zbir poena na utakmici tog dana, sveden na 400 minuta, odstupa više od 25% od kvota, ako poslednji koraci promene projekciju više od 20% ili ako je model na poenima iskošen prema tržištu
 - `bt_*.py`, `korel.py` – posebne provere (raspodela, uloge, prilike za skok/asistenciju, rotacije, povezanost opklada)
 
 ## Napomene
