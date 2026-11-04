@@ -103,7 +103,7 @@ for x in P:
     zf,prof=zone_factor(x['n'],t,o)
     r=dict(api=x['n'],igrac=name,poz=pos,tim=TEAM[t],protiv=TEAM[o],teren='domaćin' if home[t] else 'gost',utakmica=gname[t],termin=gtime[t],red=gord[t],
            status=x['status'],napomena=x['note'],utakmice=len(x['mins']),
-           minuti=round(sum(x['mins'])/len(x['mins']),1),minuti_proj=round(mp,1) if x['status']!='Ne igra' else 0,
+           minuti=round(sum(x['mins'])/len(x['mins']),1),minuti_proj=round(mp,1) if x['status']!='Ne igra' else 0,minuti_bonus=round(x.get('bonus',0),1),
            minuti_posl3=round(sum(x['mins'][-3:])/len(x['mins'][-3:]),1),
            starter=f"{sum(x['starts'])}/{len(x['starts'])}",
            on_net=on[0],off_net=on[1],onoff=None if on[0] is None or on[1] is None else round(on[0]-on[1],1),

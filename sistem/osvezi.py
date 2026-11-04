@@ -4,6 +4,7 @@
 #   sa argumentom: koristi {raw, games} koji je vratio pregledač
 import json, sys, subprocess, re, os, datetime
 from pomocno import citaj, pisi, citaj_tekst, pisi_tekst, beograd
+import provera
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 if not sys.flags.utf8_mode:   # na Windowsu open() inače ne čita fajlove kao UTF-8
     sys.exit(subprocess.run([sys.executable, '-X', 'utf8', *sys.argv], env=dict(os.environ, PYTHONUTF8='1')).returncode)
@@ -103,13 +104,16 @@ for r in rows:
     if r['igrac'] in ex and r['termin'].startswith(DAN): r['iskljuci'] = ex[r['igrac']]
     elif r.get('rizik_uloge'): r['iskljuci'] = 'Rizik uloge: ' + r['rizik_uloge']   # upitan saigrač ili izgubljen start
 pisi(rows, 'igraci2.json', ensure_ascii=False)
+provera.obradi('projekcija', *provera.igraci(rows, G, DAN, citaj('tezine.json').get('bias')))
 print(run('python3', 'kv_pet2.py').strip())
 # Maxbet nema igrače za ovaj dan (npr. objavio je samo sledeći): zapamćene preporuke ostaju, da ih ovaj preračun ne obriše
 if not citaj('kvote_pet.json'):
     print(f'Zapamćena lista nije menjana: Maxbet nema igrače za dan {DAN}.')
     print(subprocess.run([sys.executable, 'objavi_web.py'], capture_output=True, text=True).stdout.strip())
     sys.exit(0)
-print(run('python3', 'market.py').strip().splitlines()[0]); print(run('python3', 'kalibracija.py').strip()); print(run('python3', 'tezine_primeni.py', 'kvote').strip()); print(run('python3', 'prosla_kvote.py').strip())
+print(run('python3', 'market.py').strip().splitlines()[0])
+provera.obradi('tržišta', *provera.kvote(citaj('kvote_pet.json'), citaj('igraci2.json'), DAN))
+print(run('python3', 'kalibracija.py').strip()); print(run('python3', 'tezine_primeni.py', 'kvote').strip()); print(run('python3', 'prosla_kvote.py').strip())
 run('python3', 'evidencija.py', 'kvote_pet.json', DAN)
 run('node', 't28.js')
 
@@ -144,12 +148,15 @@ def brzo(p):
     jed = 1 if p['kategorija'] == 'Poeni' else 0.5
     return (lag / jed >= 0.5), f"Soccer/Merkur {lag:+.1f} u odnosu na Maxbet"
 KAL = citaj('kalibracija.json') if os.path.exists('kalibracija.json') else {'a': 1, 'b': 0}
-def kal(p):   # usklađena šansa (kalibracija.py); prikaz, tiketi i ulozi koriste nju, izbor opklada ostaje isti
+def kal(p, smer='više'):   # usklađena šansa (kalibracija.py, uči se za „više“); prikaz, tiketi i ulozi koriste nju, izbor opklada ostaje isti
     import math
-    p = min(max(float(p), 0.02), 0.98); return round(1 / (1 + math.exp(-(KAL['a'] * math.log(p / (1 - p)) + KAL['b']))), 3)
+    p = min(max(float(p), 0.02), 0.98)
+    if smer == 'manje': return round(1 - 1 / (1 + math.exp(-(KAL['a'] * math.log((1 - p) / p) + KAL['b']))), 3)
+    return round(1 / (1 + math.exp(-(KAL['a'] * math.log(p / (1 - p)) + KAL['b']))), 3)
 def red(p):
     d = {k: p.get(k) for k in KS}; d.update(zapamceno=ts, rezultat=None, ishod=None)
-    d['sansa_sirova'] = p.get('sansa'); d['sansa'] = kal(p['sansa'])
+    d['sansa_sirova'] = p.get('sansa'); d['sansa'] = kal(p['sansa'], p.get('smer'))
+    d['vrednost_sirova'] = p.get('vrednost'); d['vrednost'] = round(d['sansa'] * float(p['kvota']) - 1, 3)   # ista šansa koja se prikazuje
     d['kvota_prva'], d['zapamceno_prvo'] = prvi.get((p['kljuc'], p['opklada']), (p['kvota'], ts))
     d['brzo'], d['zaostatak'] = brzo(p)
     return d
@@ -194,7 +201,7 @@ for d in novi_red:
 # Povezanost: dve opklade na isti tim u istom smeru (obe više / obe manje) -> manja dobija ×0.7; po utakmici ukupno najviše 3 j.
 gotove = [r for r in z if r.get('ishod') in ('prošlo', 'palo') and r.get('sansa')]
 if gotove:
-    hr = sum(r['ishod'] == 'prošlo' for r in gotove) / len(gotove); mp = sum(kal(r.get('sansa_sirova') or r['sansa']) for r in gotove) / len(gotove)
+    hr = sum(r['ishod'] == 'prošlo' for r in gotove) / len(gotove); mp = sum(kal(r.get('sansa_sirova') or r['sansa'], r.get('smer')) for r in gotove) / len(gotove)
     k_raw = (hr - 0.5) / (mp - 0.5) if mp > 0.5 else 0.85
     K_KAL = max(0.5, min(1.0, (len(gotove) * k_raw + 30 * 1.0) / (len(gotove) + 30)))   # šanse su već usklađene: polazno bez dodatne korekcije
 else: K_KAL = 1.0
@@ -204,9 +211,18 @@ def ulog(d):
     pr = p * kv - 1
     if pr <= 0: return 0.0, round(p, 3), round(pr, 3)
     u = 100 * 0.25 * pr / (kv - 1)
-    return min(2.0 if d.get('vrsta') != 'glavne' else 0.5, round(u * 4) / 4 or 0.25), round(p, 3), round(pr, 3)
+    # tržište je zasad najbolja procena: kad nije na strani opklade, ulog najviše kao kod glavnih
+    gornja = 0.5 if d.get('vrsta') == 'glavne' or (d.get('trziste') is not None and float(d['trziste']) < 0.5) else 2.0
+    return min(gornja, round(u * 4) / 4 or 0.25), round(p, 3), round(pr, 3)
 otvorene = [d for d in novi_red if not d.get('konacno') and not d.get('odigrano') and not pocela(d['utakmica'])]
 for d in otvorene: d['ulog'], d['sansa_kor'], d['prednost'] = ulog(d)
+# ista opklada na obe liste: ulog samo jednom, gde je veći
+_ista = {}
+for d in novi_red:
+    if d.get('ulog'): _ista.setdefault((d['igrac'], d['kategorija'], float(d['linija']), d['smer']), []).append(d)
+for _l in _ista.values():
+    for d in sorted(_l, key=lambda d: (-d['ulog'], d.get('vrsta') != 'sigurnije'))[1:]:
+        if d in otvorene: d['ulog'] = 0.0; d['ista_opklada'] = True
 for d in sorted(otvorene, key=lambda d: -d['ulog']):
     if not d['ulog']: continue
     isti = [x for x in novi_red if x is not d and x.get('ulog') and IG_TIM.get(x['igrac']) == IG_TIM.get(d['igrac'])

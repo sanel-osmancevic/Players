@@ -87,8 +87,8 @@ def mu_of(idx, key, c, sd):
     return median_from(d[0], d[1], d[2], sd) if d else None
 
 def market(igrac, tim, kat):
-    """Konsenzus = prosek Soccera (vodi Maxbet, isti izvor kvota) i Merkura (nezavisan).
-    Maxbet ulazi samo kad nema ni jednog od njih. Vraća medijanu, sd, medijane po kladionici,
+    """Konsenzus = težinski prosek Soccera (pola težine, isti izvor kao Maxbet) i nezavisnih kladionica.
+    Maxbet ulazi samo kad nema nijedne nezavisne. Vraća medijanu, sd, medijane po kladionici,
     kretanje konsenzusa od prvog snimka i odstupanje Maxbeta od konsenzusa."""
     r = ig.get(igrac)
     if not r: return None
@@ -97,6 +97,7 @@ def market(igrac, tim, kat):
     now = {b: mu_of(books[b], key, c, sd) for b in books}
     now = {b: v for b, v in now.items() if v is not None}
     nez = [b for b in TEZ_K if b in now and TEZ_K[b] > 0]
+    if nez == ['soccer']: nez = []   # Soccer deli izvor sa Maxbetom i često ga prati sa zakašnjenjem, pa sam ne vredi kao tržište
     src = [now[b] for b in nez] or ([now['maxbet']] if 'maxbet' in now else [])
     if not src: return None
     mu = sum(now[b] * TEZ_K[b] for b in nez) / sum(TEZ_K[b] for b in nez) if nez else src[0]
@@ -112,7 +113,8 @@ def market(igrac, tim, kat):
         if span <= 0: continue
         num += (pts[-1][1] - pts[0][1]) * span; den += span
     kret = num / den if den else 0.0
-    odst = (now['maxbet'] - mu) if 'maxbet' in now and len(src) and src != [now.get('maxbet')] else 0.0
+    pravi = [b for b in nez if b != 'soccer']   # ⚡: Maxbet prema kladionicama sa drugim izvorom
+    odst = now['maxbet'] - sum(now[b] * TEZ_K[b] for b in pravi) / sum(TEZ_K[b] for b in pravi) if 'maxbet' in now and pravi else 0.0
     return mu, sd, now, kret, odst
 
 def apply(fn):

@@ -407,7 +407,7 @@ dash.calc('preporuke',{
 dash.calc('glavne',{
   inputs:['igraci','kvote'],
   title:'Glavne linije',
-  description:'Osnovne Maxbet granice za igrače (obe kvote 1.65–2.20, oko 50:50). Za obe strane: šansa = ponderisani prosek modela, istorije (sezona + prošla sezona sa naučenom težinom) i tržišta (Soccer i Merkur bez marže), kao kod preporuka; prikazuje se strana sa većom šansom, ako je 55% ili više. Bez pravila stabilnosti i forme (igrači koje sam ručno označio kao rizične su izostavljeni): ovo je pregled, ne preporuka.',
+  description:'Osnovne Maxbet granice za igrače (obe kvote 1.65–2.20, oko 50:50). Za obe strane: šansa = ponderisani prosek modela, istorije (sezona + prošla sezona sa naučenom težinom) i tržišta (Soccer i Merkur bez marže), kao kod preporuka; prikazuje se strana sa većom šansom, ako je 55% ili više. Važe i ista pravila kao kod preporuka: model i istorija bar 55%, vrednost bar 3%, tržište se nije pomerilo protiv opklade za ceo poen (skokovi i asistencije pola), kladionice se ne razilaze jako i nema „poeni manje“ za igrača sa većom ulogom. Bez pravila stabilnosti i forme (igrači koje sam ručno označio kao rizične su izostavljeni).',
   fn:(igraci,kvote)=>{
     const Phi=z=>{const x=z/Math.SQRT2,t=1/(1+0.3275911*Math.abs(x)),y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x);return 0.5*(1+(x>=0?y:-y));};
     const key={Poeni:'pts',Skokovi:'reb',Asistencije:'ast'}, r3=x=>Math.round(x*1000)/1000, out=[];
@@ -425,10 +425,16 @@ dash.calc('glavne',{
         const wm=o.tez_m==null?1/3:Number(o.tez_m), wh=o.tez_h==null?1/3:Number(o.tez_h), wt=o.tez_t==null?1/3:Number(o.tez_t);
         const pc=pt==null?(wm*pm+wh*ph)/(wm+wh):(wm*pm+wh*ph+wt*pt)/(wm+wh+wt);
         const l5=vals.slice(-5);
-        const c={kljuc:'G'+o.kolo+' '+o.igrac+' '+o.kategorija,kolo:+o.kolo,termin:p.termin,red:+p.red,igrac:o.igrac,tim:p.tim,utakmica:o.utakmica,kategorija:o.kategorija,smer,linija:L,opklada:o.kategorija.toLowerCase()+' '+smer+' '+L,kvota:kv,sansa:r3(pc),model:r3(pm),trziste:pt==null?null:r3(pt),istorija:h+'/'+vals.length,forma5:l5.filter(hit).length+'/'+l5.length,vrednost:r3(pc*kv-1),projekcija:Number(p[k+'_proj'])};
+        const c={kljuc:'G'+o.kolo+' '+o.igrac+' '+o.kategorija,kolo:+o.kolo,termin:p.termin,red:+p.red,igrac:o.igrac,tim:p.tim,utakmica:o.utakmica,kategorija:o.kategorija,smer,linija:L,opklada:o.kategorija.toLowerCase()+' '+smer+' '+L,kvota:kv,sansa:r3(pc),model:r3(pm),trziste:pt==null?null:r3(pt),istorija:h+'/'+vals.length,forma5:l5.filter(hit).length+'/'+l5.length,vrednost:r3(pc*kv-1),projekcija:Number(p[k+'_proj']),_ph:ph,_pm:pm};
         if(!best||c.sansa>best.sansa)best=c;
       }
-      if(best&&best.sansa>=0.55&&best.sansa*best.kvota-1>=PRAG_VREDNOSTI)out.push(best);
+      if(!best||best.sansa<0.55||best.sansa*best.kvota-1<PRAG_VREDNOSTI)continue;
+      // ista pravila kao u preporukama: model i istorija na strani opklade, tržište nije protiv, kladionice se ne razilaze jako
+      const pojen=o.kategorija==='Poeni', sm=(best.smer==='više'?1:-1)*Number(o.trz_kretanje||0);
+      if(best._pm<0.55||best._ph<0.55||sm<=-(pojen?1:0.5))continue;
+      if(o.trz_raskorak!=null&&Number(o.trz_raskorak)>=(pojen?1.5:0.75))continue;
+      if(best.smer==='manje'&&pojen&&p.veca_uloga)continue;
+      const {_ph,_pm,...gotova}=best; out.push(gotova);
     }
     return out.sort((a,b)=>b.sansa-a.sansa);
   }

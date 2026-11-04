@@ -80,6 +80,13 @@ if __name__ == '__main__':
     for r in rows:
         if not r['termin'].startswith(DAN): continue
         f = fakt.get((sur(r['igrac']), r['tim']))
+        # zbog izostanaka saigrača igrač dobija 8%+ više poena (minuti x šutevi): ne igramo "poeni manje"
+        if r['status'] != 'Ne igra' and KOD[r['tim']] in OUT and r.get('minuti_proj'):
+            osnova = (r.get('minuti_pre_sastava') or r['minuti_proj']) - (r.get('minuti_bonus') or 0)
+            fm = r['minuti_proj'] / osnova if osnova > 0 else 1.0
+            rast = fm * (f['pts'] if f else 1.0) - 1
+            if rast >= 0.08:
+                r['veca_uloga'] = f"Veća uloga zbog izostanaka: očekivano {100*rast:+.0f}% poena (minuti {r['minuti_proj']-osnova:+.1f})"
         if not f: continue
         for k in ('pts', 'reb', 'ast'):
             r[f'{k}_proj'] = round(r[f'{k}_proj'] * f[k], 1)

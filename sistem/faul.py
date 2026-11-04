@@ -26,7 +26,7 @@ for r in rows:
     if sk and sk[1]:
         rate = round(rate * sk[1], 2); r['sudije'] = ', '.join(sk[0]); r['sudije_faul'] = sk[1]; r['sudije_ft'] = sk[2]
         # više/manje slobodnih bacanja -> poeni srazmerno udelu poena iz slobodnih bacanja
-        uft = float(r.get('udeo_ft') or 0.18)
+        uft = float(r.get('udeo_ft') or 18) / 100   # udeo_ft je u procentima
         if sk[2]: r['pts_proj'] = round(r['pts_proj'] * (1 + (sk[2] - 1) * uft), 1)
     r['faul_40'] = rate; r['faul_4plus'] = f'{g4}/{g}'
     visak = rate - AVG
