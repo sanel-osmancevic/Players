@@ -74,7 +74,7 @@ na 10 min u poslednjih 90 min pred meč, na 30 min na dan meča, na 2 h do 36 h 
 ## Provere modela
 
 - `backtest.py` – provera projekcija na celoj sezoni (vraćanje vremena kolo po kolo), podešavanje parametara
-- `bt_faktori.py`, `bt_minuti.py` i `bt_minuti2.py` – vrednost svakog faktora, varijante modela minuta i dopuna do zbira tima; ništa ne upisuju
+- `bt_faktori.py`, `bt_minuti.py`, `bt_minuti2.py` i `bt_prenos.py` – vrednost svakog faktora, varijante modela minuta, dopuna do zbira tima i prenos minuta i učinka odsutnih; ništa ne upisuju
 - `bt_*.py`, `korel.py` – posebne provere (raspodela, uloge, prilike za skok/asistenciju, rotacije, povezanost opklada)
 
 ## Napomene
