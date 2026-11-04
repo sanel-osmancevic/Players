@@ -60,7 +60,7 @@ na 10 min u poslednjih 90 min pred meč, na 30 min na dan meča, na 2 h do 36 h 
 - Šansa: tržište je stalnih 60% (`tezine_primeni.py`), a model i istorija dele preostalih 40% po naučenom odnosu. Opklada ulazi u preporuke samo sa vrednošću od bar +3% (`PRAG_VREDNOSTI`).
 - Dugme **Zaključaj** pored Osveži: otvorene preporuke dobijaju `konacno`, a `zakljucano.json` dobija `sve`. Tada nema osvežavanja ni pripreme novog kola dok se ne klikne **Otključaj**; rezultati se i dalje upisuju i šalju na sajt.
 - Dugme **Odigrano** na opkladi ili tiketu (u aplikaciji na računaru): igrači tiketa dobijaju 🔒, a ceo taj dan se zaključava (`zakljucano.json`). `osvezi.py` ga više ne menja, dugme Osveži i automatika su isključeni dok ne dođe sledeći dan sa utakmicama, a rezultati se i dalje upisuju. Poništavanje je moguće dok nijedna utakmica sa tiketa nije počela. Oznaka ide na sajt oko 30 s posle klika.
-- Povrede (`povrede_servis.js`): zvaničan izveštaj kola, Rotowire lista povreda i sudije iz API-ja idu u `statusi.json` i `sudije_kolo.json`. Prednost: klub potvrdio izveštaj, pa izveštaj bez potvrde, pa Rotowire; ručno upisani statusi ostaju. Startne petorke nemaju izvor pre utakmice, pa se procenjuju iz istorije. Provera bez upisa: `node povrede_servis.js --proba=9`.
+- Povrede (`povrede_servis.js`): zvaničan izveštaj kola, Sportando članci po utakmici, Rotowire lista povreda i sudije iz API-ja idu u `statusi.json` i `sudije_kolo.json`. Prednost: klub potvrdio izveštaj, pa Sportando, pa izveštaj bez potvrde, pa Rotowire; ručno upisani statusi ostaju. Startne petorke nemaju izvor pre utakmice, pa se procenjuju iz istorije. Provera bez upisa: `node povrede_servis.js --proba=9`.
 - Automatika (`tik.js`, Windows zadatak na 10 min): danima sa utakmicama, od 8:00 do 1:30 sledećeg jutra, jednom na sat radi ceo tok kao dugme Osveži. Ostalih taktova samo snima kvote i upisuje rezultate. Kad se kolo završi (12 h posle poslednje utakmice), sam pokreće `pripremi_kolo.py` za sledeće. Poslednji ishod: `prikupljeno/auto.json`, dnevnik: `prikupljeno/app.log`.
 - Rezultati dana: 3 sata posle početka poslednje utakmice u danu `tik.js` povlači rezultate i odmah ih šalje na sajt, i ponavlja na svakom taktu dok se ne upišu svi (najviše 24 h).
 - Rezultati: isti zadatak na svakih 10 min pokreće `rezultati_servis.js`. Od 90 min posle početka proverava zvanični API i, kad je utakmica
@@ -73,7 +73,7 @@ na 10 min u poslednjih 90 min pred meč, na 30 min na dan meča, na 2 h do 36 h 
 ## Provere modela
 
 - `backtest.py` – provera projekcija na celoj sezoni (vraćanje vremena kolo po kolo), podešavanje parametara
-- `bt_faktori.py` i `bt_minuti.py` – vrednost svakog faktora i varijante modela minuta; ništa ne upisuju
+- `bt_faktori.py`, `bt_minuti.py` i `bt_minuti2.py` – vrednost svakog faktora, varijante modela minuta i dopuna do zbira tima; ništa ne upisuju
 - `bt_*.py`, `korel.py` – posebne provere (raspodela, uloge, prilike za skok/asistenciju, rotacije, povezanost opklada)
 
 ## Napomene

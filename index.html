@@ -871,7 +871,7 @@ window.elMsgs=updateMsgs;
   const crtaj=d=>{
     info.replaceChildren();
     zak.textContent=d.zakljucan==='sve'?'Otključaj':'Zaključaj';
-    if(d.zakljucan){const z=document.createElement('div');z.className='el-osvupoz';z.textContent=d.zakljucan==='sve'?'Sve je zaključano: granice i kvote su poslednje, a osvežavanje je isključeno dok ne klikneš Otključaj. Rezultati se i dalje upisuju.':'Tiket je odigran: igrači i granice za '+d.zakljucan+' su zaključani, a osvežavanje je isključeno. Rezultati se i dalje upisuju.';info.appendChild(z);}
+    if(d.zakljucan){const z=document.createElement('div');z.className='el-osvupoz';z.textContent=d.zakljucan==='sve'?'Sve je zaključano: granice i kvote su poslednje, a osvežavanje je isključeno dok ne klikneš Otključaj. Rezultati se i dalje upisuju.':'Odigrano: igrači i granice za '+d.zakljucan+' su zaključani, a osvežavanje je isključeno. Rezultati se i dalje upisuju.';info.appendChild(z);}
     if(d.statusiStari){const u=document.createElement('div');u.className='el-osvupoz';u.textContent='Povrede nisu osvežene u poslednjih 6 sati.';info.appendChild(u);}
     const p=d.posao; if(!p)return;
     if(p.kraj&&zadnjiV&&zadnjiV*1000>p.kraj+5000)return;   // posle ovoga je automatika već upisala novije podatke
@@ -881,7 +881,6 @@ window.elMsgs=updateMsgs;
   let tajmer=null;
   // automatika radi bez ove stranice, pa se novi podaci proveravaju na 30 s i odmah prikazuju
   const pratiPodatke=async()=>{
-    if(zadnjiV!==null&&document.visibilityState!=='visible')return;
     try{const v=(await fetch('data/meta.json?'+Date.now()).then(r=>r.json())).v;
       const novo=zadnjiV!==null&&v!==zadnjiV;zadnjiV=v;
       if(novo){await window.__ucitaj();if(window.__osveziStanje)await window.__osveziStanje();}
