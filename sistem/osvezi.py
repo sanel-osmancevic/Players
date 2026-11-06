@@ -127,6 +127,7 @@ provera.obradi('tržišta', *provera.kvote(citaj('kvote_pet.json'), citaj('igrac
 print(run('python3', 'kalibracija.py').strip()); print(run('python3', 'tezine_primeni.py', 'kvote').strip()); print(run('python3', 'prosla_kvote.py').strip())
 run('python3', 'evidencija.py', 'kvote_pet.json', DAN)
 run('node', 't28.js')
+print(run('python3', 'proba.py').strip())   # probna lista u senci, ne utiče na preporuke
 
 # zaključaj nove preporuke samo za utakmice koje još nisu počele
 picks = [dict(p, vrsta='sigurnije') for p in citaj('picks_pet3.json')] + citaj('glavne_pet.json')

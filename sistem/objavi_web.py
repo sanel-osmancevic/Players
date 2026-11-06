@@ -5,7 +5,7 @@ from pomocno import citaj, pisi, beograd
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 WEB = os.environ.get('WEB_DIR') or '..'   # sajt je u korenu repozitorijuma
 os.makedirs(f'{WEB}/data', exist_ok=True)
-for src, dst in (('zapamceno.json', 'zapamceno.json'), ('igraci2.json', 'igraci.json'), ('kvote.json', 'kvote.json'), ('utakmice.json', 'utakmice.json'), ('zakljucano.json', 'zakljucano.json')):
+for src, dst in (('zapamceno.json', 'zapamceno.json'), ('igraci2.json', 'igraci.json'), ('kvote.json', 'kvote.json'), ('utakmice.json', 'utakmice.json'), ('zakljucano.json', 'zakljucano.json'), ('proba_lista.json', 'proba.json')):
     if os.path.exists(src): shutil.copy(src, f'{WEB}/data/{dst}')
 now = beograd()
 _m = f'{WEB}/data/meta.json'
