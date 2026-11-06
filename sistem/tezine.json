@@ -7,9 +7,9 @@
  "c": 1.133,
  "raspodela": "normal",
  "w": [
-  0.562,
+  0.687,
   0.125,
-  0.313
+  0.188
  ],
  "n": 589,
  "n_po_kategoriji": {
@@ -18,13 +18,13 @@
   "Skokovi": 174
  },
  "dijagnostika": {
-  "logloss_normal": 0.4911,
-  "logloss_nb": 0.5065,
+  "logloss_normal": 0.4898,
+  "logloss_nb": 0.5081,
   "najbolja_sirina": 1.2,
   "tezine_sirovo": {
-   "model": 0.7,
-   "istorija": 0.0,
-   "trziste": 0.3
+   "model": 0.9,
+   "istorija": -0.0,
+   "trziste": 0.1
   },
   "n_tezine": 498,
   "w_ls_sirovo": 0.8,

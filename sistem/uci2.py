@@ -6,7 +6,7 @@
 # Sve se skuplja ka podrazumevanim vrednostima dok je uzorak mali (efektivno n = broj različitih igrač-kategorija).
 # Piše tezine.json koji primenjuje tezine_primeni.py.
 import json, math, os
-from pomocno import citaj, pisi, redovi_za_ucenje, MEDIJANA
+from pomocno import citaj, pisi, redovi_za_ucenje, MEDIJANA, medijana_modela
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 from dist import p_over as nb_over
 Phi = lambda z: 0.5 * (1 + math.erf(z / math.sqrt(2)))
@@ -22,7 +22,7 @@ N = sum(n_eff.values())
 
 def p_model(e, bias=0.0, c=1.0, dist='normal'):
     # od 6.11.2026. verovatnoća oko medijane (pomocno.MEDIJANA); naučeni pomeraj ostaje samo za prikazani prosek
-    mu = e['proj'] + MEDIJANA[K[e['kategorija']]]; sd = e['sd'] * c
+    mu = medijana_modela(e['proj'], K[e['kategorija']], e.get('trz_medijana')); sd = e['sd'] * c   # od 7.11. povučeno ka tržištu
     if dist == 'nb': return nb_over(e['linija'], max(mu, 0.1), sd)
     return 1 - Phi((math.floor(e['linija']) + 0.5 - mu) / sd)
 def p_hist(e, side='v'):

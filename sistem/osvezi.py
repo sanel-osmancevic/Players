@@ -3,7 +3,7 @@
 #   bez argumenta: najnoviji Maxbet snimak servisa sa igračima (prikupljeno/), a ako ga nema, direktno povlačenje
 #   sa argumentom: koristi {raw, games} koji je vratio pregledač
 import json, sys, subprocess, re, os, datetime
-from pomocno import citaj, pisi, citaj_tekst, pisi_tekst, beograd, MEDIJANA
+from pomocno import citaj, pisi, citaj_tekst, pisi_tekst, beograd, MEDIJANA, medijana_modela
 import provera
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 if not sys.flags.utf8_mode:   # na Windowsu open() inače ne čita fajlove kao UTF-8
@@ -128,6 +128,18 @@ if not citaj('kvote_pet.json'):
     print(subprocess.run([sys.executable, 'objavi_web.py'], capture_output=True, text=True).stdout.strip())
     sys.exit(0)
 print(run('python3', 'market.py').strip().splitlines()[0])
+# od 7.11.2026: medijana za šansu se povlači ka medijani tržišta (pomocno.POVLACENJE); {k}_med_model čuva vrednost pre povlačenja
+_kv = {}
+for x in citaj('kvote_pet.json'):
+    if x.get('trz_medijana') is not None: _kv[(x['igrac'], x['kategorija'])] = x['trz_medijana']
+rows = citaj('igraci2.json'); _KAT = {'pts': 'Poeni', 'reb': 'Skokovi', 'ast': 'Asistencije'}
+for r in rows:
+    for k, kat in _KAT.items():
+        if r.get(f'{k}_proj') is None or r['status'] == 'Ne igra': continue
+        osn = r[f'{k}_proj'] - _bias.get(k, 0.0); tm = _kv.get((r['igrac'], kat))
+        r[f'{k}_med_model'] = round(max(0.0, osn + MEDIJANA[k]), 2); r[f'{k}_trz_med'] = tm
+        r[f'{k}_med'] = round(max(0.0, medijana_modela(osn, k, tm)), 2)
+pisi(rows, 'igraci2.json', ensure_ascii=False)
 provera.obradi('tržišta', *provera.kvote(citaj('kvote_pet.json'), citaj('igraci2.json'), DAN))
 print(run('python3', 'kalibracija.py').strip()); print(run('python3', 'tezine_primeni.py', 'kvote').strip()); print(run('python3', 'prosla_kvote.py').strip())
 run('python3', 'evidencija.py', 'kvote_pet.json', DAN)

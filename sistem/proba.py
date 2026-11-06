@@ -95,7 +95,7 @@ def oceni(lista):
 
 def unazad(kolo, P='B'):
     # iz evidencija.json (poslednje stanje linija pred utakmicu), šansa oko medijane kao u bt analizi; samo igrači sa statusom Igra
-    from pomocno import MEDIJANA
+    from pomocno import MEDIJANA, medijana_modela
     C = citaj('tezine.json')['c']; lista = citaj(FAJL)
     lista = [r for r in lista if not (r.get('pravilo') == P and r['kolo'] == kolo and r.get('unazad'))]   # ponovo, po sadašnjem pravilu
     ter = {}
@@ -106,7 +106,7 @@ def unazad(kolo, P='B'):
     najb = {}; oc = {}
     for e in citaj('evidencija.json'):
         if e['kolo'] != kolo or e.get('status') != 'Igra' or not e.get('kvota_manje') or e.get('trz_vise') is None: continue
-        L = e['linija']; pm = 1 - Phi((math.floor(L) + .5 - (e['proj'] + MEDIJANA[K[e['kategorija']]])) / (e['sd'] * C))
+        L = e['linija']; pm = 1 - Phi((math.floor(L) + .5 - medijana_modela(e['proj'], K[e['kategorija']], e.get('trz_medijana'))) / (e['sd'] * C))
         m, t, kv = 1 - pm, 1 - e['trz_vise'], e['kvota_manje']; d = m - t; k = (e['dan'], e['igrac'])
         o = ocena(P, d, kv)
         if prolazi(P, 'manje', d, kv, e['kvota_vise'], kv) and (k not in najb or o > oc[k]):

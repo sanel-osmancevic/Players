@@ -32,3 +32,14 @@ def redovi_za_ucenje(redovi):
 # svoju projekciju u 43-46% utakmica. Pomak medijane od sirove projekcije (prosek), kola 3-9 (bt_projekcija.py, 6.11.2026);
 # na linijama 9. i 10. kola prosečna šansa za "više" je 45.6% naspram stvarnih 45.9% (oko proseka 50.9%).
 MEDIJANA = {'pts': -0.67, 'reb': -0.21, 'ast': -0.25}
+
+# Povlačenje projekcije ka tržištu (od 7.11.2026): kad je projekcija iznad medijane ostalih kladionica, ta razlika je uglavnom šum
+# (na kolima 9-10 igrači su tada dali 1.4 manje od projekcije uz normalne minute), a kad je ispod, nosi informaciju. Logloss na
+# linijama: bez povlačenja 0.6810, sa 75% gore / 25% dole 0.6753 (tržište 0.6823); najbolje gore 100% u oba kola posebno.
+POVLACENJE = {'gore': 0.75, 'dole': 0.25}
+def medijana_modela(proj, k, trz_med=None):
+    # medijana učinka za šansu na liniji: projekcija + pomak medijane, povučena ka medijani tržišta (ako je poznata)
+    mu = proj + MEDIJANA[k]
+    if trz_med is None: return mu
+    d = proj - float(trz_med)
+    return mu - (POVLACENJE['gore'] if d > 0 else POVLACENJE['dole']) * d

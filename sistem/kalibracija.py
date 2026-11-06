@@ -3,7 +3,7 @@
 # model, istorija i tržište. Uči se za „više“; za „manje“ se primenjuje na suprotnu stranu (kal u osvezi.py).
 # Skupljeno ka "bez promene" (a=1, b=0) dok je uzorak mali.
 import json, math
-from pomocno import citaj, pisi, redovi_za_ucenje, MEDIJANA
+from pomocno import citaj, pisi, redovi_za_ucenje, MEDIJANA, medijana_modela
 T = citaj('tezine.json')
 TEZ_TRZISTE = 0.6
 _m, _h = T['w'][0], T['w'][1]
@@ -14,7 +14,7 @@ def sansa(e):
     # uvek iz sačuvanih delova, sa sadašnjom formulom (od 6.11.2026. medijana i istorija bez težine), da kalibracija odgovara šansi u preporukama
     wl = T.get('w_ls', 0.2); h, n = map(int, e['ist_vise'].split('/'))
     ph = (h + wl * (e.get('ls_vise') or 0) + 1) / (n + wl * (e.get('ls_n') or 0) + 2)
-    pm = 1 - Phi((math.floor(e['linija']) + 0.5 - (e['proj'] + MEDIJANA[KLJ[e['kategorija']]])) / (e['sd'] * T.get('c', 1)))
+    pm = 1 - Phi((math.floor(e['linija']) + 0.5 - medijana_modela(e['proj'], KLJ[e['kategorija']], e.get('trz_medijana'))) / (e['sd'] * T.get('c', 1)))
     return WM * pm + WH * ph + TEZ_TRZISTE * float(e['trz_vise'])
 E = [e for e in redovi_za_ucenje(citaj('evidencija.json')) if e.get('rezultat') is not None and e.get('kvota_manje')
      and (e.get('minuti_stvarno') or 0) > 0 and e.get('trz_vise') is not None]
