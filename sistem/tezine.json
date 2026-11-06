@@ -1,35 +1,35 @@
 {
  "bias": {
-  "pts": 0.2,
-  "reb": -0.05,
-  "ast": 0.0
+  "pts": 0.39,
+  "reb": -0.03,
+  "ast": 0.05
  },
- "c": 1.099,
+ "c": 1.123,
  "raspodela": "normal",
  "w": [
-  0.279,
-  0.238,
-  0.483
+  0.427,
+  0.202,
+  0.371
  ],
- "n": 294,
+ "n": 477,
  "n_po_kategoriji": {
-  "Poeni": 143,
-  "Asistencije": 66,
-  "Skokovi": 85
+  "Poeni": 233,
+  "Asistencije": 103,
+  "Skokovi": 141
  },
  "dijagnostika": {
-  "logloss_normal": 0.4917,
-  "logloss_nb": 0.4987,
+  "logloss_normal": 0.4983,
+  "logloss_nb": 0.5043,
   "najbolja_sirina": 1.2,
   "tezine_sirovo": {
-   "model": 0.2,
+   "model": 0.5,
    "istorija": 0.1,
-   "trziste": 0.7
+   "trziste": 0.4
   },
-  "n_tezine": 206,
+  "n_tezine": 386,
   "w_ls_sirovo": 0.8,
-  "n_ls": 145
+  "n_ls": 204
  },
  "w_naucene_bez_trzista": null,
- "w_ls": 0.396
+ "w_ls": 0.443
 }
