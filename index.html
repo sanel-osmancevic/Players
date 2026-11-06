@@ -146,8 +146,8 @@ body{padding:16px;max-width:1100px;margin:0 auto}button,select{font:inherit;colo
   <div class="el-filters">
   <div class="el-tabs" role="tablist">
     <button role="tab" id="tab-preporuke" aria-controls="preporuke" aria-selected="true">Preporuke</button>
-    <button role="tab" id="tab-tiketi" aria-controls="tiketi" aria-selected="false">Tiketi</button>
-    <button role="tab" id="tab-stvarni" aria-controls="stvarni" aria-selected="false">Stvarni učinak</button>
+    <button role="tab" id="tab-tiketi" aria-controls="tiketi" aria-selected="false" hidden>Tiketi</button>
+    <button role="tab" id="tab-stvarni" aria-controls="stvarni" aria-selected="false" hidden>Stvarni učinak</button>
     <button role="tab" id="tab-proba" aria-controls="proba" aria-selected="false">Probna lista</button>
   </div>
   <div class="el-bar" id="el-filterbar" style="padding-top:var(--cds-pad-sm)">
@@ -262,19 +262,41 @@ body{padding:16px;max-width:1100px;margin:0 auto}button,select{font:inherit;colo
     </table></div>
   </section>
   <section class="el-card el-panel" id="proba" role="tabpanel" aria-labelledby="tab-proba" hidden>
+    <div class="el-bar" style="margin-bottom:var(--cds-gap-md)">
+      <div class="el-seg" id="proba-seg" role="group" aria-label="Probna lista" style="margin:0">
+        <button type="button" data-p="A" aria-pressed="true">A · model iznad tržišta</button>
+        <button type="button" data-p="B" aria-pressed="false">B · manje uz kvotu</button>
+        <button type="button" data-p="C" aria-pressed="false">C · bez modela</button>
+      </div>
+      <label for="proba-kolo">Kolo</label>
+      <select id="proba-kolo" aria-label="Kolo probne liste"><option value="">Sva kola</option></select>
+    </div>
+    <div class="proba-lista" data-p="A">
     <p class="el-note">Probna lista u senci, samo za praćenje (bez uloga, ne utiče na preporuke). Pravilo: glavna Maxbet linija gde je model (šansa oko medijane, kao u preporukama) 3–15 procentnih poena iznad tržišta (ostale kladionice bez marže), bez uslova vrednosti i istorije, jedna opklada po igraču. Na 9. i 10. kolu ta grupa je prolazila oko 6 poena češće od tržišta, a veće razlike su bile bez prednosti; granice su izabrane gledajući ta kola, pa se ovde proverava da li važi i dalje. Do 06.11. 11:30 pravilo je bilo 3–10 na starom modelu. „Unazad“ je rekonstrukcija za 05.11. iz stanja pri zaključavanju. Profit: ulog 1 po opkladi, Maxbet kvota pred početak.</p>
     <div class="el-stv-kocke" data-draw="proba" data-source="proba"></div>
     <div class="el-scroll"><table class="el-table">
       <thead><tr><th>Igrač</th><th>Utakmica</th><th>Opklada</th><th class="num">Kvota</th><th class="num">Model</th><th class="num">Tržište</th><th class="num">Razlika</th><th class="num">Rezultat</th><th class="num">Profit</th></tr></thead>
       <tbody id="proba-redovi"></tbody>
     </table></div>
-    <h3 style="margin-top:28px">Probna lista B: „manje“ uz visoku kvotu</h3>
-    <p class="el-note">Od 07.11.2026. Pravilo: samo strana „manje“, Maxbet kvota bar 1.95 (i sporedne linije), model 3–15 procentnih poena iznad tržišta, jedna opklada po igraču. Na 9. i 10. kolu ta grupa je prolazila 58.5% naspram 42.7% koliko je tržište davalo (+29% po kvoti). Pravilo je izvedeno iz tih kola, pa je 10. kolo „unazad“ samo prikaz, a ne dokaz; prava provera počinje od 11. kola. Bez uloga, ne utiče na preporuke.</p>
+    </div>
+    <div class="proba-lista" data-p="B" hidden>
+    <h3>Probna lista B: „manje“ uz visoku kvotu</h3>
+    <p class="el-note">Od 07.11.2026. Pravilo: samo strana „manje“, Maxbet kvota bar 1.95 ili ispod 1.60 (snižene i povišene linije; povišene od 07.11.), model 3–15 procentnih poena iznad tržišta, jedna opklada po igraču. Na 9. i 10. kolu „manje“ uz model 3–15 iznad tržišta i kvotu 1.95+ prolazilo je 58.5% naspram 42.7% koliko je tržište davalo (+29% po kvoti), a na sporednim linijama +27.5%. Pravilo je izvedeno iz tih kola, pa je 10. kolo „unazad“ samo prikaz, a ne dokaz; prava provera počinje od 11. kola. Bez uloga, ne utiče na preporuke. Kocke „Centri“ i „Nestalni minuti“ (odstupanje minuta 6+) prate dve grupe koje su na 9. i 10. kolu bile slabije, na obe probne liste.</p>
     <div class="el-stv-kocke" data-draw="proba2" data-source="proba"></div>
     <div class="el-scroll"><table class="el-table">
       <thead><tr><th>Igrač</th><th>Utakmica</th><th>Opklada</th><th class="num">Kvota</th><th class="num">Model</th><th class="num">Tržište</th><th class="num">Razlika</th><th class="num">Rezultat</th><th class="num">Profit</th></tr></thead>
       <tbody id="proba2-redovi"></tbody>
     </table></div>
+    </div>
+    <div class="proba-lista" data-p="C" hidden>
+    <h3>Probna lista C: kontrola bez modela</h3>
+    <p class="el-note">Od 07.11.2026. Pravilo: „manje“ na svakoj sporednoj Maxbet liniji sa obe kvote (kvote van 1.65–2.20), bez obzira na model; po igraču jedna, sporedna linija najbliža glavnoj. Služi kao kontrola za listu B: ako C prolazi kao B, prednost dolazi od Maxbet cena sporednih linija, a ne od modela; ako je B jasno bolja, model dodaje vrednost. „Unazad“ za 10. kolo je samo prikaz. Bez uloga, ne utiče na preporuke.</p>
+    <div class="el-stv-kocke" data-draw="proba3" data-source="proba"></div>
+    <div class="el-scroll"><table class="el-table">
+      <thead><tr><th>Igrač</th><th>Utakmica</th><th>Opklada</th><th class="num">Kvota</th><th class="num">Model</th><th class="num">Tržište</th><th class="num">Razlika</th><th class="num">Rezultat</th><th class="num">Profit</th></tr></thead>
+      <tbody id="proba3-redovi"></tbody>
+    </table></div>
+    </div>
   </section>
 </div>
 
@@ -684,7 +706,8 @@ dash.draw('picks',tb=>{
     const tr=document.createElement('tr');tr.dataset.key=x.kljuc;
     if(m==='sig'&&x.grupa!==last){if(ng++)tr.className='el-split';last=x.grupa;}
     td(tr,x.igrac,(m==='sig'?x.grupa==='Najsigurnije':x.sansa>=0.65)?'el-good':'');tdGame(tr,x);tdOp(tr,x);
-    if(x.odigrano){tr.classList.add('el-odigrano');const k=document.createElement('span');k.textContent=' 🔒';k.title='Odigrano: igrač i granica su zaključani';tr.firstChild.appendChild(k);}
+    // oznaka „odigrano“ (katanac i obojen red) privremeno se ne prikazuje (7.11.2026, korisnik); true je vraća
+    if(x.odigrano&&window.EL_OZNAKA_ODIGRANO){tr.classList.add('el-odigrano');const k=document.createElement('span');k.textContent=' 🔒';k.title='Odigrano: igrač i granica su zaključani';tr.firstChild.appendChild(k);}
     td(tr,d3.format('.2f')(x.kvota),'num');td(tr,pct(x.sansa),'num');tdUlog(tr,x);td(tr,x.istorija+(x.forma5?' · '+x.forma5:''),'num el-hide');
     if(done(x)){
       const has=x.rezultat!==null&&x.rezultat!==undefined&&x.rezultat!=='';
@@ -714,7 +737,7 @@ dash.draw('picks',tb=>{
 (()=>{const tabs=[...document.querySelectorAll('.el-tabs button')];
  const show=id=>{tabs.forEach(b=>{const on=b.getAttribute('aria-controls')===id;b.setAttribute('aria-selected',on);document.getElementById(b.getAttribute('aria-controls')).hidden=!on;});const rez=id==='preporuke';const fb=document.getElementById('el-filterbar');if(fb)fb.hidden=!rez;document.querySelectorAll('#el-oldkolo').forEach(e=>{e.dataset.tab=rez?'1':'';if(!rez)e.hidden=true;});try{localStorage.setItem('el-tab',id);}catch(e){}};
  tabs.forEach(b=>b.addEventListener('click',()=>show(b.getAttribute('aria-controls'))));
- let t=null;try{t=localStorage.getItem('el-tab');}catch(e){} show(t==='tiketi'||t==='stvarni'||t==='proba'?t:'preporuke');})();
+ let t=null;try{t=localStorage.getItem('el-tab');}catch(e){} show(t==='proba'?t:'preporuke');})();   // Tiketi i Stvarni učinak privremeno sakriveni (7.11.2026), dugmad imaju hidden
 (()=>{const bs=document.getElementById('mod-sig'), bg=document.getElementById('mod-gl');
  if(!bs||!bg)return;
  const set=m=>{window.elState.rmod=m;bs.setAttribute('aria-pressed',m==='sig');bg.setAttribute('aria-pressed',m==='gl');
@@ -868,13 +891,20 @@ dash.draw('stvarni',el=>{
 const crtajProbu=(el,tbId,pravilo,unazadNaziv)=>{
   el.replaceChildren(); const tb=document.getElementById(tbId); if(!tb)return; tb.replaceChildren();
   const d=dash.data('proba'); if(d.status!=='ok')return;
-  const L=(Array.isArray(d.data)?d.data:[]).filter(r=>!r.ispala&&(r.pravilo||'A')===pravilo), pct=d3.format('.0%'), raz=d3.format('+.0%');
+  const sk=document.getElementById('proba-kolo'), kf=sk?sk.value:'';
+  if(sk){const kola=[...new Set((Array.isArray(d.data)?d.data:[]).map(r=>String(r.kolo)))].sort((a,b)=>b-a);
+    if([...sk.options].slice(1).map(o=>o.value).join()!==kola.join()){sk.replaceChildren(new Option('Sva kola',''),...kola.map(x=>new Option(x+'. kolo',x)));sk.value=kola.includes(kf)?kf:'';}}
+  const L=(Array.isArray(d.data)?d.data:[]).filter(r=>!r.ispala&&(r.pravilo||'A')===pravilo&&(!kf||String(r.kolo)===kf)), pct=d3.format('.0%'), raz=d3.format('+.0%');
   const prof=r=>r.ishod==='prošlo'?r.kvota-1:r.ishod==='palo'?-1:null;
   const k=(n,v,c)=>{const x=document.createElement('div');x.className='el-stv-kocka';const a=document.createElement('span');a.textContent=n;const b=document.createElement('b');b.textContent=v;if(c)b.className=c;x.append(a,b);el.appendChild(x);};
   const zbir=l=>{const g=l.filter(r=>prof(r)!==null),p=g.reduce((a,r)=>a+prof(r),0);return {n:g.length,w:g.filter(r=>r.ishod==='prošlo').length,p,ceka:l.filter(r=>!r.ishod).length};};
   const uz=zbir(L.filter(r=>!r.unazad)), un=zbir(L.filter(r=>r.unazad)), f2=d3.format('+.2f');
   k('Uživo: prošlo',uz.n?uz.w+' od '+uz.n:'—');k('Uživo: profit',uz.n?f2(uz.p)+' j.':'—',uz.p>0?'el-good':uz.p<0?'el-bad':'');k('Čeka',String(uz.ceka));
   k(unazadNaziv,un.n?un.w+' od '+un.n+' · '+f2(un.p)+' j.':'—',un.p>0?'el-good':un.p<0?'el-bad':'');
+  // praćenje (7.11.2026): „manje“ kod centara i kod nestalnih minuta (sd 6+) bili su slabiji na kolima 9-10; ovde se vidi da li se to nastavlja
+  const pz=zbir(L.filter(r=>String(r.poz||'').startsWith('C'))), nm=zbir(L.filter(r=>Number(r.minuti_sd||0)>=6));
+  k('Centri',pz.n?pz.w+' od '+pz.n+' · '+f2(pz.p)+' j.':'—',pz.p>0?'el-good':pz.p<0?'el-bad':'');
+  k('Nestalni minuti',nm.n?nm.w+' od '+nm.n+' · '+f2(nm.p)+' j.':'—',nm.p>0?'el-good':nm.p<0?'el-bad':'');
   const dani=[...new Set(L.map(r=>r.kolo+'|'+stvDan(r.termin)))].sort((a,b)=>b.localeCompare(a,'sr',{numeric:true}));
   for(const dn of dani){
     const [kolo,dan]=dn.split('|'), rr=L.filter(r=>r.kolo+'|'+stvDan(r.termin)===dn).sort((a,b)=>String(a.termin).localeCompare(b.termin)||b.razlika-a.razlika), z=zbir(rr);
@@ -890,6 +920,13 @@ const crtajProbu=(el,tbId,pravilo,unazadNaziv)=>{
 };
 dash.draw('proba',el=>crtajProbu(el,'proba-redovi','A','Unazad 05.11.'));
 dash.draw('proba2',el=>crtajProbu(el,'proba2-redovi','B','Unazad 10. kolo'));
+dash.draw('proba3',el=>crtajProbu(el,'proba3-redovi','C','Unazad 10. kolo'));
+// izbor probne liste (A/B/C) i kola; pamti se u pregledaču
+(()=>{const seg=document.getElementById('proba-seg'), sk=document.getElementById('proba-kolo'); if(!seg||!sk)return;
+  const izaberi=p=>{seg.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.p===p));document.querySelectorAll('.proba-lista').forEach(x=>x.hidden=x.dataset.p!==p);try{localStorage.setItem('el-proba',p);}catch(e){}};
+  seg.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>izaberi(b.dataset.p)));
+  let p=null;try{p=localStorage.getItem('el-proba');}catch(e){} izaberi(['A','B','C'].includes(p)?p:'A');
+  sk.addEventListener('change',()=>['proba','proba2','proba3'].forEach(n=>dash.draw(n)));})();
 // poruke "nema podataka": prikazuje i sakriva onData (pre crteža), i prekidači posle promene
 const msgSet=(id,show)=>document.querySelectorAll('#'+id).forEach(e=>e.hidden=!show);
 const updateMsgs=()=>{
@@ -905,8 +942,9 @@ window.elMsgs=updateMsgs;
 <script>window.__ucitaj(); setInterval(()=>{ if(document.visibilityState==='visible') window.__ucitaj(); }, 5*60*1000);</script>
 <script>
 // Dugme Osveži: postoji samo u lokalnoj aplikaciji (servis/app_server.js); na GitHub sajtu i telefonu se samo gleda
+const PRIKAZI_OSVEZI_ZAKLJUCAJ=false;   // 7.11.2026 (korisnik): dugmad Osveži i Zaključaj privremeno sakrivena; true ih vraća
 (function(){
-  if(!/^(localhost|127\.0\.0\.1)$/.test(location.hostname))return;
+  if(!PRIKAZI_OSVEZI_ZAKLJUCAJ||!/^(localhost|127\.0\.0\.1)$/.test(location.hostname))return;
   const azur=document.getElementById('web-azur');
   const bar=document.createElement('div');bar.className='el-osv';
   const btn=document.createElement('button');btn.type='button';btn.textContent='Osveži';btn.title='Povlači granice, kvote, povrede i sudije, preračunava preporuke i šalje na GitHub';
