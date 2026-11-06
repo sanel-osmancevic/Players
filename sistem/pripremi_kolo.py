@@ -8,7 +8,7 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 A, SEZONA, KES = 'https://api-live.euroleague.net', 'E2026', 'api_kes'
 RACKET = 'ABC'                  # zone blizu koša u Points API-ju; H, I, J su trojke
 POZ = {'Guard': 'G', 'Forward': 'F', 'Center': 'C'}
-MIN_UTAKMICA, MIN_MINUTA = 3, 40   # igrač ulazi u model tek sa ovoliko odigranog
+MIN_UTAKMICA, MIN_MINUTA = 2, 20   # igrač ulazi u model tek sa ovoliko odigranog; 6.11.2026: bilo 3 i 40, a novi i vraćeni igrači (L. Walker, Musa, Reeves, Koloko) ostajali su van, iako su im projekcije sa 2 utakmice podjednako tačne (bt_novajlije.py)
 DANI = ['pon', 'uto', 'sre', 'čet', 'pet', 'sub', 'ned']
 
 def preuzmi(u, f=None):

@@ -110,6 +110,9 @@ rows = citaj('igraci2.json')
 for r in rows:
     if r['igrac'] in ex and r['termin'].startswith(DAN): r['iskljuci'] = ex[r['igrac']]
     elif r.get('rizik_uloge'): r['iskljuci'] = 'Rizik uloge: ' + r['rizik_uloge']   # upitan saigrač ili izgubljen start
+    # od 6.11.2026. u model ulaze i igrači sa 2 utakmice (pripremi_kolo.py), ali u preporuke tek od 3: projekcija minuta iz dve utakmice
+    # novog ili vraćenog igrača je nesigurna, a provera ima samo 40 takvih slučajeva (bt_novajlije.py)
+    elif r.get('utakmice', 9) < 3: r['iskljuci'] = f"Malo podataka: samo {r['utakmice']} utakmice ove sezone"
 pisi(rows, 'igraci2.json', ensure_ascii=False)
 provera.obradi('projekcija', *provera.igraci(rows, G, DAN, citaj('tezine.json').get('bias')))
 pisi(provera.zbir_stanje(rows, G, DAN, trag), 'zbir_utakmica.json', ensure_ascii=False)
