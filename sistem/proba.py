@@ -35,8 +35,10 @@ glavna = lambda kvv, kvm: 1.65 <= kvv <= 2.2 and 1.65 <= kvm <= 2.2
 def prolazi(pravilo, smer, d, kv, kvv=None, kvm=None):
     if pravilo == 'C': return smer == 'manje' and not glavna(kvv, kvm)   # C: bez modela, svaka sporedna linija sa obe kvote
     if not (OD <= d < DO): return False
-    return pravilo == 'A' or (smer == 'manje' and (kv >= KV_B or kv < KV_B_NISKA))
-# izbor jedne opklade po igraču: A i B najveća razlika model − tržište; C sporedna linija najbliža glavnoj (kvota za „manje“ najbliža 1.90)
+    return pravilo in ('A', 'D') or (smer == 'manje' and (kv >= KV_B or kv < KV_B_NISKA))
+# D (od 7.11.2026): isto pravilo kao A, ali na starom modelu (medijana bez povlačenja ka tržištu, polje {k}_med_model);
+#   dosadašnji redovi liste A za 10. kolo su prebačeni u D, a A za 10. kolo je izračunat unazad novim modelom.
+# izbor jedne opklade po igraču: A, B i D najveća razlika model − tržište; C sporedna linija najbliža glavnoj (kvota za „manje“ najbliža 1.90)
 ocena = lambda pravilo, d, kv: -abs(kv - 1.9) if pravilo == 'C' else d
 
 def kandidati(kvote, igraci, pravilo='A'):
@@ -46,7 +48,8 @@ def kandidati(kvote, igraci, pravilo='A'):
         if not r or not x.get('kvota_vise') or not x.get('kvota_manje') or x.get('trz_vise') is None: continue
         if r['status'] != 'Igra' or r.get('utakmice', 9) < 3: continue
         k = K[x['kategorija']]; L = float(x['linija'])
-        pm = 1 - Phi((math.floor(L) + .5 - r.get(f'{k}_med', r[f'{k}_proj'])) / r[f'{k}_sd'])   # oko medijane, kao u preporukama
+        med = r.get(f'{k}_med_model', r.get(f'{k}_med')) if pravilo == 'D' else r.get(f'{k}_med')
+        pm = 1 - Phi((math.floor(L) + .5 - (med if med is not None else r[f'{k}_proj'])) / r[f'{k}_sd'])   # oko medijane, kao u preporukama
         for smer, m, t, kv in (('više', pm, x['trz_vise'], x['kvota_vise']), ('manje', 1 - pm, 1 - x['trz_vise'], x['kvota_manje'])):
             d = m - t
             o = ocena(pravilo, d, kv)
@@ -65,7 +68,7 @@ def azuriraj(sada=None):
     for h, a, t, u in kolo['games']: start[t] = datetime.datetime.fromisoformat(u.replace('Z', '+00:00'))
     pocela = lambda r: (s := start.get(r['termin'])) is not None and s <= sada
     kv, ig = citaj('kvote_pet.json'), citaj('igraci2.json')
-    sad = {(p, c['igrac'], c['kategorija'], c['linija'], c['smer']): c for p in 'ABC' for c in kandidati(kv, ig, p)}
+    sad = {(p, c['igrac'], c['kategorija'], c['linija'], c['smer']): c for p in 'ABCD' for c in kandidati(kv, ig, p)}
     vreme = sada.strftime('%d.%m. %H:%M'); po_kljucu = {(r.get('pravilo', 'A'), r['kolo'], r['igrac'], r['kategorija'], r['linija'], r['smer']): r for r in lista}
     for r in lista:   # postojeći, nepočeti: osveži ili označi da su ispali
         if r.get('unazad') or pocela(r) or r['kolo'] != kolo['kolo']: continue
@@ -97,7 +100,9 @@ def unazad(kolo, P='B'):
     # iz evidencija.json (poslednje stanje linija pred utakmicu), šansa oko medijane kao u bt analizi; samo igrači sa statusom Igra
     from pomocno import MEDIJANA, medijana_modela
     C = citaj('tezine.json')['c']; lista = citaj(FAJL)
-    lista = [r for r in lista if not (r.get('pravilo') == P and r['kolo'] == kolo and r.get('unazad'))]   # ponovo, po sadašnjem pravilu
+    # B i C: prethodna rekonstrukcija se briše i računa ponovo; A i D: samo dani za koje lista još nema redova (živi redovi ostaju)
+    if P in 'BC': lista = [r for r in lista if not (r.get('pravilo') == P and r['kolo'] == kolo and r.get('unazad'))]
+    ima_dan = {r['termin'].split()[0] for r in lista if r.get('pravilo', 'A') == P and r['kolo'] == kolo}
     ter = {}
     for r in citaj('zapamceno.json'):
         if r.get('kolo') == kolo and r.get('utakmica'): ter[r['utakmica']] = r['termin']
@@ -106,13 +111,16 @@ def unazad(kolo, P='B'):
     najb = {}; oc = {}
     for e in citaj('evidencija.json'):
         if e['kolo'] != kolo or e.get('status') != 'Igra' or not e.get('kvota_manje') or e.get('trz_vise') is None: continue
-        L = e['linija']; pm = 1 - Phi((math.floor(L) + .5 - medijana_modela(e['proj'], K[e['kategorija']], e.get('trz_medijana'))) / (e['sd'] * C))
-        m, t, kv = 1 - pm, 1 - e['trz_vise'], e['kvota_manje']; d = m - t; k = (e['dan'], e['igrac'])
-        o = ocena(P, d, kv)
-        if prolazi(P, 'manje', d, kv, e['kvota_vise'], kv) and (k not in najb or o > oc[k]):
+        if e['dan'] in ima_dan: continue
+        L = e['linija']; kk = K[e['kategorija']]
+        mu = e['proj'] + MEDIJANA[kk] if P == 'D' else medijana_modela(e['proj'], kk, e.get('trz_medijana'))
+        pm = 1 - Phi((math.floor(L) + .5 - mu) / (e['sd'] * C)); k = (e['dan'], e['igrac'])
+        for smer, m, t, kv in (('više', pm, e['trz_vise'], e['kvota_vise']), ('manje', 1 - pm, 1 - e['trz_vise'], e['kvota_manje'])):
+          d = m - t; o = ocena(P, d, kv)
+          if prolazi(P, smer, d, kv, e['kvota_vise'], e['kvota_manje']) and (k not in najb or o > oc[k]):
             oc[k] = o
-            najb[k] = dict(pravilo=P, kolo=kolo, termin=ter.get(e['utakmica'], e['dan']), utakmica=e['utakmica'], igrac=e['igrac'], tim=e['tim'], kategorija=e['kategorija'],
-                linija=L, smer='manje', opklada=f"{e['kategorija'].lower()} manje {L:g}", kvota=kv, model=round(m, 3), trziste=round(t, 3), razlika=round(d, 3),
+            najb[k] = dict(**({'pravilo': P} if P != 'A' else {}), kolo=kolo, termin=ter.get(e['utakmica'], e['dan']), utakmica=e['utakmica'], igrac=e['igrac'], tim=e['tim'], kategorija=e['kategorija'],
+                linija=L, smer=smer, opklada=f"{e['kategorija'].lower()} {smer} {L:g}", kvota=kv, model=round(m, 3), trziste=round(t, 3), razlika=round(d, 3),
                 knjige=None, rizik=None, poz=e.get('poz'), minuti_sd=e.get('minuti_sd'), kvota_prva=kv, zapamceno='unazad', poslednje='unazad', ispala=False, rezultat=None, ishod=None, unazad=True)
     lista += najb.values(); oceni(lista); pisi(lista, FAJL, ensure_ascii=False)
     print(f'Pravilo {P} unazad za {kolo}. kolo: {len(najb)} opklada')
@@ -122,7 +130,7 @@ if __name__ == '__main__':
     a = [x for x in sys.argv if x.startswith('--unazad-')]
     for x in a: unazad(int(x.split('=')[1]), x[len('--unazad-')])
     L = citaj(FAJL) if a else azuriraj()
-    for p in 'ABC':
+    for p in 'ABCD':
         M = [r for r in L if r.get('pravilo', 'A') == p and not r.get('ispala')]
         otv = [r for r in M if not r.get('ishod')]; gotove = [r for r in M if r.get('ishod') in ('prošlo', 'palo')]
         pr = sum(r['kvota'] - 1 if r['ishod'] == 'prošlo' else -1 for r in gotove)

@@ -264,15 +264,16 @@ body{padding:16px;max-width:1100px;margin:0 auto}button,select{font:inherit;colo
   <section class="el-card el-panel" id="proba" role="tabpanel" aria-labelledby="tab-proba" hidden>
     <div class="el-bar" style="margin-bottom:var(--cds-gap-md)">
       <div class="el-seg" id="proba-seg" role="group" aria-label="Probna lista" style="margin:0">
-        <button type="button" data-p="A" aria-pressed="true">A · model iznad tržišta</button>
+        <button type="button" data-p="A" aria-pressed="true">A · novi model</button>
         <button type="button" data-p="B" aria-pressed="false">B · manje uz kvotu</button>
         <button type="button" data-p="C" aria-pressed="false">C · bez modela</button>
+        <button type="button" data-p="D" aria-pressed="false">D · stari model</button>
       </div>
       <label for="proba-kolo">Kolo</label>
       <select id="proba-kolo" aria-label="Kolo probne liste"><option value="">Sva kola</option></select>
     </div>
     <div class="proba-lista" data-p="A">
-    <p class="el-note">Probna lista u senci, samo za praćenje (bez uloga, ne utiče na preporuke). Pravilo: glavna Maxbet linija gde je model (šansa oko medijane, kao u preporukama) 3–15 procentnih poena iznad tržišta (ostale kladionice bez marže), bez uslova vrednosti i istorije, jedna opklada po igraču. Na 9. i 10. kolu ta grupa je prolazila oko 6 poena češće od tržišta, a veće razlike su bile bez prednosti; granice su izabrane gledajući ta kola, pa se ovde proverava da li važi i dalje. Do 06.11. 11:30 pravilo je bilo 3–10 na starom modelu. „Unazad“ je rekonstrukcija za 05.11. iz stanja pri zaključavanju. Profit: ulog 1 po opkladi, Maxbet kvota pred početak.</p>
+    <p class="el-note">Probna lista A u senci, samo za praćenje (bez uloga, ne utiče na preporuke). Pravilo: Maxbet linija sa obe kvote gde je model 3–15 procentnih poena iznad tržišta (ostale kladionice bez marže), bez uslova vrednosti i istorije, jedna opklada po igraču. Od 07.11.2026. na <b>novom modelu</b>: projekcija se povlači ka medijani tržišta (75% kad je iznad, 25% kad je ispod), pa „više“ skoro ne prolazi. 10. kolo je izračunato unazad novim modelom iz linija pred utakmicu; ranija lista A (stari model) je sada lista D. Profit: ulog 1 po opkladi, Maxbet kvota pred početak.</p>
     <div class="el-stv-kocke" data-draw="proba" data-source="proba"></div>
     <div class="el-scroll"><table class="el-table">
       <thead><tr><th>Igrač</th><th>Utakmica</th><th>Opklada</th><th class="num">Kvota</th><th class="num">Model</th><th class="num">Tržište</th><th class="num">Razlika</th><th class="num">Rezultat</th><th class="num">Profit</th></tr></thead>
@@ -295,6 +296,15 @@ body{padding:16px;max-width:1100px;margin:0 auto}button,select{font:inherit;colo
     <div class="el-scroll"><table class="el-table">
       <thead><tr><th>Igrač</th><th>Utakmica</th><th>Opklada</th><th class="num">Kvota</th><th class="num">Model</th><th class="num">Tržište</th><th class="num">Razlika</th><th class="num">Rezultat</th><th class="num">Profit</th></tr></thead>
       <tbody id="proba3-redovi"></tbody>
+    </table></div>
+    </div>
+      <div class="proba-lista" data-p="D" hidden>
+    <h3>Probna lista D: stari model</h3>
+    <p class="el-note">Isto pravilo kao A (model 3–15 iznad tržišta), ali na modelu kakav je bio do 07.11.2026: medijana bez povlačenja ka tržištu. Služi za poređenje sa A: pokazuje da li je povlačenje popravilo izbor. Petak 06.11. je stvarno praćen uživo, četvrtak 05.11. je rekonstrukcija iz stanja pri zaključavanju, a sreda 04.11. iz linija pred utakmicu. Bez uloga, ne utiče na preporuke.</p>
+    <div class="el-stv-kocke" data-draw="proba4" data-source="proba"></div>
+    <div class="el-scroll"><table class="el-table">
+      <thead><tr><th>Igrač</th><th>Utakmica</th><th>Opklada</th><th class="num">Kvota</th><th class="num">Model</th><th class="num">Tržište</th><th class="num">Razlika</th><th class="num">Rezultat</th><th class="num">Profit</th></tr></thead>
+      <tbody id="proba4-redovi"></tbody>
     </table></div>
     </div>
   </section>
@@ -918,15 +928,16 @@ const crtajProbu=(el,tbId,pravilo,unazadNaziv)=>{
   }
   if(!L.length){const tr=document.createElement('tr');const c=document.createElement('td');c.colSpan=9;c.className='sub';c.textContent='Probna lista je još prazna.';tr.appendChild(c);tb.appendChild(tr);}
 };
-dash.draw('proba',el=>crtajProbu(el,'proba-redovi','A','Unazad 05.11.'));
+dash.draw('proba',el=>crtajProbu(el,'proba-redovi','A','Unazad 10. kolo'));
 dash.draw('proba2',el=>crtajProbu(el,'proba2-redovi','B','Unazad 10. kolo'));
 dash.draw('proba3',el=>crtajProbu(el,'proba3-redovi','C','Unazad 10. kolo'));
+dash.draw('proba4',el=>crtajProbu(el,'proba4-redovi','D','Unazad sre i čet'));
 // izbor probne liste (A/B/C) i kola; pamti se u pregledaču
 (()=>{const seg=document.getElementById('proba-seg'), sk=document.getElementById('proba-kolo'); if(!seg||!sk)return;
   const izaberi=p=>{seg.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.p===p));document.querySelectorAll('.proba-lista').forEach(x=>x.hidden=x.dataset.p!==p);try{localStorage.setItem('el-proba',p);}catch(e){}};
   seg.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>izaberi(b.dataset.p)));
-  let p=null;try{p=localStorage.getItem('el-proba');}catch(e){} izaberi(['A','B','C'].includes(p)?p:'A');
-  sk.addEventListener('change',()=>['proba','proba2','proba3'].forEach(n=>dash.draw(n)));})();
+  let p=null;try{p=localStorage.getItem('el-proba');}catch(e){} izaberi(['A','B','C','D'].includes(p)?p:'A');
+  sk.addEventListener('change',()=>['proba','proba2','proba3','proba4'].forEach(n=>dash.draw(n)));})();
 // poruke "nema podataka": prikazuje i sakriva onData (pre crteža), i prekidači posle promene
 const msgSet=(id,show)=>document.querySelectorAll('#'+id).forEach(e=>e.hidden=!show);
 const updateMsgs=()=>{
