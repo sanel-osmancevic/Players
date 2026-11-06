@@ -268,6 +268,13 @@ body{padding:16px;max-width:1100px;margin:0 auto}button,select{font:inherit;colo
       <thead><tr><th>Igrač</th><th>Utakmica</th><th>Opklada</th><th class="num">Kvota</th><th class="num">Model</th><th class="num">Tržište</th><th class="num">Razlika</th><th class="num">Rezultat</th><th class="num">Profit</th></tr></thead>
       <tbody id="proba-redovi"></tbody>
     </table></div>
+    <h3 style="margin-top:28px">Probna lista B: „manje“ uz visoku kvotu</h3>
+    <p class="el-note">Od 07.11.2026. Pravilo: samo strana „manje“, Maxbet kvota bar 1.95 (i sporedne linije), model 3–15 procentnih poena iznad tržišta, jedna opklada po igraču. Na 9. i 10. kolu ta grupa je prolazila 58.5% naspram 42.7% koliko je tržište davalo (+29% po kvoti). Pravilo je izvedeno iz tih kola, pa je 10. kolo „unazad“ samo prikaz, a ne dokaz; prava provera počinje od 11. kola. Bez uloga, ne utiče na preporuke.</p>
+    <div class="el-stv-kocke" data-draw="proba2" data-source="proba"></div>
+    <div class="el-scroll"><table class="el-table">
+      <thead><tr><th>Igrač</th><th>Utakmica</th><th>Opklada</th><th class="num">Kvota</th><th class="num">Model</th><th class="num">Tržište</th><th class="num">Razlika</th><th class="num">Rezultat</th><th class="num">Profit</th></tr></thead>
+      <tbody id="proba2-redovi"></tbody>
+    </table></div>
   </section>
 </div>
 
@@ -858,16 +865,16 @@ dash.draw('stvarni',el=>{
   if(!l.length){const tr=document.createElement('tr');const c=document.createElement('td');c.colSpan=8;c.className='sub';c.textContent='Još nema odigranih opklada. Označi ih dugmetom Odigrano u Preporukama ili Tiketima.';tr.appendChild(c);v.appendChild(tr);}
 });
 // Probna lista u senci (sistem/proba.py): zbir po grupi i redovi po danu; ispale pre početka se ne računaju
-dash.draw('proba',el=>{
-  el.replaceChildren(); const tb=document.getElementById('proba-redovi'); if(!tb)return; tb.replaceChildren();
+const crtajProbu=(el,tbId,pravilo,unazadNaziv)=>{
+  el.replaceChildren(); const tb=document.getElementById(tbId); if(!tb)return; tb.replaceChildren();
   const d=dash.data('proba'); if(d.status!=='ok')return;
-  const L=(Array.isArray(d.data)?d.data:[]).filter(r=>!r.ispala), pct=d3.format('.0%'), raz=d3.format('+.0%');
+  const L=(Array.isArray(d.data)?d.data:[]).filter(r=>!r.ispala&&(r.pravilo||'A')===pravilo), pct=d3.format('.0%'), raz=d3.format('+.0%');
   const prof=r=>r.ishod==='prošlo'?r.kvota-1:r.ishod==='palo'?-1:null;
   const k=(n,v,c)=>{const x=document.createElement('div');x.className='el-stv-kocka';const a=document.createElement('span');a.textContent=n;const b=document.createElement('b');b.textContent=v;if(c)b.className=c;x.append(a,b);el.appendChild(x);};
   const zbir=l=>{const g=l.filter(r=>prof(r)!==null),p=g.reduce((a,r)=>a+prof(r),0);return {n:g.length,w:g.filter(r=>r.ishod==='prošlo').length,p,ceka:l.filter(r=>!r.ishod).length};};
   const uz=zbir(L.filter(r=>!r.unazad)), un=zbir(L.filter(r=>r.unazad)), f2=d3.format('+.2f');
   k('Uživo: prošlo',uz.n?uz.w+' od '+uz.n:'—');k('Uživo: profit',uz.n?f2(uz.p)+' j.':'—',uz.p>0?'el-good':uz.p<0?'el-bad':'');k('Čeka',String(uz.ceka));
-  k('Unazad 05.11.',un.n?un.w+' od '+un.n+' · '+f2(un.p)+' j.':'—',un.p>0?'el-good':un.p<0?'el-bad':'');
+  k(unazadNaziv,un.n?un.w+' od '+un.n+' · '+f2(un.p)+' j.':'—',un.p>0?'el-good':un.p<0?'el-bad':'');
   const dani=[...new Set(L.map(r=>r.kolo+'|'+stvDan(r.termin)))].sort((a,b)=>b.localeCompare(a,'sr',{numeric:true}));
   for(const dn of dani){
     const [kolo,dan]=dn.split('|'), rr=L.filter(r=>r.kolo+'|'+stvDan(r.termin)===dn).sort((a,b)=>String(a.termin).localeCompare(b.termin)||b.razlika-a.razlika), z=zbir(rr);
@@ -880,7 +887,9 @@ dash.draw('proba',el=>{
       const p=prof(r);td(tr,p===null?'—':f2(p),p===null?'num':p>0?'num el-good':'num el-bad');tb.appendChild(tr);}
   }
   if(!L.length){const tr=document.createElement('tr');const c=document.createElement('td');c.colSpan=9;c.className='sub';c.textContent='Probna lista je još prazna.';tr.appendChild(c);tb.appendChild(tr);}
-});
+};
+dash.draw('proba',el=>crtajProbu(el,'proba-redovi','A','Unazad 05.11.'));
+dash.draw('proba2',el=>crtajProbu(el,'proba2-redovi','B','Unazad 10. kolo'));
 // poruke "nema podataka": prikazuje i sakriva onData (pre crteža), i prekidači posle promene
 const msgSet=(id,show)=>document.querySelectorAll('#'+id).forEach(e=>e.hidden=!show);
 const updateMsgs=()=>{
