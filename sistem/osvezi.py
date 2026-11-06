@@ -188,7 +188,7 @@ for d in novi_red:
 n_z = len({r['utakmica'] for r in novi_red if r.get('konacno')})
 print(f"Zapamćena lista ažurirana {ts}: konačno zaključanih utakmica {n_z}, ⚡ igraj odmah: {[r['igrac'] for r in novi_red if r.get('brzo') and not r.get('ishod')]}")
 # završna kvota: poslednja Maxbet kvota pre početka utakmice; CLV = prva / završna − 1 (plus = kvota je pala posle naše preporuke)
-# CLV prema tržištu: verovatnoća konsenzusa (Soccer, Merkur, Mozzart, Meridian, Stoiximan, bez marže) za našu stranu pred početak;
+# CLV prema tržištu: verovatnoća konsenzusa (Soccer, Merkur, Meridian, bez marže) za našu stranu pred početak;
 # clv_trz = prva Maxbet kvota × ta verovatnoća − 1 = koliko je naša kvota vredela prema "pravoj" završnoj ceni tržišta
 TRZ = {(x['igrac'], x['kategorija'], float(x['linija'])): x.get('trz_vise') for x in citaj('kvote_pet.json')}
 for d in novi_red:

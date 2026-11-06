@@ -4,7 +4,7 @@ const fs = require('fs'), path = require('path'), { spawn } = require('child_pro
 const ROOT = path.resolve(__dirname, '..', '..'), SISTEM = path.join(ROOT, 'sistem'), PRIK = path.join(SISTEM, 'prikupljeno');
 const MIN = 60000, SVEZ_SNIMAK = 15 * MIN, ROK_BRAVE = 25 * MIN;
 const BRAVA = path.join(PRIK, '.osvezi_traje'), DNEVNIK = path.join(PRIK, 'app.log');
-const NAZIV = { mb: 'Maxbet', sb: 'Soccer', mk: 'Merkur', mz: 'Mozzart', md: 'Meridian', sx: 'Stoiximan' };
+const NAZIV = { mb: 'Maxbet', sb: 'Soccer', mk: 'Merkur', md: 'Meridian' };
 const META = path.join(ROOT, 'data', 'meta.json');
 const log = m => { try { fs.mkdirSync(PRIK, { recursive: true }); fs.appendFileSync(DNEVNIK, `${new Date().toISOString()} ${m}\n`); } catch {} };
 const citaj = (f, d) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return d; } };

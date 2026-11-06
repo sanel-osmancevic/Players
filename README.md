@@ -3,7 +3,7 @@
 Analiza sportskih opklada na igrače. Trenutno pokriva Evroligu i Maxbet.
 
 Sistem koji za svako kolo Evrolige procenjuje poene, skokove i asistencije igrača, poredi ih sa Maxbet granicama
-i kvotama pet drugih kladionica i pravi preporuke, tikete i predloge uloga. Rezultati se prate posle svakog dana,
+i kvotama drugih kladionica (Soccer, Merkur, Meridian) i pravi preporuke, tikete i predloge uloga. Rezultati se prate posle svakog dana,
 a model uči iz njih.
 
 ## Struktura
@@ -12,7 +12,7 @@ a model uči iz njih.
 |---|---|
 | `sistem/` | Ceo sistem: Python skripte, podaci, snimci kvota, arhiva. Sve skripte se pokreću iz ovog foldera. |
 | `sistem/snippets/` | Skripte koje se pokreću u pregledaču (povlačenje kvota i podataka sa sajtova). |
-| `sistem/books/` | Snimci kvota po kladionici i vremenu (mb = Maxbet, sb = Soccer, mk = Merkur, mz = Mozzart, md = Meridian, sx = Stoiximan). |
+| `sistem/books/` | Snimci kvota po kladionici i vremenu (mb = Maxbet, sb = Soccer, mk = Merkur, md = Meridian). |
 | `sistem/arhiva/` | Pozadinska arhiva: svi igrači iz ponude pri svakom osvežavanju i pun zapisnik posle utakmica. |
 | `sistem/servis/` | Automatsko prikupljanje kvota u pozadini (vidi dole). |
 | `sistem/prikupljeno/` | Snimci servisa po danima, `stanje.json` i `servis.log`. `market.py` ih čita zajedno sa `books/`. |
@@ -32,7 +32,7 @@ a model uči iz njih.
    - `uci2.py`, `tezine_primeni.py` – naučene težine (model / istorija / tržište), pomeraj, širina
    - `faul.py` – sklonost faulovima i sudije
    - `provera.py` – projekcije u granicama, zbir poena sveden na 400 minuta prema kvotama (upozorenje iznad 10%, stop iznad 25%) i po koraku modela (stop kad jedan korak pomeri zbir više od 15%); greška zaustavlja osvežavanje i lista ostaje ista. Stanje je u `zbir_utakmica.json`.
-   - `kv_pet2.py`, `market.py` – Maxbet linije, konsenzus 5 kladionica (Soccer sam se ne računa kao tržište), raskorak, ⚡ (Maxbet kasni za kladionicama sa drugim izvorom)
+   - `kv_pet2.py`, `market.py` – Maxbet linije, konsenzus kladionica (Soccer sam se ne računa kao tržište), raskorak, ⚡ (Maxbet kasni za kladionicama sa drugim izvorom)
    - `kalibracija.py` – usklađivanje šansi sa stvarnošću
    - `evidencija.py` – evidencija svih linija
    - `t28.js` – pravila preporuka (isti kod kao dashboard)
@@ -70,12 +70,13 @@ na 10 min u poslednjih 90 min pred meč, na 30 min na dan meča, na 2 h do 36 h 
   uz upozorenje u `servis.log`. Provera bez upisa: `node rezultati_servis.js --proba=9`.
 - Ocene u `servis.log`: `ok`; `prazno` (nema ponude, ne snima se; `UPOZORENJE` ako je manje od 6 h do meča);
   `sumnjivo` (ispod pola igrača prethodnog snimka, ide u `sumnjivo/`); `GREŠKA` (posle 3 uzastopne ta kladionica se proverava na 6 h).
-- Blokade se ne zaobilaze. Stanje 2.11.2026: Mozzart vraća 429, a Stoiximan 403, pa za njih servis zasad nema snimke.
+- Blokade se ne zaobilaze. Mozzart (429) i Stoiximan (403) su isključeni 4.11.2026. iz prikupljanja i računanja, jer ne mogu da se čitaju; `snippets/mozzart.js` i `snippets/stoiximan.js` su ostali ako se to promeni.
 
 ## Provere modela
 
 - `backtest.py` – provera projekcija na celoj sezoni (vraćanje vremena kolo po kolo), podešavanje parametara
 - `bt_faktori.py`, `bt_minuti.py`, `bt_minuti2.py` i `bt_prenos.py` – vrednost svakog faktora, varijante modela minuta, dopuna do zbira tima i prenos minuta i učinka odsutnih; ništa ne upisuju
+- `bt_strelci.py` – najbolji strelci prema tržištu i umanjenje njihove projekcije; `bt_gusto.py` – strelci u izjednačenim utakmicama i sa odsutnima; ništa ne upisuju
 - `bt_niski.py` – projekcija poena prema stvarnim poenima po grupama igrača (niski strelci); ništa ne upisuje
 - `bt_uloga.py` – prenos minuta odsutnog po ulozi: tri pravila prema sadašnjem; ništa ne upisuje
 - `bt_total.py` – da li ukupan broj poena i hendikep iz kvota popravljaju projekcije poena (samo 9. kolo); ništa ne upisuje

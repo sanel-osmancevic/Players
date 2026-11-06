@@ -3,7 +3,6 @@
 Redosled pri osvežavanju (pregledač na korisnikovom računaru):
 
 1. **Kvote** — servis ih sam snima u prikupljeno/ (Maxbet, Soccer, Merkur, Meridian; odmah: `node servis/kvote_servis.js --odmah`).
-   Kladionice koje servis ne može da čita (Mozzart, Stoiximan): ručno snippets/mozzart.js → books/mz_, snippets/stoiximan.js → books/sx_.
 2. **Nestanak iz ponude** — automatski (nestanak.py u osvezi.py): igrač nestao u poslednja dva snimka kod 2+ kladionice → statusi_auto.json "Upitan",
    kod svih → "Ne igra".
 3. **Zvaničan izveštaj o povredama** — automatski (servis/povrede_servis.js uz dugme Osveži i automatiku; članak "Injury report, Round N" i Rotowire).

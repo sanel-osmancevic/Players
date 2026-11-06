@@ -42,16 +42,14 @@ def snaps(prefix):
         if s['out'] and s['t'].replace('Z', '') >= OD.replace('Z', ''): po_vremenu[s['t']] = s
     return [po_vremenu[t] for t in sorted(po_vremenu)]
 
-def surname_mz(name):   # Mozzart "A.Black", "T.da Silva"
-    return surname_full(name.split('.', 1)[-1])
 def surname_md(name):   # Meridian "da Silva, Tristan", "Carter Jr., Wendell"
     return surname_full(name.split(',')[0])
 def index(snap, kind):
     out = {}
     for k, d in snap['out'].items():
         n, t = k.split('|')
-        if kind in ('mozzart', 'meridian', 'stoiximan'):
-            sn = surname_mz(n) if kind == 'mozzart' else (surname_md(n) if kind == 'meridian' else surname_full(n))
+        if kind == 'meridian':
+            sn = surname_md(n)
             g = norm(t)
             kand = {r['tim'] for i, r in ig.items() if surname_full(i) == sn and any(a in g for a in ALIAS.get(r['tim'], [norm(r['tim'])]))}
             if len(kand) == 1: out[(sn, kand.pop())] = d
@@ -65,11 +63,9 @@ ig = {r['igrac']: r for r in citaj('igraci2.json') if r['termin'].startswith(DAN
 HIST = {'maxbet': [(s['t'], index(s, 'maxbet')) for s in snaps('mb')],
         'soccer': [(s['t'], index(s, 'soccer')) for s in snaps('sb')],
         'merkur': [(s['t'], index(s, 'merkur')) for s in snaps('mk')],
-        'mozzart': [(s['t'], index(s, 'mozzart')) for s in snaps('mz')],
-        'meridian': [(s['t'], index(s, 'meridian')) for s in snaps('md')],
-        'stoiximan': [(s['t'], index(s, 'stoiximan')) for s in snaps('sx')]}
+        'meridian': [(s['t'], index(s, 'meridian')) for s in snaps('md')]}
 # težine u konsenzusu: Soccer deli izvor kvota sa Maxbetom pa vredi pola; ostali su nezavisni (uče se iz rezultata)
-TEZ_K = {'soccer': 0.5, 'merkur': 1.0, 'mozzart': 1.0, 'meridian': 1.0, 'stoiximan': 1.0}
+TEZ_K = {'soccer': 0.5, 'merkur': 1.0, 'meridian': 1.0}
 if os.path.exists('tezine_kladionica.json'): TEZ_K.update(citaj('tezine_kladionica.json'))
 # kladionica čiji je poslednji snimak stariji 6 h od najnovijeg ne ulazi u konsenzus (zastarele kvote bi dale lažan ⚡)
 _t = lambda s: _dt.fromisoformat(s.replace('Z', '+00:00')).timestamp()

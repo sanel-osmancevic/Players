@@ -13,9 +13,7 @@ const KNJIGE = [   // Maxbet prvi: on daje raspored utakmica za izbor učestalos
   ['mb', 'maxbet.js', 'https://www.maxbet.rs/sr/'],
   ['sb', 'soccer.js', 'https://www.soccerbet.rs/sr/'],
   ['mk', 'merkur.js', 'https://www.merkurxtip.rs/sr/'],
-  ['mz', 'mozzart.js', 'https://www.mozzartbet.com/sr'],
   ['md', 'meridian.js', 'https://meridianbet.rs/sr/'],
-  ['sx', 'stoiximan.js', 'https://www.stoiximan.gr/'],
 ];
 const MIN = 60000, TAKT = 10;              // Task Scheduler okida na TAKT minuta
 const ROK_SKRIPTE = 3 * MIN, ROK_BRAVE = 25 * MIN;
@@ -39,6 +37,11 @@ function razmak(pocetci, sada) {
   const a = lokalno(new Date(sada)), b = lokalno(new Date(sled));
   if (a.year === b.year && a.month === b.month && a.day === b.day) return 30;
   return do_ <= 36 * 60 ? 120 : 360;
+}
+
+// Počeci svih utakmica tekućeg kola iz kolo.json (i već odigranih), kao druga potvrda pored Maxbet rasporeda
+function pocetciKola() {
+  return (citaj(path.join(SISTEM, 'kolo.json'), {}).games || []).map(g => Date.parse(g[3])).filter(Number.isFinite);
 }
 
 function brojIgraca(p) { return Object.keys(p.raw || p.out || {}).length; }
@@ -110,8 +113,10 @@ async function main() {
       b.pokusano = t0;
       try {
         const p = await pokreni(ctx, url, fs.readFileSync(path.join(SISTEM, 'snippets', fajl), 'utf8'));
-        if (k === 'mb' && p.games?.length) st.pocetci = p.games.map(g => g[2]).filter(Boolean);
-        const ocena = oceni(k, p, st.knjige, st.pocetci, t0), n = brojIgraca(p), l = lokalno(new Date(t0));
+        // Maxbet posle utakmice skida je iz ponude, pa se odigrani počeci čuvaju još nedelju dana: bez njih bi manja ponuda
+        // narednog dana (manje utakmica) izgledala kao sumnjiv snimak
+        if (k === 'mb' && p.games?.length) st.pocetci = [...new Set([...st.pocetci.filter(t => t > t0 - 7 * 1440 * MIN && t <= t0), ...p.games.map(g => g[2]).filter(Boolean)])];
+        const ocena = oceni(k, p, st.knjige, [...st.pocetci, ...pocetciKola()], t0), n = brojIgraca(p), l = lokalno(new Date(t0));
         const dan = `${l.year}-${l.month}-${l.day}`, ime = `${k}_${l.hour}${l.minute}.json`;
         if (ocena !== 'prazno') pisi(path.join(IZLAZ, dan, ocena === 'sumnjivo' ? 'sumnjivo' : '', ime), JSON.stringify(p));
         b.greske = 0; b.ocena = ocena; delete b.poruka;
