@@ -323,9 +323,7 @@ dash.calc('preporuke',{
         if(smer==='manje'&&o.kategorija==='Poeni'&&p.veca_uloga)continue;
         if(o.trz_raskorak!=null&&Number(o.trz_raskorak)>=(o.kategorija==='Poeni'?1.5:0.75))continue;
         const h=vals.filter(hit).length, lsn=Number(o.ls_n||0), lsh=o.ls_vise==null?0:(smer==='više'?Number(o.ls_vise):lsn-Number(o.ls_vise)), wl=o.tez_ls==null?0.2:Number(o.tez_ls), ph=(h+wl*lsh+1)/(vals.length+wl*lsn+2), tv=o.trz_vise==null?null:Number(o.trz_vise), pt=tv==null?null:(smer==='više'?tv:1-tv), wm=o.tez_m==null?1/3:Number(o.tez_m), wh=o.tez_h==null?1/3:Number(o.tez_h), wt=o.tez_t==null?1/3:Number(o.tez_t), pc=pt==null?(wm*pm+wh*ph)/(wm+wh):(wm*pm+wh*ph+wt*pt)/(wm+wh+wt), ev=pc*Number(kv)-1;
-        // od 6.11.2026. 14:15 (korisnik): ulazi i bez vrednosti ako po projekciji dolazi (model 55%+) i ukupna šansa nije ispod 50%
-        const poProjekciji=ev<PRAG_VREDNOSTI;
-        if(pm<0.55||(poProjekciji&&pc<0.5))continue;   // istorija više nije uslov (6.11.2026: ne predviđa ništa preko tržišta)
+        if(pm<0.55||ev<PRAG_VREDNOSTI)continue;   // istorija više nije uslov (6.11.2026: ne predviđa ništa preko tržišta)
         if(pt!=null&&pm-pt>MAKS_RAZLIKA)continue;   // model mnogo iznad tržišta: obično ne zna za izostanak ili ulogu (bt_formula.py)
         if(klupa&&(pt==null||pt<0.5))continue;   // i tržište mora biti na strani opklade
         const z=(smer==='više'?1:-1)*(mu-(Math.floor(L)+0.5))/Number(p[k+'_sd']);
@@ -335,7 +333,7 @@ dash.calc('preporuke',{
         if(sm<=-jak)continue;
         const stabilan=Number(p.minuti_proj)>=20&&Number(p.minuti_sd)<=6&&p.starter_status!=='klupa'&&!p.nemir_tim_visok&&z>=0.5&&p.status==='Igra'&&(pt==null||pt>=0.5)&&sm>-slab&&h5>=4&&trOk;
         const id='K'+o.kolo+' '+o.igrac; const cur=best.get(id);
-        if(!cur||ev>cur.vrednost||(ev===cur.vrednost&&pc>cur.sansa)) best.set(id,{po_projekciji:poProjekciji,klupa,forma5:h5+'/'+l5.length,kretanje:Math.round(sm*100)/100,trziste:pt==null?null:r3(pt),model:r3(pm),kljuc:id+' '+o.kategorija,kolo:+o.kolo,termin:p.termin,red:+p.red,igrac:o.igrac,utakmica:o.utakmica,kategorija:o.kategorija,smer,linija:L,opklada:o.kategorija.toLowerCase()+' '+smer+' '+L,kvota:Number(kv),sansa:r3(pc),razmak:r3(z),stabilan,istorija:h+'/'+vals.length,vrednost:r3(ev),minuti:Number(p.minuti_proj)});
+        if(!cur||ev>cur.vrednost||(ev===cur.vrednost&&pc>cur.sansa)) best.set(id,{klupa,forma5:h5+'/'+l5.length,kretanje:Math.round(sm*100)/100,trziste:pt==null?null:r3(pt),model:r3(pm),kljuc:id+' '+o.kategorija,kolo:+o.kolo,termin:p.termin,red:+p.red,igrac:o.igrac,utakmica:o.utakmica,kategorija:o.kategorija,smer,linija:L,opklada:o.kategorija.toLowerCase()+' '+smer+' '+L,kvota:Number(kv),sansa:r3(pc),razmak:r3(z),stabilan,istorija:h+'/'+vals.length,vrednost:r3(ev),minuti:Number(p.minuti_proj)});
       }
     }
     const day=t=>String(t).split(' ').slice(0,2).join(' ');
