@@ -298,11 +298,12 @@ dash.draw('daysel',sel=>{
 
 
 // najmanja vrednost opklade (šansa × kvota − 1): ispod ovoga razliku lako pojede greška procene
+const MAKS_RAZLIKA=0.15;   // 6.11.2026, kola 9-10: model 3-15 poena iznad tržišta prolazi ~6% češće od tržišta, preko 15 bez prednosti
 const PRAG_VREDNOSTI=0.03;
 dash.calc('preporuke',{
   inputs:['igraci','kvote'],
   title:'Maxbet preporuke',
-  description:'Za svaku Maxbet liniju i stranu: šansa = (verovatnoća modela + učinak ove sezone)/2, vrednost = šansa × kvota − 1. Šansa uključuje i tržište: verovatnoća iz glavnih linija Maxbeta, Soccera i Merkura bez marže, pa je šansa ponderisani prosek modela, istorije (ova sezona + prošla sezona sa naučenom težinom, polazno 0,2, samo utakmice sa sličnom minutažom) i tržišta; težine se uče iz rezultata prethodnih kola (dok je uzorak mali, blizu jednakih). Zadržane opklade gde i model i sezona daju 55%+, vrednost nije negativna i kvota je bar 1.40; po igraču jedna, ona sa najvećom šansom. Za svaki dan kola: Najsigurnije = 5 sa najvećom šansom među igračima sa 20+ projektovanih minuta, koji nisu sa klupe (startovali bar 3 od poslednjih 5) i nisu iz tima sa najnemirnijom rotacijom (gornja trećina), stabilnom minutažom (odstupanje do 6 min) i projekcijom bar pola standardne devijacije od linije i tržištem koje nije protiv (50%+) i nije se pomeralo protiv opklade za pola poena ili više (skokovi i asistencije četvrt). Opklade protiv kojih se tržište pomerilo za ceo poen ili više (skokovi i asistencije pola) se ne preporučuju; Takođe verujem dopunjuje listu do 10: prvo igrači sa jakom istorijom (bar 75% ove sezone i bar 4 od poslednjih 5), pa ostali po šansi. Forma: u poslednjih 5 utakmica linija mora proći bar 3 puta (za najsigurnije bar 4), a za najsigurnije minutaža u poslednje 3 utakmice ne sme da pada (za više) ili raste (za manje) za više od 3 minuta. Iz iste utakmice najviše 2 među najsigurnijima i 3 na celoj listi; igrači koje ručno označim kao rizične (iskljuci) se preskaču. Bez „poeni manje“ za igrača koji zbog izostanaka saigrača dobija veću ulogu (8%+ više očekivanih poena). Bez opklada gde se kladionice jako razilaze oko igrača (procene se razlikuju 1,5+ poena, skokovi i asistencije 0,75+), jer tu ni tržište nije sigurno. Igrači sa manje od 15 projektovanih minuta ulaze samo uz stalnu minutažu (odstupanje do 4 min), bez zavisnosti od tuđih povreda ili povrataka, uz tržište na strani opklade i slaganje bar dve nezavisne kladionice; prate se posebno (klupa).',
+  description:'Za svaku Maxbet liniju i stranu: šansa = (verovatnoća modela + učinak ove sezone)/2, vrednost = šansa × kvota − 1. Šansa uključuje i tržište: verovatnoća iz glavnih linija Maxbeta, Soccera i Merkura bez marže, pa je šansa ponderisani prosek modela, istorije (ova sezona + prošla sezona sa naučenom težinom, polazno 0,2, samo utakmice sa sličnom minutažom) i tržišta; težine se uče iz rezultata prethodnih kola (dok je uzorak mali, blizu jednakih). Šansa modela se računa oko medijane (igrač prelazi svoju projekciju ređe od pola puta), istorija nema težinu. Zadržane opklade gde model daje 55%+, vrednost nije negativna i kvota je bar 1.40; po igraču jedna, ona sa najvećom šansom. Za svaki dan kola: Najsigurnije = 5 sa najvećom šansom među igračima sa 20+ projektovanih minuta, koji nisu sa klupe (startovali bar 3 od poslednjih 5) i nisu iz tima sa najnemirnijom rotacijom (gornja trećina), stabilnom minutažom (odstupanje do 6 min) i projekcijom bar pola standardne devijacije od linije i tržištem koje nije protiv (50%+) i nije se pomeralo protiv opklade za pola poena ili više (skokovi i asistencije četvrt). Opklade protiv kojih se tržište pomerilo za ceo poen ili više (skokovi i asistencije pola) se ne preporučuju; Takođe verujem dopunjuje listu svim ostalim opkladama koje prolaze uslove (bez ograničenja na 10, najviše 3 po utakmici), po vrednosti: prvo igrači sa jakom istorijom (bar 75% ove sezone i bar 4 od poslednjih 5), pa ostali po šansi. Forma: u poslednjih 5 utakmica linija mora proći bar 3 puta (za najsigurnije bar 4), a za najsigurnije minutaža u poslednje 3 utakmice ne sme da pada (za više) ili raste (za manje) za više od 3 minuta. Iz iste utakmice najviše 2 među najsigurnijima i 3 na celoj listi; igrači koje ručno označim kao rizične (iskljuci) se preskaču. Bez „poeni manje“ za igrača koji zbog izostanaka saigrača dobija veću ulogu (8%+ više očekivanih poena). Bez opklada gde se kladionice jako razilaze oko igrača (procene se razlikuju 1,5+ poena, skokovi i asistencije 0,75+), jer tu ni tržište nije sigurno. Igrači sa manje od 15 projektovanih minuta ulaze samo uz stalnu minutažu (odstupanje do 4 min), bez zavisnosti od tuđih povreda ili povrataka, uz tržište na strani opklade i slaganje bar dve nezavisne kladionice; prate se posebno (klupa).',
   fn:(igraci,kvote)=>{
     const Phi=z=>{const x=z/Math.SQRT2,t=1/(1+0.3275911*Math.abs(x)),y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x);return 0.5*(1+(x>=0?y:-y));};
     const key={Poeni:'pts',Skokovi:'reb',Asistencije:'ast'};
@@ -316,36 +317,37 @@ dash.calc('preporuke',{
       // i bez veće uloge, a kladionice moraju da se slažu oko granice (bar 2 nezavisne, raskorak do pola praga)
       const klupa=Number(p.minuti_proj)<15;
       if(klupa&&(Number(p.minuti_sd)>4||p.sastav_zbog||p.povratak||p.veca_uloga||o.trz_raskorak==null||Number(o.trz_raskorak)>=(o.kategorija==='Poeni'?0.75:0.4)))continue;
-      const L=Number(o.linija), over=1-Phi((Math.floor(L)+0.5-Number(p[k+'_proj']))/Number(p[k+'_sd']));
+      const L=Number(o.linija), mu=Number(p[k+'_med']??p[k+'_proj']), over=1-Phi((Math.floor(L)+0.5-mu)/Number(p[k+'_sd']));   // šansa oko medijane (od 6.11.2026.)
       for(const [smer,kv,pm,hit] of [['više',o.kvota_vise,over,v=>v>L],['manje',o.kvota_manje,1-over,v=>v<L]]){
         if(!kv||Number(kv)<1.4)continue;
         if(smer==='manje'&&o.kategorija==='Poeni'&&p.veca_uloga)continue;
         if(o.trz_raskorak!=null&&Number(o.trz_raskorak)>=(o.kategorija==='Poeni'?1.5:0.75))continue;
         const h=vals.filter(hit).length, lsn=Number(o.ls_n||0), lsh=o.ls_vise==null?0:(smer==='više'?Number(o.ls_vise):lsn-Number(o.ls_vise)), wl=o.tez_ls==null?0.2:Number(o.tez_ls), ph=(h+wl*lsh+1)/(vals.length+wl*lsn+2), tv=o.trz_vise==null?null:Number(o.trz_vise), pt=tv==null?null:(smer==='više'?tv:1-tv), wm=o.tez_m==null?1/3:Number(o.tez_m), wh=o.tez_h==null?1/3:Number(o.tez_h), wt=o.tez_t==null?1/3:Number(o.tez_t), pc=pt==null?(wm*pm+wh*ph)/(wm+wh):(wm*pm+wh*ph+wt*pt)/(wm+wh+wt), ev=pc*Number(kv)-1;
-        if(pm<0.55||ph<0.55||ev<PRAG_VREDNOSTI)continue;
+        if(pm<0.55||ev<PRAG_VREDNOSTI)continue;   // istorija više nije uslov (6.11.2026: ne predviđa ništa preko tržišta)
+        if(pt!=null&&pm-pt>MAKS_RAZLIKA)continue;   // model mnogo iznad tržišta: obično ne zna za izostanak ili ulogu (bt_formula.py)
         if(klupa&&(pt==null||pt<0.5))continue;   // i tržište mora biti na strani opklade
-        const z=(smer==='više'?1:-1)*(Number(p[k+'_proj'])-(Math.floor(L)+0.5))/Number(p[k+'_sd']);
+        const z=(smer==='više'?1:-1)*(mu-(Math.floor(L)+0.5))/Number(p[k+'_sd']);
         const l5=vals.slice(-5), h5=l5.filter(hit).length, tr=Number(p.minuti_trend||0), trOk=smer==='više'?tr>=-3:tr<=3;
         if(h5<3)continue;
         const km=o.trz_kretanje==null?0:Number(o.trz_kretanje), sm=(smer==='više'?1:-1)*km, jak=o.kategorija==='Poeni'?1:0.5, slab=o.kategorija==='Poeni'?0.5:0.25;
         if(sm<=-jak)continue;
         const stabilan=Number(p.minuti_proj)>=20&&Number(p.minuti_sd)<=6&&p.starter_status!=='klupa'&&!p.nemir_tim_visok&&z>=0.5&&p.status==='Igra'&&(pt==null||pt>=0.5)&&sm>-slab&&h5>=4&&trOk;
         const id='K'+o.kolo+' '+o.igrac; const cur=best.get(id);
-        if(!cur||pc>cur.sansa||(pc===cur.sansa&&ev>cur.vrednost)) best.set(id,{klupa,forma5:h5+'/'+l5.length,kretanje:Math.round(sm*100)/100,trziste:pt==null?null:r3(pt),model:r3(pm),kljuc:id+' '+o.kategorija,kolo:+o.kolo,termin:p.termin,red:+p.red,igrac:o.igrac,utakmica:o.utakmica,kategorija:o.kategorija,smer,linija:L,opklada:o.kategorija.toLowerCase()+' '+smer+' '+L,kvota:Number(kv),sansa:r3(pc),razmak:r3(z),stabilan,istorija:h+'/'+vals.length,vrednost:r3(ev),minuti:Number(p.minuti_proj)});
+        if(!cur||ev>cur.vrednost||(ev===cur.vrednost&&pc>cur.sansa)) best.set(id,{klupa,forma5:h5+'/'+l5.length,kretanje:Math.round(sm*100)/100,trziste:pt==null?null:r3(pt),model:r3(pm),kljuc:id+' '+o.kategorija,kolo:+o.kolo,termin:p.termin,red:+p.red,igrac:o.igrac,utakmica:o.utakmica,kategorija:o.kategorija,smer,linija:L,opklada:o.kategorija.toLowerCase()+' '+smer+' '+L,kvota:Number(kv),sansa:r3(pc),razmak:r3(z),stabilan,istorija:h+'/'+vals.length,vrednost:r3(ev),minuti:Number(p.minuti_proj)});
       }
     }
     const day=t=>String(t).split(' ').slice(0,2).join(' ');
     const groups=new Map(); for(const b of best.values()){const g=b.kolo+'|'+day(b.termin);(groups.get(g)||groups.set(g,[]).get(g)).push(b);}
     const out=[];
     for(const list of groups.values()){
-      list.sort((a,b)=>b.sansa-a.sansa||b.vrednost-a.vrednost);
+      list.sort((a,b)=>b.vrednost-a.vrednost||b.sansa-a.sansa);   // po vrednosti (6.11.2026, bt_sansa.py: 10 sa najvećom šansom su bili favoriti bez prednosti)
       const cnt=new Map(), ok=(b,m)=>(cnt.get(b.utakmica)||0)<m, take=b=>cnt.set(b.utakmica,(cnt.get(b.utakmica)||0)+1);
       const top=[]; for(const b of list){if(top.length<5&&b.stabilan&&ok(b,2)){top.push(b);take(b);}}
       const used=new Set(top.map(b=>b.igrac)), next=[];
       // dopuna do 10 ukupno; prvo igrači sa jakom istorijom (sezona 75%+ i bar 4 od poslednjih 5), pa ostali po šansi
       const jaka=b=>{const [a,n]=String(b.istorija).split('/').map(Number), f=Number(String(b.forma5||'0').split('/')[0]); return n>0&&a/n>=0.75&&f>=4;};
-      const red=[...list.filter(jaka),...list.filter(b=>!jaka(b))];
-      for(const b of red){if(top.length+next.length<10&&!used.has(b.igrac)&&ok(b,3)){next.push(b);take(b);used.add(b.igrac);}}
+      const red=list;   // po šansi (ranije su prvo išli igrači sa jakom istorijom)
+      for(const b of red){if(!used.has(b.igrac)&&ok(b,3)){next.push(b);take(b);used.add(b.igrac);}}
       top.forEach((b,i)=>out.push({...b,rang:i+1,grupa:'Najsigurnije'}));
       next.forEach((b,i)=>out.push({...b,rang:top.length+i+1,grupa:'Takođe verujem'}));
     }
@@ -365,7 +367,7 @@ dash.calc('glavne',{
       const qv=Number(o.kvota_vise), qm=Number(o.kvota_manje); if(qv<1.65||qv>2.2||qm<1.65||qm>2.2)continue;
       const p=igraci.find(x=>x.igrac===o.igrac&&+x.kolo===+o.kolo); if(!p||p.status==='Ne igra'||p.iskljuci)continue;
       const k=key[o.kategorija]; const vals=String(p[k+'_sve']||'').split(',').filter(x=>x!=='').map(Number); if(!vals.length)continue;
-      const L=Number(o.linija), over=1-Phi((Math.floor(L)+0.5-Number(p[k+'_proj']))/Number(p[k+'_sd']));
+      const L=Number(o.linija), mu=Number(p[k+'_med']??p[k+'_proj']), over=1-Phi((Math.floor(L)+0.5-mu)/Number(p[k+'_sd']));   // šansa oko medijane (od 6.11.2026.)
       let best=null;
       for(const [smer,kv,pm,hit] of [['više',qv,over,v=>v>L],['manje',qm,1-over,v=>v<L]]){
         const h=vals.filter(hit).length, lsn=Number(o.ls_n||0), lsh=o.ls_vise==null?0:(smer==='više'?Number(o.ls_vise):lsn-Number(o.ls_vise));
@@ -380,12 +382,13 @@ dash.calc('glavne',{
       if(!best||best.sansa<0.55||best.sansa*best.kvota-1<PRAG_VREDNOSTI)continue;
       // ista pravila kao u preporukama: model i istorija na strani opklade, tržište nije protiv, kladionice se ne razilaze jako
       const pojen=o.kategorija==='Poeni', sm=(best.smer==='više'?1:-1)*Number(o.trz_kretanje||0);
-      if(best._pm<0.55||best._ph<0.55||sm<=-(pojen?1:0.5))continue;
+      if(best._pm<0.55||sm<=-(pojen?1:0.5))continue;
+      if(best.trziste!=null&&best._pm-best.trziste>MAKS_RAZLIKA)continue;
       if(o.trz_raskorak!=null&&Number(o.trz_raskorak)>=(pojen?1.5:0.75))continue;
       if(best.smer==='manje'&&pojen&&p.veca_uloga)continue;
       const {_ph,_pm,...gotova}=best; out.push(gotova);
     }
-    return out.sort((a,b)=>b.sansa-a.sansa);
+    return out.sort((a,b)=>b.vrednost-a.vrednost);
   }
 });
 

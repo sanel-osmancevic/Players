@@ -1,7 +1,9 @@
 # Probna lista u senci (od 6.11.2026): pravilo iz bt_formula.py, prati se pored prave liste, bez uloga i bez uticaja na preporuke.
-# Pravilo: glavna Maxbet linija (obe kvote), model 3-10 procentnih poena iznad tržišta (ostale kladionice bez marže), bez filtera istorije.
-#   Na kolima 9-10 ta grupa je prolazila oko 8 poena češće od tržišta, a razlika 10+ je gubila (model tu obično ne zna za izostanak ili ulogu).
-#   Granice su izabrane gledajući ta dva kola, pa lista služi da se pravilo potvrdi ili odbaci na kolima koja tek dolaze.
+# Pravilo: glavna Maxbet linija (obe kvote), model 3-15 procentnih poena iznad tržišta (ostale kladionice bez marže), bez filtera istorije.
+#   Model je sadašnji: šansa oko medijane (pomocno.MEDIJANA). Na kolima 9-10 ta grupa je prolazila 5.7 poena češće od tržišta
+#   [+0.3, +11.4], a razlika preko 15 je bez prednosti (bt_pravila.py). Do 6.11.2026. 11:30 pravilo je bilo 3-10 na modelu oko proseka
+#   (stara lista: prikupljeno/2026-11-06/proba_lista_stari_model.json). Granice su izabrane gledajući ta dva kola, pa lista služi
+#   da se pravilo potvrdi ili odbaci na kolima koja tek dolaze.
 # Igrač: jedna opklada (najveća razlika u opsegu); bez igrača koji ne igraju, upitnih i onih sa manje od 3 utakmice.
 # Upis: proba_lista.json. Red se pamti kad prvi put uđe u opseg; do početka utakmice osvežava kvotu i razliku, a ako izađe iz opsega
 # dobija ispala=True (ostaje zbog analize). Posle početka se ne menja, a rezultat se upisuje iz zapisnika (prikupljeno/rezultati/).
@@ -9,7 +11,7 @@
 import math, os, re, glob, datetime, unicodedata
 from pomocno import citaj, pisi, beograd
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
-OD, DO = 0.03, 0.10
+OD, DO = 0.03, 0.15
 FAJL = 'proba_lista.json'
 Phi = lambda z: .5 * (1 + math.erf(z / math.sqrt(2)))
 K = {'Poeni': 'pts', 'Skokovi': 'reb', 'Asistencije': 'ast'}
@@ -24,7 +26,7 @@ def kandidati(kvote, igraci):
         if not r or not x.get('kvota_vise') or not x.get('kvota_manje') or x.get('trz_vise') is None: continue
         if r['status'] != 'Igra' or r.get('utakmice', 9) < 3: continue
         k = K[x['kategorija']]; L = float(x['linija'])
-        pm = 1 - Phi((math.floor(L) + .5 - r[f'{k}_proj']) / r[f'{k}_sd'])
+        pm = 1 - Phi((math.floor(L) + .5 - r.get(f'{k}_med', r[f'{k}_proj'])) / r[f'{k}_sd'])   # oko medijane, kao u preporukama
         for smer, m, t, kv in (('više', pm, x['trz_vise'], x['kvota_vise']), ('manje', 1 - pm, 1 - x['trz_vise'], x['kvota_manje'])):
             d = m - t
             if OD <= d < DO and (x['igrac'] not in najb or d > najb[x['igrac']]['razlika']):

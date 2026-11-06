@@ -3,7 +3,7 @@
 #   bez argumenta: najnoviji Maxbet snimak servisa sa igračima (prikupljeno/), a ako ga nema, direktno povlačenje
 #   sa argumentom: koristi {raw, games} koji je vratio pregledač
 import json, sys, subprocess, re, os, datetime
-from pomocno import citaj, pisi, citaj_tekst, pisi_tekst, beograd
+from pomocno import citaj, pisi, citaj_tekst, pisi_tekst, beograd, MEDIJANA
 import provera
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 if not sys.flags.utf8_mode:   # na Windowsu open() inače ne čita fajlove kao UTF-8
@@ -113,6 +113,11 @@ for r in rows:
     # od 6.11.2026. u model ulaze i igrači sa 2 utakmice (pripremi_kolo.py), ali u preporuke tek od 3: projekcija minuta iz dve utakmice
     # novog ili vraćenog igrača je nesigurna, a provera ima samo 40 takvih slučajeva (bt_novajlije.py)
     elif r.get('utakmice', 9) < 3: r['iskljuci'] = f"Malo podataka: samo {r['utakmice']} utakmice ove sezone"
+# medijana za šansu na liniji (pomocno.MEDIJANA): konačna projekcija bez naučenog pomeraja proseka, plus pomak medijane
+_bias = citaj('tezine.json').get('bias', {}) if os.path.exists('tezine.json') else {}
+for r in rows:
+    for k in ('pts', 'reb', 'ast'):
+        if r.get(f'{k}_proj') is not None: r[f'{k}_med'] = round(max(0.0, r[f'{k}_proj'] - _bias.get(k, 0.0) + MEDIJANA[k]), 2) if r['status'] != 'Ne igra' else 0
 pisi(rows, 'igraci2.json', ensure_ascii=False)
 provera.obradi('projekcija', *provera.igraci(rows, G, DAN, citaj('tezine.json').get('bias')))
 pisi(provera.zbir_stanje(rows, G, DAN, trag), 'zbir_utakmica.json', ensure_ascii=False)
@@ -182,7 +187,7 @@ novi_red = list(zadrzani)
 for vr in ('sigurnije', 'glavne'):
     ima = sum(1 for r in zadrzani if r.get('vrsta') == vr)
     for p in [p for p in picks if p['vrsta'] == vr and p['utakmica'] not in zakl and not pocela(p['utakmica']) and p['kljuc'] not in igrani]:
-        if ima >= 10: break
+        if ima >= 30: break   # od 6.11.2026. lista nema ograničenje na 10 (redosled po vrednosti); 30 je samo zaštita
         novi_red.append(red(p)); ima += 1
 # 3) konačno zaključavanje: utakmice koje počinju za 60 min ili manje (ili sve, uz --zakljucaj)
 for d in novi_red:
@@ -212,6 +217,8 @@ for d in novi_red:
 #   bez prednosti posle korekcije -> ulog 0 (opklada ostaje na listi samo za praćenje). Najviše 2 j. (glavne 0.5 j.), ukupno dnevno najviše 10 j.
 # Povezanost: dve opklade na isti tim u istom smeru (obe više / obe manje) -> manja dobija ×0.7; po utakmici ukupno najviše 3 j.
 gotove = [r for r in z if r.get('ishod') in ('prošlo', 'palo') and r.get('sansa')]
+# ista opklada sa obe stare liste (sigurnije i glavne, do 6.11.2026) računa se jednom, inače bi ista opklada dvaput pomerala k
+gotove = list({(r['kolo'], r['igrac'], r['opklada']): r for r in gotove}.values())
 if gotove:
     hr = sum(r['ishod'] == 'prošlo' for r in gotove) / len(gotove); mp = sum(kal(r.get('sansa_sirova') or r['sansa'], r.get('smer')) for r in gotove) / len(gotove)
     k_raw = (hr - 0.5) / (mp - 0.5) if mp > 0.5 else 0.85
@@ -226,7 +233,8 @@ def ulog(d):
     # tržište je zasad najbolja procena: kad nije na strani opklade, ulog najviše kao kod glavnih
     gornja = 0.5 if d.get('vrsta') == 'glavne' or (d.get('trziste') is not None and float(d['trziste']) < 0.5) else 2.0
     return min(gornja, round(u * 4) / 4 or 0.25), round(p, 3), round(pr, 3)
-otvorene = [d for d in novi_red if not d.get('konacno') and not d.get('odigrano') and not pocela(d['utakmica'])]
+# i opklade konačno zaključane baš u ovom preračunu (konacno == ts): red je upravo napravljen bez uloga, pa bi ostao bez njega (Herrera 05.11.)
+otvorene = [d for d in novi_red if (not d.get('konacno') or d.get('konacno') == ts) and not d.get('odigrano') and not pocela(d['utakmica'])]
 for d in otvorene: d['ulog'], d['sansa_kor'], d['prednost'] = ulog(d)
 # ista opklada na obe liste: ulog samo jednom, gde je veći
 _ista = {}

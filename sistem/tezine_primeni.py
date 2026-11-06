@@ -9,7 +9,8 @@ T = citaj('tezine.json') if os.path.exists('tezine.json') else {'bias': {}, 'c':
 # Odnos modela i istorije u preostalih 40% i dalje se uči iz rezultata.
 TEZ_TRZISTE = 0.6
 _m, _h = T['w'][0], T['w'][1]
-TEZ = [round((1 - TEZ_TRZISTE) * _m / (_m + _h), 3), round((1 - TEZ_TRZISTE) * _h / (_m + _h), 3), TEZ_TRZISTE]
+# Od 6.11.2026. istorija nema težinu: kad se zna tržište, ne predviđa ništa (bt_formula.py, kola 9-10), pa je ostatak modelu.
+TEZ = [round(1 - TEZ_TRZISTE, 3), 0.0, TEZ_TRZISTE]
 mode = sys.argv[1]
 if mode == 'igraci':
     rows = citaj('igraci2.json')

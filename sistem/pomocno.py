@@ -27,3 +27,8 @@ def redovi_za_ucenje(redovi):
     for e in redovi:
         if e.get('rezultat') is not None: ut.setdefault(e['kolo'], set()).add(e['utakmica'])
     return [e for e in redovi if len(ut.get(e['kolo'], ())) >= NAJMANJE_UTAKMICA_ZA_UCENJE]
+
+# Šansa na liniji računa se oko medijane, ne oko proseka: učinak je iskošen udesno (retke velike večeri), pa igrač prelazi
+# svoju projekciju u 43-46% utakmica. Pomak medijane od sirove projekcije (prosek), kola 3-9 (bt_projekcija.py, 6.11.2026);
+# na linijama 9. i 10. kola prosečna šansa za "više" je 45.6% naspram stvarnih 45.9% (oko proseka 50.9%).
+MEDIJANA = {'pts': -0.67, 'reb': -0.21, 'ast': -0.25}

@@ -6,7 +6,7 @@
 # Sve se skuplja ka podrazumevanim vrednostima dok je uzorak mali (efektivno n = broj različitih igrač-kategorija).
 # Piše tezine.json koji primenjuje tezine_primeni.py.
 import json, math, os
-from pomocno import citaj, pisi, redovi_za_ucenje
+from pomocno import citaj, pisi, redovi_za_ucenje, MEDIJANA
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 from dist import p_over as nb_over
 Phi = lambda z: 0.5 * (1 + math.erf(z / math.sqrt(2)))
@@ -21,7 +21,8 @@ n_eff = {k: len(v) for k, v in eff.items()}
 N = sum(n_eff.values())
 
 def p_model(e, bias=0.0, c=1.0, dist='normal'):
-    mu = e['proj'] + bias; sd = e['sd'] * c
+    # od 6.11.2026. verovatnoća oko medijane (pomocno.MEDIJANA); naučeni pomeraj ostaje samo za prikazani prosek
+    mu = e['proj'] + MEDIJANA[K[e['kategorija']]]; sd = e['sd'] * c
     if dist == 'nb': return nb_over(e['linija'], max(mu, 0.1), sd)
     return 1 - Phi((math.floor(e['linija']) + 0.5 - mu) / sd)
 def p_hist(e, side='v'):

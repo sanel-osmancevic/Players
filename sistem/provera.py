@@ -104,7 +104,7 @@ def kvote(redovi, igr, dan):
             greske.append(f"{o['igrac']} {o['kategorija']} {o['linija']}: tržište {t}")
         p = pi.get(o['igrac'])
         if p and o['kategorija'] == 'Poeni' and p['status'] != 'Ne igra':
-            razlike.append(1 - Phi((math.floor(o['linija']) + 0.5 - p['pts_proj']) / p['pts_sd']) - t)
+            razlike.append(1 - Phi((math.floor(o['linija']) + 0.5 - p.get('pts_med', p['pts_proj'])) / p['pts_sd']) - t)
     if len(razlike) >= NAJMANJE_LINIJA and abs(mean(razlike)) > ISKOSENOST_MODELA:
         greske.append(f'poeni: model je prosečno {mean(razlike):+.2f} od tržišta na {len(razlike)} linija')
     return greske, upozorenja
