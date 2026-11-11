@@ -257,7 +257,8 @@ def ulog(d):
     if pr <= 0: return 0.0, round(p, 3), round(pr, 3)
     u = 100 * 0.25 * pr / (kv - 1)
     # tržište je zasad najbolja procena: kad nije na strani opklade, ulog najviše kao kod glavnih
-    gornja = 0.5 if d.get('vrsta') == 'glavne' or (d.get('trziste') is not None and float(d['trziste']) < 0.5) else 2.0
+    # bez tržišta (nijedna druga kladionica nema liniju) šansa je samo model, koji sam nema dokazanu prednost: isti strop (od 11.11.2026)
+    gornja = 0.5 if d.get('vrsta') == 'glavne' or d.get('trziste') is None or float(d['trziste']) < 0.5 else 2.0
     return min(gornja, round(u * 4) / 4 or 0.25), round(p, 3), round(pr, 3)
 # i opklade konačno zaključane baš u ovom preračunu (konacno == ts): red je upravo napravljen bez uloga, pa bi ostao bez njega (Herrera 05.11.)
 otvorene = [d for d in novi_red if (not d.get('konacno') or d.get('konacno') == ts) and not d.get('odigrano') and not pocela(d['utakmica'])]
