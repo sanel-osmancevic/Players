@@ -90,7 +90,7 @@ for x in P:
 MINFIX=RUCNO.get('minuti',{})  # ručni dodatak minuta po kolu, npr. {'HAYES, KEVARRIUS|PAR':4.0}
 for x in P:
     b=MINFIX.get(f"{x['n']}|{x['t']}")
-    if b: x['bonus']=max(x.get('bonus',0),b)
+    if b: x['bonus']=max(x.get('bonus',0),b) if b>0 else x.get('bonus',0)+b   # od 11.11.2026. i umanjenje (povratak posle pauze)
 rows=[];safe=[]
 for x in P:
     t,o,pos=x['t'],x['o'],x['pos']

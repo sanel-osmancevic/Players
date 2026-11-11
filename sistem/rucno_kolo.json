@@ -1,6 +1,10 @@
 {
-"kolo": 10,
+"kolo": 11,
+"napomena": "11.11.2026: povratak posle pauze, manje minuta u prvoj utakmici (Jekiri od 6. kola, Kurucs i Cale od 7., Gibson od 8.)",
 "minuti": {
-"FELIZ, ANDRES|MAD": 6
+"JEKIRI, TONYE|PAR": -4,
+"KURUCS, RODIONS|BAS": -4,
+"CALE, MYLES|ASV": -3,
+"GIBSON, UMOJA|BAR": -2
 }
 }

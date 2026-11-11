@@ -36,7 +36,8 @@ MEDIJANA = {'pts': -0.67, 'reb': -0.21, 'ast': -0.25}
 # Povlačenje projekcije ka tržištu (od 7.11.2026): kad je projekcija iznad medijane ostalih kladionica, ta razlika je uglavnom šum
 # (na kolima 9-10 igrači su tada dali 1.4 manje od projekcije uz normalne minute), a kad je ispod, nosi informaciju. Logloss na
 # linijama: bez povlačenja 0.6810, sa 75% gore / 25% dole 0.6753 (tržište 0.6823); najbolje gore 100% u oba kola posebno.
-POVLACENJE = {'gore': 0.75, 'dole': 0.25}
+# Ispod tržišta: 9. kolo najbolje 100%, 10. kolo 0%, oba zajedno 50% – nepostojano, pa se od 11.11. ne povlači.
+POVLACENJE = {'gore': 0.75, 'dole': 0.0}   # 11.11.2026: dole 0.25 -> 0; na 10. kolu je povlačenje naniže izbacilo dobitne „manje“ sa visokom kvotom (Edwards, C. Jones 14.5), a samo na 10. kolu najbolje je bilo 0
 def medijana_modela(proj, k, trz_med=None):
     # medijana učinka za šansu na liniji: projekcija + pomak medijane, povučena ka medijani tržišta (ako je poznata)
     mu = proj + MEDIJANA[k]

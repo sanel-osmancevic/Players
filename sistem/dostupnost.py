@@ -21,6 +21,10 @@ SHR = float(os.environ.get('SHR',0.5))   # koliko verujemo razlici (ostatak ide 
 RECENT = int(os.environ.get('RECENT',3))  # izostanak u poslednja 3 kola čini igrača bitnim za sastav
 P_POVRATAK = float(os.environ.get('PPOV',0.65))  # prvi meč posle izostanka: minuti obično ograničeni
 
+# ručno umanjenje minuta iz rucno_kolo.json (npr. povratak posle pauze) mora da preživi ovaj preračun (od 11.11.2026)
+_rk = citaj('rucno_kolo.json') if os.path.exists('rucno_kolo.json') else {}
+from kolo import KOLO as _KOLO
+MINUS = {k.split('|')[0]: v for k, v in (_rk.get('minuti', {}) if _rk.get('kolo') == _KOLO else {}).items() if v < 0}
 P = [p for f in ('statistika.json',) for p in citaj(f)['P']]
 LOG = {}
 for n, pos, t, rr, mm, *_ in P:
@@ -99,7 +103,7 @@ for r in rows:
     m_new = sum(v * w for v, w in vals); base = osnovno(i)
     stari = r['minuti_proj']
     bonus = max(0.0, stari - base) if (nevidjeno or os.environ.get("KEEPB")) else 0.0
-    novi = base + SHR * (m_new - base) + bonus
+    novi = base + SHR * (m_new - base) + bonus + MINUS.get(i, 0.0)
     novi = max(stari - CAP_ABS, min(stari + CAP_ABS, novi))
     novi = max(stari * (1 - CAP_REL), min(stari * (1 + CAP_REL), novi))
     zbog = []

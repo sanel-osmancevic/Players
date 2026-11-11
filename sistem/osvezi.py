@@ -1,5 +1,5 @@
 # Osvežavanje Maxbet liste u jednom koraku.
-# Upotreba: py -X utf8 osvezi.py [mb_snapshot.json]
+# Upotreba: py -X utf8 osvezi.py [mb_snapshot.json] [--bez-provere-snimka]
 #   bez argumenta: najnoviji Maxbet snimak servisa sa igračima (prikupljeno/), a ako ga nema, direktno povlačenje
 #   sa argumentom: koristi {raw, games} koji je vratio pregledač
 import json, sys, subprocess, re, os, datetime
@@ -61,6 +61,20 @@ def najnoviji_snimak():
 _arg = [a for a in sys.argv[1:] if not a.startswith('--')]
 snap = citaj(_arg[0]) if _arg else (najnoviji_snimak() or fetch_direct())
 raw = snap['raw']
+# Zaštita (od 11.11.2026): snimak mora biti svež i za utakmice ovog kola. 11.11. je posle pripreme 11. kola uzet snimak od petka
+# 10. kola i napravio lažne opklade (igrači su isti, a protivnici i linije stari). Preskače se sa --bez-provere-snimka.
+if raw and '--bez-provere-snimka' not in sys.argv:
+    _t = snap.get('t'); _star = None
+    if _t:
+        _t = datetime.datetime.fromtimestamp(_t / 1000, datetime.timezone.utc) if isinstance(_t, (int, float)) else datetime.datetime.fromisoformat(str(_t).replace('Z', '+00:00'))
+        _star = (datetime.datetime.now(datetime.timezone.utc) - _t).total_seconds() / 3600
+    _kolo = {(IME[h], IME[a]) for h, a, _, _ in GAMES}
+    _snim = {(tim(g[0]), tim(g[1])) for g in snap.get('games') or []}
+    _razlog = (f'Maxbet snimak je star {_star:.0f} h' if _star is not None and _star > 12 else
+               'u Maxbet snimku nema nijedne utakmice ovog kola' if _snim and not (_snim & _kolo) else None)
+    if _razlog:
+        print(f'Zapamćena lista nije menjana: {_razlog} ({snap.get("t")}). Prvo povući sveže kvote.')
+        sys.exit(0)
 for k, ls in raw.items():  # uskladi oblik: milestone linije imaju 3 polja
     raw[k] = [l[:3] if len(l) == 4 and l[3] is None else l for l in ls]
 

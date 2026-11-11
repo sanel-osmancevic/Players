@@ -88,10 +88,15 @@ def oceni(lista):
         k = int(os.path.basename(f)[4:].split('_')[0])
         for n, mn, p, rb, a in citaj(f):
             l, fn = (n.split(', ', 1) + [''])[:2]; R[(k, kljuc(fn + ' ' + l))] = dict(min=mn, Poeni=p, Skokovi=rb, Asistencije=a)
+    # utakmica je gotova ako je bar jedna opklada sa nje ocenjena iz zapisnika; igrač kog tada nema u zapisniku nije bio u sastavu
+    # (od 11.11.2026: D. Washington 5.11. je ostajao „otvoren“ jer nije bio ni u zapisniku)
+    gotove = {(r['kolo'], r['utakmica']) for r in lista if (r['kolo'], kljuc(r['igrac'])) in R}
     for r in lista:
         if r.get('ishod'): continue
         x = R.get((r['kolo'], kljuc(r['igrac'])))
-        if not x: continue
+        if not x:
+            if (r['kolo'], r['utakmica']) in gotove: r.update(rezultat=None, ishod='nije igrao')
+            continue
         if not x['min']: r.update(rezultat=None, ishod='nije igrao'); continue
         v = x[r['kategorija']]; r['rezultat'] = v
         r['ishod'] = 'prošlo' if (v > r['linija'] if r['smer'] == 'više' else v < r['linija']) else 'palo'
