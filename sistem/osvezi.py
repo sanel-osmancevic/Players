@@ -47,7 +47,7 @@ def fetch_direct():
         add('A', p.get('ouPlAssists'), o.get('51682'), o.get('51684'))
     gl = get('/sport/B/league/131600/mob').get('esMatches', [])
     with ThreadPoolExecutor(8) as ex: gm = list(ex.map(lambda m: get(f"/match/{m['id']}"), gl))
-    games = [[d['home'], d['away'], d.get('kickOffTime'), (d.get('params') or {}).get('hdp'), (d.get('params') or {}).get('overUnder'),
+    games = [[d['home'], d['away'], d.get('kickOffTime'), (d.get('params') or {}).get('hdp'), ((d.get('params') or {}).get('overUnder') or (d.get('params') or {}).get('overUnderOvertime')),
               (d.get('odds') or {}).get('1'), (d.get('odds') or {}).get('3')] for d in gm]
     return dict(raw=raw, games=games)
 

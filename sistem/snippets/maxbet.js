@@ -21,5 +21,5 @@ for (const d of await sve(lst.map(m => m.id))) {
   add('A', p.ouPlAssists, o[51682], o[51684]);
 }
 const gl = (await get('/sport/B/league/131600/mob')).esMatches || [];
-const games = (await sve(gl.map(m => m.id))).map(d => [d.home, d.away, d.kickOffTime, (d.params || {}).hdp, (d.params || {}).overUnder, (d.odds || {})[1], (d.odds || {})[3]]);
+const games = (await sve(gl.map(m => m.id))).map(d => [d.home, d.away, d.kickOffTime, (d.params || {}).hdp, ((d.params || {}).overUnder ?? (d.params || {}).overUnderOvertime), (d.odds || {})[1], (d.odds || {})[3]]);   // od 6.11.2026. Maxbet šalje ukupno kao overUnderOvertime (sa produžecima)
 JSON.stringify({t: new Date().toISOString(), n: lst.length, raw, games});

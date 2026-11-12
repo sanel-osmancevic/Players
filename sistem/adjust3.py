@@ -1,7 +1,7 @@
 import json,math
 from pomocno import citaj, pisi
 rows=citaj('igraci2.json')
-G={'Real Madrid – Panathinaikos': (171.5, 2.25, 1.84), 'Anadolu Efes – Paris': (178.5, 1.48, 3.2), 'Fenerbahče – Baskonia': (168.5, 1.11, 8.25), 'Hapoel TA – Barcelona': (178.5, 1.54, 2.9), 'ASVEL – Bayern': (176.5, 1.84, 2.25), 'Olimpia Milano – Valencia': (178.5, 2.2, 1.9), 'Beşiktaş – Žalgiris': (174.5, 2.15, 1.94), 'Olympiacos – Crvena zvezda': (168.5, 1.46, 3.3), 'Virtus – Dubai': (173.5, 2.15, 1.87), 'Partizan – Maccabi TA': (170.5, 1.62, 2.7)}
+G={'Maccabi TA – Hapoel TA': (181.5, 2.9, 1.54), 'Olympiacos – Dubai': (167.5, 1.58, 2.8), 'Olimpia Milano – Žalgiris': (169.5, 2.2, 1.88), 'Valencia – Bayern': (183.5, 1.27, 5.1), 'Real Madrid – Crvena zvezda': (177.5, 1.42, 3.4), 'Anadolu Efes – Virtus': (174.5, 1.6, 2.65), 'Panathinaikos – Barcelona': (171.5, 1.21, 5.8), 'ASVEL – Beşiktaş': (176.5, 1.87, 2.15)}
 LG=173.8
 for r in rows:
     g=G.get(r['utakmica'])
