@@ -298,7 +298,10 @@ dash.draw('daysel',sel=>{
 
 
 // najmanja vrednost opklade (šansa × kvota − 1): ispod ovoga razliku lako pojede greška procene
-const MAKS_RAZLIKA=0.15;   // 6.11.2026, kola 9-10: model 3-15 poena iznad tržišta prolazi ~6% češće od tržišta, preko 15 bez prednosti
+const MAKS_RAZLIKA=0.12;   // 12.11.2026, kola 9-11: model 12-15 poena iznad tržišta 16/36, ROI -19% (ranije 0.15)
+// 12.11.2026, kola 9-11: „više“ 119 opklada ROI -16%, „manje“ 168 ROI +8%; bez tržišta 107 opklada ROI -9% (model 65%+ čak -22%)
+// pa preporuke samo za „manje“ i samo uz tržište; „više“ se i dalje prati na probnoj listi D
+const SAMO_MANJE=true, TRAZI_TRZISTE=true;
 const PRAG_VREDNOSTI=0.03;
 // 11.11.2026: sirova projekcija (pre pomaka medijane i povlačenja ka tržištu) mora biti na strani opklade, inače „manje“ dolazi samo od tržišta
 const naStrani=(proj,L,smer)=>proj==null||(smer==='više'?Number(proj)>L:Number(proj)<L);
@@ -322,6 +325,8 @@ dash.calc('preporuke',{
       const L=Number(o.linija), mu=Number(p[k+'_med']??p[k+'_proj']), over=1-Phi((Math.floor(L)+0.5-mu)/Number(p[k+'_sd']));   // šansa oko medijane (od 6.11.2026.)
       for(const [smer,kv,pm,hit] of [['više',o.kvota_vise,over,v=>v>L],['manje',o.kvota_manje,1-over,v=>v<L]]){
         if(!kv||Number(kv)<1.4)continue;
+        if(SAMO_MANJE&&smer==='više')continue;
+        if(TRAZI_TRZISTE&&o.trz_vise==null)continue;
         if(smer==='manje'&&o.kategorija==='Poeni'&&p.veca_uloga)continue;
         if(o.trz_raskorak!=null&&Number(o.trz_raskorak)>=(o.kategorija==='Poeni'?1.5:0.75))continue;
         const h=vals.filter(hit).length, lsn=Number(o.ls_n||0), lsh=o.ls_vise==null?0:(smer==='više'?Number(o.ls_vise):lsn-Number(o.ls_vise)), wl=o.tez_ls==null?0.2:Number(o.tez_ls), ph=(h+wl*lsh+1)/(vals.length+wl*lsn+2), tv=o.trz_vise==null?null:Number(o.trz_vise), pt=tv==null?null:(smer==='više'?tv:1-tv), wm=o.tez_m==null?1/3:Number(o.tez_m), wh=o.tez_h==null?1/3:Number(o.tez_h), wt=o.tez_t==null?1/3:Number(o.tez_t), pc=pt==null?(wm*pm+wh*ph)/(wm+wh):(wm*pm+wh*ph+wt*pt)/(wm+wh+wt), ev=pc*Number(kv)-1;
@@ -387,6 +392,7 @@ dash.calc('glavne',{
       const pojen=o.kategorija==='Poeni', sm=(best.smer==='više'?1:-1)*Number(o.trz_kretanje||0);
       if(best._pm<0.55||sm<=-(pojen?1:0.5))continue;
       if(!naStrani(p[k+'_proj'],L,best.smer))continue;   // 11.11.2026: sirova projekcija na strani opklade
+      if((SAMO_MANJE&&best.smer==='više')||(TRAZI_TRZISTE&&best.trziste==null))continue;   // 12.11.2026
       if(best.trziste!=null&&best._pm-best.trziste>MAKS_RAZLIKA)continue;
       if(o.trz_raskorak!=null&&Number(o.trz_raskorak)>=(pojen?1.5:0.75))continue;
       if(best.smer==='manje'&&pojen&&p.veca_uloga)continue;
