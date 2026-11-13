@@ -908,6 +908,7 @@ dash.draw('stvarni',el=>{
   if(!l.length){const tr=document.createElement('tr');const c=document.createElement('td');c.colSpan=8;c.className='sub';c.textContent='Još nema odigranih opklada. Označi ih dugmetom Odigrano u Preporukama ili Tiketima.';tr.appendChild(c);v.appendChild(tr);}
 });
 // Probna lista u senci (sistem/proba.py): zbir po grupi i redovi po danu; ispale pre početka se ne računaju
+const PROBA_OTV=new Map();   // ručno otvorena/zatvorena kola i dani na probnim listama (traje dok je stranica otvorena)
 const crtajProbu=(el,tbId,pravilo,unazadNaziv)=>{
   el.replaceChildren(); const tb=document.getElementById(tbId); if(!tb)return; tb.replaceChildren();
   const d=dash.data('proba'); if(d.status!=='ok')return;
@@ -925,16 +926,32 @@ const crtajProbu=(el,tbId,pravilo,unazadNaziv)=>{
   const pz=zbir(L.filter(r=>String(r.poz||'').startsWith('C'))), nm=zbir(L.filter(r=>Number(r.minuti_sd||0)>=6));
   k('Centri',pz.n?pz.w+' od '+pz.n+' · '+f2(pz.p)+' j.':'—',pz.p>0?'el-good':pz.p<0?'el-bad':'');
   k('Nestalni minuti',nm.n?nm.w+' od '+nm.n+' · '+f2(nm.p)+' j.':'—',nm.p>0?'el-good':nm.p<0?'el-bad':'');
-  const dani=[...new Set(L.map(r=>r.kolo+'|'+stvDan(r.termin)))].sort((a,b)=>b.localeCompare(a,'sr',{numeric:true}));
-  for(const dn of dani){
-    const [kolo,dan]=dn.split('|'), rr=L.filter(r=>r.kolo+'|'+stvDan(r.termin)===dn).sort((a,b)=>String(a.termin).localeCompare(b.termin)||b.razlika-a.razlika), z=zbir(rr);
-    const zag=document.createElement('tr');zag.className='el-daysep';const c=document.createElement('td');c.colSpan=9;
-    c.textContent=kolo+'. kolo · '+dan+(rr.some(r=>r.unazad)?' (unazad)':'')+' · '+rr.length+' opklada'+(z.n?' · prošlo '+z.w+' od '+z.n+' · '+f2(z.p)+' j.':'');zag.appendChild(c);tb.appendChild(zag);
-    for(const r of rr){const tr=document.createElement('tr');
-      td(tr,r.igrac+(r.rizik?' ⚠':''));if(r.rizik)tr.lastChild.title=r.rizik;td(tr,r.utakmica,'sub');td(tr,r.opklada);td(tr,Number(r.kvota).toFixed(2),'num');
-      td(tr,pct(r.model),'num');td(tr,pct(r.trziste),'num');td(tr,raz(r.razlika),'num');
-      td(tr,r.ishod==='nije igrao'?'nije igrao':r.rezultat==null?'—':String(r.rezultat),'num');
-      const p=prof(r);td(tr,p===null?'—':f2(p),p===null?'num':p>0?'num el-good':'num el-bad');tb.appendChild(tr);}
+  // 13.11.2026: kola i dani su sklopljeni; dan koji još ima opklada na čekanju je na vrhu i otvoren, redovi po šansi modela
+  const datum=dn=>{const m=String(dn).match(/(\d+)\.(\d+)\./);return m?(+m[2])*100+(+m[1]):0;};
+  const dani=[...new Set(L.map(r=>r.kolo+'|'+stvDan(r.termin)))];
+  const ceka=dn=>L.some(r=>r.kolo+'|'+stvDan(r.termin)===dn&&!r.ishod);
+  dani.sort((a,b)=>(ceka(b)-ceka(a))||(+b.split('|')[0]-+a.split('|')[0])||(datum(b.split('|')[1])-datum(a.split('|')[1])));
+  const kola=[...new Set(dani.map(dn=>dn.split('|')[0]))];
+  const zaglavlje=(tekst,kl,otv,klik)=>{const zag=document.createElement('tr');zag.className='el-daysep '+kl;zag.style.cursor='pointer';const c=document.createElement('td');c.colSpan=9;
+    c.textContent=(otv?'▾ ':'▸ ')+tekst;zag.appendChild(c);zag.setAttribute('role','button');zag.tabIndex=0;zag.setAttribute('aria-expanded',otv);
+    zag.onclick=klik;zag.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();klik();}};tb.appendChild(zag);};
+  const ponovo=()=>crtajProbu(el,tbId,pravilo,unazadNaziv);
+  for(const kolo of kola){
+    const kd=dani.filter(dn=>dn.split('|')[0]===kolo), kr=L.filter(r=>String(r.kolo)===kolo), kz=zbir(kr);
+    const kk=pravilo+'|k'+kolo, kOtv=PROBA_OTV.has(kk)?PROBA_OTV.get(kk):kd.some(ceka);
+    zaglavlje(kolo+'. kolo · '+kr.length+' opklada'+(kz.n?' · prošlo '+kz.w+' od '+kz.n+' · '+f2(kz.p)+' j.':'')+(kz.ceka?' · čeka '+kz.ceka:''),'el-kolo',kOtv,()=>{PROBA_OTV.set(kk,!kOtv);ponovo();});
+    if(!kOtv)continue;
+    for(const dn of kd){
+      const dan=dn.split('|')[1], rr=L.filter(r=>r.kolo+'|'+stvDan(r.termin)===dn).sort((a,b)=>(b.model-a.model)||(b.razlika-a.razlika)), z=zbir(rr);
+      const dk=pravilo+'|'+dn, dOtv=PROBA_OTV.has(dk)?PROBA_OTV.get(dk):ceka(dn);
+      zaglavlje(dan+(rr.some(r=>r.unazad)?' (unazad)':'')+(ceka(dn)?' · danas':'')+' · '+rr.length+' opklada'+(z.n?' · prošlo '+z.w+' od '+z.n+' · '+f2(z.p)+' j.':''),'',dOtv,()=>{PROBA_OTV.set(dk,!dOtv);ponovo();});
+      if(!dOtv)continue;
+      for(const r of rr){const tr=document.createElement('tr');
+        td(tr,r.igrac+(r.rizik?' ⚠':''));if(r.rizik)tr.lastChild.title=r.rizik;td(tr,r.utakmica,'sub');td(tr,r.opklada);td(tr,Number(r.kvota).toFixed(2),'num');
+        td(tr,pct(r.model),'num');td(tr,pct(r.trziste),'num');td(tr,raz(r.razlika),'num');
+        td(tr,r.ishod==='nije igrao'?'nije igrao':r.rezultat==null?'—':String(r.rezultat),'num');
+        const p=prof(r);td(tr,p===null?'—':f2(p),p===null?'num':p>0?'num el-good':'num el-bad');tb.appendChild(tr);}
+    }
   }
   if(!L.length){const tr=document.createElement('tr');const c=document.createElement('td');c.colSpan=9;c.className='sub';c.textContent='Probna lista je još prazna.';tr.appendChild(c);tb.appendChild(tr);}
 };
