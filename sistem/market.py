@@ -1,4 +1,4 @@
-# Tržišna procena iz glavnih linija tri kladionice (Maxbet, Soccer, Merkur).
+# Tržišna procena iz glavnih linija kladionica (Maxbet, Soccer, Merkur, Meridian, od 18.11.2026. i Balkanbet).
 # Za svaku kladionicu: verovatnoća bez marže na njenoj glavnoj liniji -> implicirana medijana
 # (normalna raspodela sa sd iz modela). Prosek medijana = konsenzus tržišta.
 # Upisuje u kvote_pet.json i kvote.json polje trz_vise (verovatnoća da linija prođe na više po tržištu).
@@ -20,6 +20,7 @@ def surname_full(name):
     return norm(t[-1]) if t else ''
 def surname_merkur(name):
     t = name.split()
+    if len(t) > 1 and not t[-1].endswith('.'): return surname_full(name)   # od 17.11.2026. Merkur piše „Ime Prezime“, ranije „Prezime I.“
     return norm(' '.join(t[:-1]) if len(t) > 1 else t[0])
 
 CAT = {'P': 'Poeni', 'S': 'Skokovi', 'A': 'Asistencije'}
@@ -48,6 +49,15 @@ def index(snap, kind):
     out = {}
     for k, d in snap['out'].items():
         n, t = k.split('|')
+        if kind == 'balkanbet':   # od 18.11.2026: "L.Walker IV|Besiktas", "T.Luwawu Cabarrot|Real Madrid": inicijal + puno prezime
+            ini, tacka, pr = n.partition('.')
+            if not tacka: ini, pr = '', n
+            pr = norm(' '.join(w for w in pr.split() if w.lower().strip('.') not in SUF))
+            sa = lambda i: norm(' '.join(w for w in i.split() if w.lower().strip('.') not in SUF))
+            T = tim(t)
+            kand = {i for i, r in ig.items() if r['tim'] == T and pr and sa(i).endswith(pr) and sa(i).startswith(norm(ini)[:1])}
+            if T and len(kand) == 1: out[(surname_full(kand.pop()), T)] = d
+            continue
         if kind == 'meridian':
             sn = surname_md(n)
             g = norm(t)
@@ -63,9 +73,10 @@ ig = {r['igrac']: r for r in citaj('igraci2.json') if r['termin'].startswith(DAN
 HIST = {'maxbet': [(s['t'], index(s, 'maxbet')) for s in snaps('mb')],
         'soccer': [(s['t'], index(s, 'soccer')) for s in snaps('sb')],
         'merkur': [(s['t'], index(s, 'merkur')) for s in snaps('mk')],
-        'meridian': [(s['t'], index(s, 'meridian')) for s in snaps('md')]}
+        'meridian': [(s['t'], index(s, 'meridian')) for s in snaps('md')],
+        'balkanbet': [(s['t'], index(s, 'balkanbet')) for s in snaps('bb')]}
 # težine u konsenzusu: Soccer deli izvor kvota sa Maxbetom pa vredi pola; ostali su nezavisni (uče se iz rezultata)
-TEZ_K = {'soccer': 0.5, 'merkur': 1.0, 'meridian': 1.0}
+TEZ_K = {'soccer': 0.5, 'merkur': 1.0, 'meridian': 1.0, 'balkanbet': 1.0}
 if os.path.exists('tezine_kladionica.json'): TEZ_K.update(citaj('tezine_kladionica.json'))
 # kladionica čiji je poslednji snimak stariji 6 h od najnovijeg ne ulazi u konsenzus (zastarele kvote bi dale lažan ⚡)
 _t = lambda s: _dt.fromisoformat(s.replace('Z', '+00:00')).timestamp()

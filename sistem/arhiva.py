@@ -30,7 +30,7 @@ def zabelezi(t_snap=None):
     # sve kladionice, poslednji snimak, po (prezime, tim); plus imena koja model ne prepoznaje
     knj = {b: h[-1][1] for b, h in M.HIST.items() if h}
     sirovo = {}
-    for pref, b in (('mb', 'maxbet'), ('sb', 'soccer'), ('mk', 'merkur'), ('md', 'meridian')):
+    for pref, b in (('mb', 'maxbet'), ('sb', 'soccer'), ('mk', 'merkur'), ('md', 'meridian'), ('bb', 'balkanbet')):
         s = M.snaps(pref)
         if s: sirovo[b] = s[-1]['out']
     out = []; videni = set()

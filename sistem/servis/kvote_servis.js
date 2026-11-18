@@ -14,6 +14,7 @@ const KNJIGE = [   // Maxbet prvi: on daje raspored utakmica za izbor učestalos
   ['sb', 'soccer.js', 'https://www.soccerbet.rs/sr/'],
   ['mk', 'merkur.js', 'https://www.merkurxtip.rs/sr/'],
   ['md', 'meridian.js', 'https://meridianbet.rs/sr/'],
+  ['bb', 'balkanbet.js', 'https://www.balkanbet.rs/'],   // od 18.11.2026
 ];
 const MIN = 60000, TAKT = 10;              // Task Scheduler okida na TAKT minuta
 const ROK_SKRIPTE = 3 * MIN, ROK_BRAVE = 25 * MIN;
