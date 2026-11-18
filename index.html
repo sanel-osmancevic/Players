@@ -269,6 +269,7 @@ body{padding:16px;max-width:1100px;margin:0 auto}button,select{font:inherit;colo
         <button type="button" data-p="C" aria-pressed="false">C · bez modela</button>
         <button type="button" data-p="D" aria-pressed="false">D · stari model</button>
         <button type="button" data-p="E" aria-pressed="false">E · najsigurnije</button>
+        <button type="button" data-p="F" aria-pressed="false">F · minutaža</button>
       </div>
       <label for="proba-kolo">Kolo</label>
       <select id="proba-kolo" aria-label="Kolo probne liste"><option value="">Sva kola</option></select>
@@ -315,6 +316,15 @@ body{padding:16px;max-width:1100px;margin:0 auto}button,select{font:inherit;colo
     <div class="el-scroll"><table class="el-table">
       <thead><tr><th>Igrač</th><th>Utakmica</th><th>Opklada</th><th class="num">Kvota</th><th class="num">Model</th><th class="num">Tržište</th><th class="num">Razlika</th><th class="num">Rezultat</th><th class="num">Profit</th></tr></thead>
       <tbody id="proba5-redovi"></tbody>
+    </table></div>
+    </div>
+    <div class="proba-lista" data-p="F" hidden>
+    <h3>Probna lista F: minutaža</h3>
+    <p class="el-note">Od 18.11.2026. Pravilo: samo poeni „manje“ na glavnoj Maxbet liniji (kvota za „manje“ najbliža 1.85, između 1.40 i 2.30), za igrače kojima model projektuje bar 22 minuta. Ne koristi model ni tržište, pa pokazuje da li model uopšte dodaje vrednost. Na kolima 9–12 unazad: 135 od 213 (63%), +44 j. (oko +21% po opkladi), u plusu u svakom kolu; ispod 22 minuta „manje“ na poenima je gubilo. Granica 22 izabrana je gledajući ta kola, pa je unazad samo prikaz; prava provera počinje od 18.11. Bez uloga, ne utiče na preporuke.</p>
+    <div class="el-stv-kocke" data-draw="proba6" data-source="proba"></div>
+    <div class="el-scroll"><table class="el-table">
+      <thead><tr><th>Igrač</th><th>Utakmica</th><th>Opklada</th><th class="num">Kvota</th><th class="num">Model</th><th class="num">Tržište</th><th class="num">Razlika</th><th class="num">Rezultat</th><th class="num">Profit</th></tr></thead>
+      <tbody id="proba6-redovi"></tbody>
     </table></div>
     </div>
   </section>
@@ -948,7 +958,7 @@ const crtajProbu=(el,tbId,pravilo,unazadNaziv)=>{
       if(!dOtv)continue;
       for(const r of rr){const tr=document.createElement('tr');
         td(tr,r.igrac+(r.rizik?' ⚠':''));if(r.rizik)tr.lastChild.title=r.rizik;td(tr,r.utakmica,'sub');td(tr,r.opklada);td(tr,Number(r.kvota).toFixed(2),'num');
-        td(tr,pct(r.model),'num');td(tr,pct(r.trziste),'num');td(tr,raz(r.razlika),'num');
+        td(tr,pct(r.model),'num');td(tr,r.trziste==null?'—':pct(r.trziste),'num');td(tr,r.razlika==null?'—':raz(r.razlika),'num');
         td(tr,r.ishod==='nije igrao'?'nije igrao':r.rezultat==null?'—':String(r.rezultat),'num');
         const p=prof(r);td(tr,p===null?'—':f2(p),p===null?'num':p>0?'num el-good':'num el-bad');tb.appendChild(tr);}
     }
@@ -960,11 +970,12 @@ dash.draw('proba2',el=>crtajProbu(el,'proba2-redovi','B','Unazad 10. kolo'));
 dash.draw('proba3',el=>crtajProbu(el,'proba3-redovi','C','Unazad 10. kolo'));
 dash.draw('proba4',el=>crtajProbu(el,'proba4-redovi','D','Unazad sre i čet'));
 dash.draw('proba5',el=>crtajProbu(el,'proba5-redovi','E','Unazad 9.–11. kolo'));
+dash.draw('proba6',el=>crtajProbu(el,'proba6-redovi','F','Unazad 9.–12. kolo'));
 // izbor probne liste (A/B/C) i kola; pamti se u pregledaču
 (()=>{const seg=document.getElementById('proba-seg'), sk=document.getElementById('proba-kolo'); if(!seg||!sk)return;
   const izaberi=p=>{seg.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.p===p));document.querySelectorAll('.proba-lista').forEach(x=>x.hidden=x.dataset.p!==p);try{localStorage.setItem('el-proba',p);}catch(e){}};
   seg.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>izaberi(b.dataset.p)));
-  let p=null;try{p=localStorage.getItem('el-proba');}catch(e){} izaberi(['A','B','C','D','E'].includes(p)?p:'A');
+  let p=null;try{p=localStorage.getItem('el-proba');}catch(e){} izaberi(['A','B','C','D','E','F'].includes(p)?p:'A');
   sk.addEventListener('change',()=>['proba','proba2','proba3','proba4'].forEach(n=>dash.draw(n)));})();
 // poruke "nema podataka": prikazuje i sakriva onData (pre crteža), i prekidači posle promene
 const msgSet=(id,show)=>document.querySelectorAll('#'+id).forEach(e=>e.hidden=!show);
