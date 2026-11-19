@@ -43,6 +43,8 @@ KV_B, KV_B_NISKA = 1.95, 1.60   # B: kvota za „manje“ bar 1.95 (snižene lin
 glavna = lambda kvv, kvm: 1.65 <= kvv <= 2.2 and 1.65 <= kvm <= 2.2
 KV_E, MODEL_E = 1.60, 0.60
 KV_F, MIN_F = (1.40, 2.30), 22
+# 19.11.2026: lista D ugašena (stari model; „više“ na kolima 10-12 41%, −22.5%), stari redovi ostaju za pregled; ostale se prate
+AKTIVNE = 'ABCEF'
 def prolazi_F(smer, kv, kat, minuti):
     return smer == 'manje' and kat == 'Poeni' and KV_F[0] <= kv <= KV_F[1] and (minuti or 0) >= MIN_F
 def prolazi_E(smer, m, kv, kat, poz):
@@ -86,10 +88,10 @@ def azuriraj(sada=None):
     for h, a, t, u in kolo['games']: start[t] = datetime.datetime.fromisoformat(u.replace('Z', '+00:00'))
     pocela = lambda r: (s := start.get(r['termin'])) is not None and s <= sada
     kv, ig = citaj('kvote_pet.json'), citaj('igraci2.json')
-    sad = {(p, c['igrac'], c['kategorija'], c['linija'], c['smer']): c for p in 'ABCDEF' for c in kandidati(kv, ig, p)}
+    sad = {(p, c['igrac'], c['kategorija'], c['linija'], c['smer']): c for p in AKTIVNE for c in kandidati(kv, ig, p)}
     vreme = sada.strftime('%d.%m. %H:%M'); po_kljucu = {(r.get('pravilo', 'A'), r['kolo'], r['igrac'], r['kategorija'], r['linija'], r['smer']): r for r in lista}
     for r in lista:   # postojeći, nepočeti: osveži ili označi da su ispali
-        if r.get('unazad') or pocela(r) or r['kolo'] != kolo['kolo']: continue
+        if r.get('unazad') or pocela(r) or r['kolo'] != kolo['kolo'] or r.get('pravilo', 'A') not in AKTIVNE: continue
         c = sad.get((r.get('pravilo', 'A'), r['igrac'], r['kategorija'], r['linija'], r['smer']))
         if c: r.update(kvota=c['kvota'], model=c['model'], trziste=c['trziste'], razlika=c['razlika'], rizik=c['rizik'], poz=c['poz'], minuti_sd=c['minuti_sd'], minuti=c['minuti'], ispala=False, poslednje=vreme)
         else: r['ispala'] = True

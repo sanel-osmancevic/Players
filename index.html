@@ -267,7 +267,7 @@ body{padding:16px;max-width:1100px;margin:0 auto}button,select{font:inherit;colo
         <button type="button" data-p="A" aria-pressed="true">A · novi model</button>
         <button type="button" data-p="B" aria-pressed="false">B · manje uz kvotu</button>
         <button type="button" data-p="C" aria-pressed="false">C · bez modela</button>
-        <button type="button" data-p="D" aria-pressed="false">D · stari model</button>
+        <button type="button" data-p="D" aria-pressed="false">D · stari model (ugašena)</button>
         <button type="button" data-p="E" aria-pressed="false">E · najsigurnije</button>
         <button type="button" data-p="F" aria-pressed="false">F · minutaža</button>
       </div>
@@ -302,7 +302,7 @@ body{padding:16px;max-width:1100px;margin:0 auto}button,select{font:inherit;colo
     </div>
       <div class="proba-lista" data-p="D" hidden>
     <h3>Probna lista D: stari model</h3>
-    <p class="el-note">Isto pravilo kao A (model 3–15 iznad tržišta), ali na modelu kakav je bio do 07.11.2026: medijana bez povlačenja ka tržištu. Služi za poređenje sa A: pokazuje da li je povlačenje popravilo izbor. Petak 06.11. je stvarno praćen uživo, četvrtak 05.11. je rekonstrukcija iz stanja pri zaključavanju, a sreda 04.11. iz linija pred utakmicu. Bez uloga, ne utiče na preporuke.</p>
+    <p class="el-note"><b>Ugašena 19.11.2026:</b> „više“ na ovoj listi je u kolima 10–12 prolazilo 41% (−22.5% po opkladi), a „manje“ je bilo oko nule. Novi redovi se više ne dodaju; stari ostaju za pregled. Isto pravilo kao A (model 3–15 iznad tržišta), ali na modelu kakav je bio do 07.11.2026: medijana bez povlačenja ka tržištu. Služi za poređenje sa A: pokazuje da li je povlačenje popravilo izbor. Petak 06.11. je stvarno praćen uživo, četvrtak 05.11. je rekonstrukcija iz stanja pri zaključavanju, a sreda 04.11. iz linija pred utakmicu. Bez uloga, ne utiče na preporuke.</p>
     <div class="el-stv-kocke" data-draw="proba4" data-source="proba"></div>
     <div class="el-scroll"><table class="el-table">
       <thead><tr><th>Igrač</th><th>Utakmica</th><th>Opklada</th><th class="num">Kvota</th><th class="num">Model</th><th class="num">Tržište</th><th class="num">Razlika</th><th class="num">Rezultat</th><th class="num">Profit</th></tr></thead>
@@ -936,6 +936,10 @@ const crtajProbu=(el,tbId,pravilo,unazadNaziv)=>{
   const pz=zbir(L.filter(r=>String(r.poz||'').startsWith('C'))), nm=zbir(L.filter(r=>Number(r.minuti_sd||0)>=6));
   k('Centri',pz.n?pz.w+' od '+pz.n+' · '+f2(pz.p)+' j.':'—',pz.p>0?'el-good':pz.p<0?'el-bad':'');
   k('Nestalni minuti',nm.n?nm.w+' od '+nm.n+' · '+f2(nm.p)+' j.':'—',nm.p>0?'el-good':nm.p<0?'el-bad':'');
+  // 19.11.2026: na kolima 9-12 „manje“ za igrače sa 22+ projektovanih minuta bilo je u plusu, ispod 22 u minusu (A +12% naspram −11%)
+  const m22=zbir(L.filter(r=>r.minuti!=null&&Number(r.minuti)>=22)), m21=zbir(L.filter(r=>r.minuti!=null&&Number(r.minuti)<22));
+  k('22+ min',m22.n?m22.w+' od '+m22.n+' · '+f2(m22.p)+' j.':'—',m22.p>0?'el-good':m22.p<0?'el-bad':'');
+  k('Ispod 22 min',m21.n?m21.w+' od '+m21.n+' · '+f2(m21.p)+' j.':'—',m21.p>0?'el-good':m21.p<0?'el-bad':'');
   // 13.11.2026: kola i dani su sklopljeni; dan koji još ima opklada na čekanju je na vrhu i otvoren, redovi po šansi modela
   const datum=dn=>{const m=String(dn).match(/(\d+)\.(\d+)\./);return m?(+m[2])*100+(+m[1]):0;};
   const dani=[...new Set(L.map(r=>r.kolo+'|'+stvDan(r.termin)))];
