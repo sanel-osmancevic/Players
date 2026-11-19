@@ -158,7 +158,9 @@ provera.obradi('tržišta', *provera.kvote(citaj('kvote_pet.json'), citaj('igrac
 print(run('python3', 'kalibracija.py').strip()); print(run('python3', 'tezine_primeni.py', 'kvote').strip()); print(run('python3', 'prosla_kvote.py').strip())
 run('python3', 'evidencija.py', 'kvote_pet.json', DAN)
 run('node', 't28.js')
-print(run('python3', 'proba.py').strip())   # probna lista u senci, ne utiče na preporuke
+print(run('python3', 'proba.py').strip())   # probne liste
+# od 19.11.2026. preporuke su presek probnih lista F i E (preporuke_ef.py); izlaz t28.js se zamenjuje
+import preporuke_ef; print('Preporuke E+F:', len(preporuke_ef.napravi(DAN)))
 
 # zaključaj nove preporuke samo za utakmice koje još nisu počele
 picks = [dict(p, vrsta='sigurnije') for p in citaj('picks_pet3.json')] + citaj('glavne_pet.json')
@@ -198,7 +200,7 @@ def kal(p, smer='više'):   # usklađena šansa (kalibracija.py, uči se za „v
     return round(1 / (1 + math.exp(-(KAL['a'] * math.log(p / (1 - p)) + KAL['b']))), 3)
 def red(p):
     d = {k: p.get(k) for k in KS}; d.update(zapamceno=ts, rezultat=None, ishod=None)
-    d['sansa_sirova'] = p.get('sansa'); d['sansa'] = kal(p['sansa'], p.get('smer'))
+    d['sansa_sirova'] = p.get('sansa'); d['sansa'] = p['sansa'] if p.get('grupa') == preporuke_ef.GRUPA else kal(p['sansa'], p.get('smer'))
     d['vrednost_sirova'] = p.get('vrednost'); d['vrednost'] = round(d['sansa'] * float(p['kvota']) - 1, 3)   # ista šansa koja se prikazuje
     d['kvota_prva'], d['zapamceno_prvo'] = prvi.get((p['kljuc'], p['opklada']), (p['kvota'], ts))
     d['brzo'], d['zaostatak'] = brzo(p)
@@ -252,6 +254,7 @@ if gotove:
 else: K_KAL = 1.0
 IG_TIM = {r['igrac']: r['tim'] for r in citaj('igraci2.json')}
 def ulog(d):
+    if d.get('grupa') == preporuke_ef.GRUPA: return preporuke_ef.ULOG, None, None   # od 19.11.2026: ravan ulog za preporuke iz probnih lista
     kv, p = float(d['kvota']), 0.5 + K_KAL * (float(d['sansa']) - 0.5)
     pr = p * kv - 1
     if pr <= 0: return 0.0, round(p, 3), round(pr, 3)
