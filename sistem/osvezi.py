@@ -183,15 +183,17 @@ prvi = {(r['kljuc'], r['opklada']): (r.get('kvota_prva') or r['kvota'], r.get('z
 ts = now.strftime('%d.%m. %H:%M')
 PRED_MEC = 60      # minuta pre početka: opklade za tu utakmicu se konačno zaključavaju (poslednji talas)
 ZAKLJUCAJ_SVE = '--zakljucaj' in sys.argv
-# Maxbet zaostaje za Soccerom i Merkurom -> "igraj odmah" (⚡): medijana Soccer/Merkur je za 0.5+ poena
-# (skokovi/asistencije 0.25+) na strani opklade u odnosu na Maxbet (provera petak: 8/11 u 13h, 7/7 u 15h)
+# ⚡ od 24.11.2026. obrnut smer: Maxbet je već pomerio liniju na stranu opklade za 0.3+ poena (skokovi/asistencije 0.15+) u odnosu
+# na ostale kladionice. Do tada je ⚡ značio obrnuto (ostale kladionice na strani opklade, Maxbet „kasni“), ali na kolima 9-13
+# „manje“ na glavnoj liniji kad je Maxbet bio iznad tržišta prošlo je 53% (−3%), a kad je bio ispod 66% (+29%, svih 5 kola u plusu):
+# Maxbet je brži od ostalih (bt_prolaz.py). Polje zaostatak sad pokazuje koliko je Maxbet ispred ostalih na strani opklade.
 ODST = {(x['igrac'], x['kategorija'], float(x['linija'])): x.get('mb_odstupanje') for x in citaj('kvote_pet.json')}
 def brzo(p):
     o = ODST.get((p['igrac'], p['kategorija'], float(p['linija'])))
     if o is None: return None, None
-    lag = (-o if p['smer'] == 'više' else o)
+    ispred = (o if p['smer'] == 'više' else -o)   # o = Maxbet medijana − ostale; „manje“: Maxbet niže od ostalih = Maxbet ispred
     jed = 1 if p['kategorija'] == 'Poeni' else 0.5
-    return (lag / jed >= 0.5), f"Soccer/Merkur {lag:+.1f} u odnosu na Maxbet"
+    return (ispred / jed >= 0.3), f"Maxbet {ispred:+.1f} ispred ostalih kladionica"
 KAL = citaj('kalibracija.json') if os.path.exists('kalibracija.json') else {'a': 1, 'b': 0}
 def kal(p, smer='više'):   # usklađena šansa (kalibracija.py, uči se za „više“); prikaz, tiketi i ulozi koriste nju, izbor opklada ostaje isti
     import math

@@ -270,6 +270,7 @@ body{padding:16px;max-width:1100px;margin:0 auto}button,select{font:inherit;colo
         <button type="button" data-p="C" aria-pressed="false">C · bez modela</button>
         <button type="button" data-p="E" aria-pressed="false">E · najsigurnije</button>
         <button type="button" data-p="F" aria-pressed="false">F · minutaža</button>
+        <button type="button" data-p="G" aria-pressed="false">G · F očišćen</button>
       </div>
       <label for="proba-kolo">Kolo</label>
       <select id="proba-kolo" aria-label="Kolo probne liste"><option value="">Sva kola</option></select>
@@ -316,6 +317,15 @@ body{padding:16px;max-width:1100px;margin:0 auto}button,select{font:inherit;colo
     <div class="el-scroll"><table class="el-table">
       <thead><tr><th>Igrač</th><th>Utakmica</th><th>Opklada</th><th class="num">Kvota</th><th class="num">Model</th><th class="num">Tržište</th><th class="num">Razlika</th><th class="num">Rezultat</th><th class="num">Profit</th></tr></thead>
       <tbody id="proba6-redovi"></tbody>
+    </table></div>
+    </div>
+    <div class="proba-lista" data-p="G" hidden>
+    <h3>Probna lista G: F očišćen</h3>
+    <p class="el-note">Od 24.11.2026. Pravilo: opklada liste F (poeni „manje“ na glavnoj Maxbet liniji, igrač sa 22+ projektovanih minuta), uz tri filtera. (1) Bez opklada gde je Maxbet linija bar 0.3 poena iznad medijane ostalih kladionica: na kolima 9–13 takve su prolazile 53% (−3%), a kad je Maxbet bio ispod tržišta 66% (+29%), pa je Maxbet brži od ostalih. (2) Bekovi samo kad model daje 60%+ za „manje“ (bekovi 55%, krila i centri 65%). (3) Bez igrača kojima raste uloga zbog izostanka saigrača (kad igrač odigra 5+ minuta više od projekcije, „manje“ prolazi 30%). Na kolima 9–13 unazad (bez filtera uloge): 81 od 126 (64%), +30.5 j. (oko +24% po opkladi), u plusu u svakom kolu. Pravilo je izvedeno iz tih kola, pa je unazad samo prikaz; prava provera počinje od 24.11. Bez uloga, ne utiče na preporuke.</p>
+    <div class="el-stv-kocke" data-draw="proba7" data-source="proba"></div>
+    <div class="el-scroll"><table class="el-table">
+      <thead><tr><th>Igrač</th><th>Utakmica</th><th>Opklada</th><th class="num">Kvota</th><th class="num">Model</th><th class="num">Tržište</th><th class="num">Razlika</th><th class="num">Rezultat</th><th class="num">Profit</th></tr></thead>
+      <tbody id="proba7-redovi"></tbody>
     </table></div>
     </div>
   </section>
@@ -668,7 +678,7 @@ const tdGame=(tr,x)=>{const e=document.createElement('td');e.className='el-hide 
     if(x.tim&&t===x.tim){const b=document.createElement('b');b.className='el-tim';b.textContent=t;e.appendChild(b);}else e.appendChild(document.createTextNode(t));});
   tr.appendChild(e);};
 const tdUlog=(tr,x)=>{const e=document.createElement('td');e.className='num'+(x.ulog?'':' sub');e.textContent=x.ulog==null?'—':(x.ulog?d3.format('.2f')(x.ulog)+' j.':'0');e.title=x.ulog==null?'':(x.ulog?'Predlog uloga u jedinicama (1 j. = 1% kase), četvrtina Kelly kriterijuma na korigovanu šansu '+pct(x.sansa_kor||x.sansa)+(x.povezano?'; smanjeno jer je povezano sa '+x.povezano:''):'Posle korekcije šanse nema prednosti pri ovoj kvoti: samo za praćenje');tr.appendChild(e);};
-const tdOp=(tr,x)=>{const e=document.createElement('td');e.textContent=x.opklada;if(x.brzo){const s=document.createElement('span');s.className='el-brzo';s.textContent=' ⚡';s.title='Igraj odmah: Soccer i Merkur su već pomerili kvotu na ovu stranu, Maxbet još nije'+(x.zaostatak!=null?' ('+x.zaostatak+')':'');e.appendChild(s);}tr.appendChild(e);};
+const tdOp=(tr,x)=>{const e=document.createElement('td');e.textContent=x.opklada;if(x.brzo){const s=document.createElement('span');s.className='el-brzo';s.textContent=' ⚡';s.title='Maxbet je pre ostalih kladionica pomerio liniju na ovu stranu (od 24.11. obrnut smer; kola 9-13: 66% naspram 53%)'+(x.zaostatak!=null?' ('+x.zaostatak+')':'');e.appendChild(s);}tr.appendChild(e);};
 const done=x=>x.ishod==='prošlo'||x.ishod==='palo'||x.ishod==='nije igrao';
 // Kartica igrača: klik na red u preporukama otvara objašnjenje (projekcija, minuti, uloga, šansa po delovima, tržište, sastav)
 window.elState.kopen=window.elState.kopen||{};
@@ -690,7 +700,7 @@ const kartica=(tb,tr,x,n)=>{
   }
   const parts=[]; if(x.model!=null)parts.push('model '+pct(x.model)); parts.push('sezona '+x.istorija+(x.forma5?', posl. 5: '+x.forma5:'')); if(x.trziste!=null)parts.push('tržište '+pct(x.trziste));
   L.push(['Šansa',parts.join(' · ')+' → '+(x.sansa_sirova!=null?'usklađena '+pct(x.sansa)+' (sirova '+pct(x.sansa_sirova)+')':pct(x.sansa))+(x.ulog!=null?' · ulog '+(x.ulog?d3.format('.2f')(x.ulog)+' j.':'0 (bez prednosti)'):'')]);
-  if(o&&o.trz_medijana!=null) L.push(['Tržište',`medijana ${f1(o.trz_medijana)} (${o.trz_knjige||'?'} kladionice${o.trz_raskorak!=null?', raskorak '+f1(o.trz_raskorak):''})`+(o.mb_odstupanje!=null?` · Maxbet ${sg(o.mb_odstupanje)} prema tržištu`:'')+(o.trz_kretanje?` · pomeranje ${sg(o.trz_kretanje)}`:'')+(x.brzo?' · ⚡ igraj odmah':'')]);
+  if(o&&o.trz_medijana!=null) L.push(['Tržište',`medijana ${f1(o.trz_medijana)} (${o.trz_knjige||'?'} kladionice${o.trz_raskorak!=null?', raskorak '+f1(o.trz_raskorak):''})`+(o.mb_odstupanje!=null?` · Maxbet ${sg(o.mb_odstupanje)} prema tržištu`:'')+(o.trz_kretanje?` · pomeranje ${sg(o.trz_kretanje)}`:'')+(x.brzo?' · ⚡ Maxbet ispred tržišta':'')]);
   if(p){
     const s=[p.sastav_zbog,p.povratak,p.rizik_uloge,p.veca_uloga].filter(Boolean); if(s.length)L.push(['Sastav',s.join(' · ')]);
     if(p.uloga_zbog)L.push(['Šutevi i uloga',p.uloga_zbog]);
@@ -965,12 +975,13 @@ dash.draw('proba2',el=>crtajProbu(el,'proba2-redovi','B','Unazad 10. kolo'));
 dash.draw('proba3',el=>crtajProbu(el,'proba3-redovi','C','Unazad 10. kolo'));
 dash.draw('proba5',el=>crtajProbu(el,'proba5-redovi','E','Unazad 9.–11. kolo'));
 dash.draw('proba6',el=>crtajProbu(el,'proba6-redovi','F','Unazad 9.–12. kolo'));
+dash.draw('proba7',el=>crtajProbu(el,'proba7-redovi','G','Unazad 9.–13. kolo'));
 // izbor probne liste (A/B/C) i kola; pamti se u pregledaču
 (()=>{const seg=document.getElementById('proba-seg'), sk=document.getElementById('proba-kolo'); if(!seg||!sk)return;
   const izaberi=p=>{seg.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.p===p));document.querySelectorAll('.proba-lista').forEach(x=>x.hidden=x.dataset.p!==p);try{localStorage.setItem('el-proba',p);}catch(e){}};
   seg.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>izaberi(b.dataset.p)));
-  let p=null;try{p=localStorage.getItem('el-proba');}catch(e){} izaberi(['A','B','C','E','F'].includes(p)?p:'A');
-  sk.addEventListener('change',()=>['proba','proba2','proba3','proba5','proba6'].forEach(n=>dash.draw(n)));})();
+  let p=null;try{p=localStorage.getItem('el-proba');}catch(e){} izaberi(['A','B','C','E','F','G'].includes(p)?p:'A');
+  sk.addEventListener('change',()=>['proba','proba2','proba3','proba5','proba6','proba7'].forEach(n=>dash.draw(n)));})();
 // poruke "nema podataka": prikazuje i sakriva onData (pre crteža), i prekidači posle promene
 const msgSet=(id,show)=>document.querySelectorAll('#'+id).forEach(e=>e.hidden=!show);
 const updateMsgs=()=>{

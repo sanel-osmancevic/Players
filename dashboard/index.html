@@ -560,7 +560,7 @@ const tdGame=(tr,x)=>{const e=document.createElement('td');e.className='el-hide 
     if(x.tim&&t===x.tim){const b=document.createElement('b');b.className='el-tim';b.textContent=t;e.appendChild(b);}else e.appendChild(document.createTextNode(t));});
   tr.appendChild(e);};
 const tdUlog=(tr,x)=>{const e=document.createElement('td');e.className='num'+(x.ulog?'':' sub');e.textContent=x.ulog==null?'—':(x.ulog?d3.format('.2f')(x.ulog)+' j.':'0');e.title=x.ulog==null?'':(x.ulog?'Predlog uloga u jedinicama (1 j. = 1% kase), četvrtina Kelly kriterijuma na korigovanu šansu '+pct(x.sansa_kor||x.sansa)+(x.povezano?'; smanjeno jer je povezano sa '+x.povezano:''):'Posle korekcije šanse nema prednosti pri ovoj kvoti: samo za praćenje');tr.appendChild(e);};
-const tdOp=(tr,x)=>{const e=document.createElement('td');e.textContent=x.opklada;if(x.brzo){const s=document.createElement('span');s.className='el-brzo';s.textContent=' ⚡';s.title='Igraj odmah: Soccer i Merkur su već pomerili kvotu na ovu stranu, Maxbet još nije'+(x.zaostatak!=null?' ('+x.zaostatak+')':'');e.appendChild(s);}tr.appendChild(e);};
+const tdOp=(tr,x)=>{const e=document.createElement('td');e.textContent=x.opklada;if(x.brzo){const s=document.createElement('span');s.className='el-brzo';s.textContent=' ⚡';s.title='Maxbet je pre ostalih kladionica pomerio liniju na ovu stranu (od 24.11. obrnut smer; kola 9-13: 66% naspram 53%)'+(x.zaostatak!=null?' ('+x.zaostatak+')':'');e.appendChild(s);}tr.appendChild(e);};
 const done=x=>x.ishod==='prošlo'||x.ishod==='palo'||x.ishod==='nije igrao';
 // Kartica igrača: klik na red u preporukama otvara objašnjenje (projekcija, minuti, uloga, šansa po delovima, tržište, sastav)
 window.elState.kopen=window.elState.kopen||{};
@@ -582,7 +582,7 @@ const kartica=(tb,tr,x,n)=>{
   }
   const parts=[]; if(x.model!=null)parts.push('model '+pct(x.model)); parts.push('sezona '+x.istorija+(x.forma5?', posl. 5: '+x.forma5:'')); if(x.trziste!=null)parts.push('tržište '+pct(x.trziste));
   L.push(['Šansa',parts.join(' · ')+' → '+(x.sansa_sirova!=null?'usklađena '+pct(x.sansa)+' (sirova '+pct(x.sansa_sirova)+')':pct(x.sansa))+(x.ulog!=null?' · ulog '+(x.ulog?d3.format('.2f')(x.ulog)+' j.':'0 (bez prednosti)'):'')]);
-  if(o&&o.trz_medijana!=null) L.push(['Tržište',`medijana ${f1(o.trz_medijana)} (${o.trz_knjige||'?'} kladionice${o.trz_raskorak!=null?', raskorak '+f1(o.trz_raskorak):''})`+(o.mb_odstupanje!=null?` · Maxbet ${sg(o.mb_odstupanje)} prema tržištu`:'')+(o.trz_kretanje?` · pomeranje ${sg(o.trz_kretanje)}`:'')+(x.brzo?' · ⚡ igraj odmah':'')]);
+  if(o&&o.trz_medijana!=null) L.push(['Tržište',`medijana ${f1(o.trz_medijana)} (${o.trz_knjige||'?'} kladionice${o.trz_raskorak!=null?', raskorak '+f1(o.trz_raskorak):''})`+(o.mb_odstupanje!=null?` · Maxbet ${sg(o.mb_odstupanje)} prema tržištu`:'')+(o.trz_kretanje?` · pomeranje ${sg(o.trz_kretanje)}`:'')+(x.brzo?' · ⚡ Maxbet ispred tržišta':'')]);
   if(p){
     const s=[p.sastav_zbog,p.povratak,p.rizik_uloge,p.veca_uloga].filter(Boolean); if(s.length)L.push(['Sastav',s.join(' · ')]);
     if(p.uloga_zbog)L.push(['Šutevi i uloga',p.uloga_zbog]);
